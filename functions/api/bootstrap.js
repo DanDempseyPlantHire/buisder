@@ -47,7 +47,7 @@ export async function onRequestGet(context) {
   const { results: applicants } = await env.DB.prepare(
     `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date,
             u.id as applicantId, u.name as applicantName, u.email as applicantEmail,
-            jp.location as applicantLocation, jp.availability as applicantAvailability, jp.skills as applicantSkills,
+            jp.location as applicantLocation, jp.availability as applicantAvailability, jp.skills as applicantSkills, jp.photo_data as applicantPhoto,
             j.title as jobTitle,
             ii.interview_at as interviewAt,
             ii.location as interviewLocation,

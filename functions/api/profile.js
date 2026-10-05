@@ -13,15 +13,15 @@ export async function onRequestPut(context) {
   }
 
   if (user.role === "jobseeker") {
-    const { ageBand, phone, location, about, skills, education, experience, availability, interests, transport, cvFilename } = body;
+    const { ageBand, phone, location, about, skills, education, experience, availability, interests, transport, cvFilename, photoData, onboardingComplete } = body;
     await env.DB.prepare(
       `UPDATE jobseeker_profiles
-       SET age_band=?, phone=?, location=?, about=?, skills=?, education=?, experience=?, availability=?, interests=?, transport=?, cv_filename=?
+       SET age_band=?, phone=?, location=?, about=?, skills=?, education=?, experience=?, availability=?, interests=?, transport=?, cv_filename=?, photo_data=?, onboarding_complete=?
        WHERE user_id=?`
     ).bind(
       ageBand || "", phone || "", location || "", about || "", skills || "",
       education || "", experience || "", availability || "", interests || "",
-      transport || "", cvFilename || "", user.id
+      transport || "", cvFilename || "", photoData || "", onboardingComplete ? 1 : 0, user.id
     ).run();
   } else {
     const { companyName, location, description } = body;

@@ -250,7 +250,27 @@
       .app{border-radius:14px;border:1px solid var(--line-dark);min-height:calc(100vh - 48px)}
       .bottomnav{bottom:24px;border-radius:0 0 14px 14px}
     }
-  </style>
+  
+    .profile-avatar{
+      width:88px;height:88px;border-radius:50%;overflow:hidden;
+      background:#eef2ff;color:#3730a3;display:grid;place-items:center;
+      font-size:30px;font-weight:900;border:3px solid #fff;
+      box-shadow:0 8px 24px rgba(17,24,39,.12);margin:0 auto 12px;
+    }
+    .profile-avatar img{width:100%;height:100%;object-fit:cover}
+    .onboarding-banner{
+      background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;
+      border-radius:16px;padding:12px;margin:12px 0;font-size:13px;line-height:1.45
+    }
+    
+
+    .jobseeker-photo{width:96px;height:96px;border-radius:50%;overflow:hidden;background:#eef2ff;color:#3730a3;display:grid;place-items:center;font-size:32px;font-weight:900;border:3px solid #fff;box-shadow:0 8px 24px rgba(17,24,39,.12);margin:0 auto 10px}
+    .jobseeker-photo img{width:100%;height:100%;object-fit:cover}
+    .photo-help{text-align:center;color:#667085;font-size:12px;margin:0 0 12px}
+    .applicant-photo{width:50px;height:50px;border-radius:50%;overflow:hidden;background:#eef2ff;color:#3730a3;display:grid;place-items:center;font-weight:900;flex:0 0 auto}
+    .applicant-photo img{width:100%;height:100%;object-fit:cover}
+
+</style>
 </head>
 <body>
 <div class="app">
@@ -509,7 +529,7 @@ function render(){
   nav.classList.remove("hidden");
   document.getElementById("modeLabel").textContent = state.mode==="jobseeker" ? "Job seeker account" : "Employer account";
   renderNav();
-  document.getElementById("content").innerHTML = state.mode==="jobseeker" ? renderJobseeker() : renderEmployer();
+  document.getElementById("content").innerHTML = needsOnboarding() ? renderOnboarding() : (state.mode==="jobseeker" ? renderJobseeker() : renderEmployer());
   if(state.mode==="jobseeker" && state.tab==="feed"){ setupSwipe(); }
 }
 
@@ -735,6 +755,52 @@ async function respondToInterview(applicationId, response){
   } catch(e){ toast(e.message); }
 }
 
+
+async function prepareProfilePhoto(file){
+  if(!file) return "";
+  if(!file.type || !file.type.startsWith("image/")) throw new Error("Please choose an image file");
+  if(file.size > 5 * 1024 * 1024) throw new Error("Profile photo must be under 5 MB");
+
+  const dataUrl = await new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = ()=>reject(new Error("Could not read image"));
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise((resolve, reject)=>{
+    const i = new Image();
+    i.onload = ()=>resolve(i);
+    i.onerror = ()=>reject(new Error("Could not load image"));
+    i.src = dataUrl;
+  });
+
+  const size = 240;
+  const canvas = document.createElement("canvas");
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const side = Math.min(img.width, img.height);
+  const sx = (img.width - side) / 2;
+  const sy = (img.height - side) / 2;
+  ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+
+  let quality = .72;
+  let out = canvas.toDataURL("image/jpeg", quality);
+  while(out.length > 95000 && quality > .4){
+    quality -= .08;
+    out = canvas.toDataURL("image/jpeg", quality);
+  }
+  if(out.length > 120000) throw new Error("Please choose a smaller or simpler photo");
+  return out;
+}
+
+function profilePhotoMarkup(p, name){
+  if(p && p.photo_data){
+    return `<div class="jobseeker-photo"><img src="${p.photo_data}" alt="Profile photo"></div>`;
+  }
+  return `<div class="jobseeker-photo">${(name || "U").slice(0,1).toUpperCase()}</div>`;
+}
+
 function renderProfile(){
   const p = state.profile || {};
   const cvLabel = p.cv_filename
@@ -743,9 +809,14 @@ function renderProfile(){
 
   return `
     <div class="section-pad">
-      <div class="title-row"><h2>Your job profile</h2><span>CV optional</span></div>
+      <div class="title-row"><h2>Your job profile</h2><span>Edit anytime</span></div>
 
       <div class="form-card">
+        ${profilePhotoMarkup(p, state.user.name)}
+        <div class="photo-help">Add or change your profile picture here at any time.</div>
+        <label>Profile picture</label>
+        <input id="pphoto" type="file" accept="image/*">
+
         <label>First name</label>
         <input id="pname" value="${state.user.name || ""}">
 
@@ -796,7 +867,7 @@ function renderProfile(){
         ${cvLabel}
 
         <div class="notice">
-          <strong>Privacy control:</strong> your full profile and CV are not publicly searchable. In a live version, you would choose when to share them with an employer.
+          <strong>Privacy:</strong> your profile is shown to an employer when you apply for one of their jobs. It is not a public searchable profile.
         </div>
 
         <button class="btn btn-dark btn-block" onclick="saveProfile()">Save profile</button>
@@ -811,21 +882,30 @@ async function saveProfile(){
     ? cvInput.files[0].name
     : (state.profile.cv_filename || "");
 
-  const body = {
-    name: document.getElementById("pname").value || "",
-    ageBand: document.getElementById("page").value,
-    phone: document.getElementById("pphone").value,
-    location: document.getElementById("plocation").value,
-    about: document.getElementById("pabout").value,
-    skills: document.getElementById("pskills").value,
-    education: document.getElementById("peducation").value,
-    experience: document.getElementById("pexperience").value,
-    availability: document.getElementById("pavail").value,
-    interests: document.getElementById("pinterests").value,
-    transport: document.getElementById("ptransport").value,
-    cvFilename
-  };
+  let photoData = state.profile.photo_data || "";
+  const photoInput = document.getElementById("pphoto");
   try{
+    if(photoInput && photoInput.files && photoInput.files[0]){
+      photoData = await prepareProfilePhoto(photoInput.files[0]);
+    }
+
+    const body = {
+      name: document.getElementById("pname").value || "",
+      ageBand: document.getElementById("page").value,
+      phone: document.getElementById("pphone").value,
+      location: document.getElementById("plocation").value,
+      about: document.getElementById("pabout").value,
+      skills: document.getElementById("pskills").value,
+      education: document.getElementById("peducation").value,
+      experience: document.getElementById("pexperience").value,
+      availability: document.getElementById("pavail").value,
+      interests: document.getElementById("pinterests").value,
+      transport: document.getElementById("ptransport").value,
+      cvFilename,
+      photoData,
+      onboardingComplete: true
+    };
+
     await api("/api/profile", {method:"PUT", body});
     await loadBootstrap();
     toast("Profile saved");
@@ -875,6 +955,89 @@ function showApplicationProfile(jobId){
 
     <button class="btn btn-dark btn-block" onclick="closeModal()">Close</button>
   `);
+}
+
+
+function needsOnboarding(){
+  if(state.mode !== "jobseeker") return false;
+  const p = state.profile || {};
+  return Number(p.onboarding_complete || 0) !== 1;
+}
+
+function renderOnboarding(){
+  const p = state.profile || {};
+  return `
+    <div class="section-pad">
+      <div class="title-row"><h2>Complete your profile</h2><span>First-time setup</span></div>
+      <div class="form-card">
+        ${profilePhotoMarkup(p, state.user.name)}
+        <div class="onboarding-banner">
+          Complete this once before browsing jobs. Existing users can also add a profile picture here.
+        </div>
+
+        <label>Profile picture</label>
+        <input id="onboardPhoto" type="file" accept="image/*">
+
+        <label>First name</label>
+        <input id="onboardName" value="${state.user.name || ""}" placeholder="First name">
+
+        <label>Age band</label>
+        <select id="onboardAge">
+          <option ${p.age_band==="16–17"?"selected":""}>16–17</option>
+          <option ${p.age_band==="18–20"?"selected":""}>18–20</option>
+          <option ${p.age_band==="21–24"?"selected":""}>21–24</option>
+        </select>
+
+        <label>General location</label>
+        <input id="onboardLocation" value="${p.location || ""}" placeholder="e.g. Cork">
+
+        <label>About you</label>
+        <textarea id="onboardAbout" placeholder="A short introduction">${p.about || ""}</textarea>
+
+        <label>Skills</label>
+        <input id="onboardSkills" value="${p.skills || ""}" placeholder="Teamwork, communication">
+
+        <label>Availability</label>
+        <input id="onboardAvailability" value="${p.availability || ""}" placeholder="Evenings, Saturday">
+
+        <label>Jobs you are interested in</label>
+        <input id="onboardInterests" value="${p.interests || ""}" placeholder="Retail, hospitality">
+
+        <button class="btn btn-dark btn-block" onclick="completeOnboarding()">Save and continue</button>
+      </div>
+    </div>
+  `;
+}
+
+async function completeOnboarding(){
+  try{
+    let photoData = state.profile.photo_data || "";
+    const f = document.getElementById("onboardPhoto");
+    if(f && f.files && f.files[0]) photoData = await prepareProfilePhoto(f.files[0]);
+
+    const body = {
+      name: document.getElementById("onboardName").value || "",
+      ageBand: document.getElementById("onboardAge").value,
+      phone: state.profile.phone || "",
+      location: document.getElementById("onboardLocation").value || "",
+      about: document.getElementById("onboardAbout").value || "",
+      skills: document.getElementById("onboardSkills").value || "",
+      education: state.profile.education || "",
+      experience: state.profile.experience || "",
+      availability: document.getElementById("onboardAvailability").value || "",
+      interests: document.getElementById("onboardInterests").value || "",
+      transport: state.profile.transport || "Public transport",
+      cvFilename: state.profile.cv_filename || "",
+      photoData,
+      onboardingComplete: true
+    };
+
+    await api("/api/profile", {method:"PUT", body});
+    await loadBootstrap();
+    state.tab = "feed";
+    render();
+    toast("Profile completed");
+  }catch(e){ toast(e.message); }
 }
 
 function renderEmployer(){
@@ -975,7 +1138,8 @@ function renderApplicants(){
       ` : state.applicants.map(a=>`
         <div class="card list-card">
           <div class="app-item">
-            <div>
+            ${a.applicantPhoto ? `<div class="applicant-photo"><img src="${a.applicantPhoto}" alt="Applicant photo"></div>` : `<div class="applicant-photo">${(a.applicantName || a.applicantEmail || "U").slice(0,1).toUpperCase()}</div>`}
+            <div style="flex:1">
               <div style="font-weight:900">${a.applicantName || a.applicantEmail}</div>
               <div class="small">Applied to ${a.jobTitle}</div>
               <div class="small">${a.applicantLocation || "Location not set"} · ${a.applicantAvailability || "Availability not set"}</div>
@@ -1047,6 +1211,7 @@ function viewApplicant(id){
   const a = state.applicants.find(x=>String(x.id)===String(id));
   if(!a) return;
   openModal(`
+    ${a.applicantPhoto ? `<div class="jobseeker-photo"><img src="${a.applicantPhoto}" alt="Applicant photo"></div>` : `<div class="jobseeker-photo">${(a.applicantName || a.applicantEmail || "U").slice(0,1).toUpperCase()}</div>`}
     <h3>${a.applicantName || a.applicantEmail}</h3>
     <p>Applied to ${a.jobTitle}</p>
     <p>${a.applicantLocation || "Location not set"} · ${a.applicantAvailability || "Availability not set"}</p>

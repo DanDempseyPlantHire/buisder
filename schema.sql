@@ -30,7 +30,9 @@ CREATE TABLE IF NOT EXISTS jobseeker_profiles (
   availability TEXT,
   interests TEXT,
   transport TEXT,
-  cv_filename TEXT
+  cv_filename TEXT,
+  photo_data TEXT,
+  onboarding_complete INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS employer_profiles (
