@@ -72,12 +72,25 @@ CREATE TABLE IF NOT EXISTS skips (
   PRIMARY KEY (jobseeker_id, job_id)
 );
 
+CREATE TABLE IF NOT EXISTS interview_invites (
+  id TEXT PRIMARY KEY,
+  application_id TEXT NOT NULL UNIQUE REFERENCES applications(id) ON DELETE CASCADE,
+  interview_at TEXT NOT NULL,
+  location TEXT,
+  message TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','declined')),
+  seen_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_jobs_employer ON jobs(employer_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_applications_jobseeker ON applications(jobseeker_id);
 CREATE INDEX IF NOT EXISTS idx_applications_job ON applications(job_id);
 CREATE INDEX IF NOT EXISTS idx_skips_jobseeker ON skips(jobseeker_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_interview_invites_application ON interview_invites(application_id);
 
 -- A few seed jobs so the swipe feed isn't empty on a fresh database.
 -- Safe to delete these rows once real employers start posting.

@@ -229,6 +229,22 @@
     .notice{
       background:var(--paper-dim);border-radius:8px;padding:12px;font-size:12px;line-height:1.5;color:#565244;margin-top:12px
     }
+    .interview-alert{
+      background:var(--accent-tint);color:var(--accent-ink);border:1px solid #d7b19b;
+      border-radius:10px;padding:14px;margin-bottom:12px
+    }
+    .interview-alert strong{display:block;margin-bottom:4px}
+    .notify-btn{margin-top:10px;background:#fff;color:#111827;border:0;border-radius:12px;padding:10px 12px;font-weight:900}
+    .interview-box{
+      background:var(--good-tint);color:#294d30;border:1px solid #b8ccb9;
+      border-radius:10px;padding:13px;margin:12px 0
+    }
+    .interview-box.pending{background:var(--accent-tint);color:var(--accent-ink);border-color:#d7b19b}
+    .interview-box.declined{background:var(--bad-tint);color:var(--bad);border-color:#d9aaa1}
+    .new-dot{
+      display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;
+      border-radius:9px;background:var(--accent);color:var(--paper);font-size:10px;margin-left:4px;padding:0 5px
+    }
     @media (min-width:700px){
       body{padding:24px 0}
       .app{border-radius:14px;border:1px solid var(--line-dark);min-height:calc(100vh - 48px)}
@@ -280,6 +296,52 @@ let state = {
 
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 
+function formatInterview(value){
+  if(!value) return "";
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return value.replace("T"," ");
+  return d.toLocaleString("en-IE", {
+    weekday:"short", day:"numeric", month:"short", year:"numeric",
+    hour:"2-digit", minute:"2-digit"
+  });
+}
+
+function interviewStatusLabel(a){
+  if(a.interviewStatus==="accepted" || a.status==="interview_accepted") return "Interview confirmed";
+  if(a.interviewStatus==="declined" || a.status==="interview_declined") return "Interview declined";
+  if(a.interviewAt) return "Interview invited";
+  return cap(a.status);
+}
+
+function unreadInterviewCount(){
+  return state.applications.filter(a => a.interviewAt && !a.inviteSeenAt && (a.interviewStatus==="pending" || a.status==="invited")).length;
+}
+
+const notifiedInterviewIds = new Set();
+
+async function enableBrowserNotifications(){
+  if (!("Notification" in window)) { toast("Browser notifications are not supported on this device"); return; }
+  const permission = await Notification.requestPermission();
+  if(permission === "granted"){
+    toast("Interview notifications enabled");
+    notifyUnseenInterviews();
+  } else {
+    toast("Notifications were not enabled");
+  }
+}
+
+function notifyUnseenInterviews(){
+  if(state.mode !== "jobseeker" || !("Notification" in window) || Notification.permission !== "granted") return;
+  for(const a of state.applications){
+    if(a.interviewAt && !a.inviteSeenAt && !notifiedInterviewIds.has(a.id)){
+      notifiedInterviewIds.add(a.id);
+      new Notification("New interview invitation", {
+        body: `${a.company || "An employer"} invited you to interview on ${formatInterview(a.interviewAt)}${a.interviewLocation ? " at " + a.interviewLocation : ""}.`
+      });
+    }
+  }
+}
+
 async function api(path, opts = {}){
   const res = await fetch(path, {
     method: opts.method || "GET",
@@ -307,6 +369,7 @@ async function loadBootstrap(){
     state.jobs = data.jobs || [];
     state.applications = data.applications || [];
     state.skipped = data.skipped || [];
+    setTimeout(notifyUnseenInterviews, 50);
   } else {
     state.postedJobs = data.postedJobs || [];
     state.applicants = data.applicants || [];
@@ -316,9 +379,32 @@ async function loadBootstrap(){
 async function boot(){
   try{ await loadBootstrap(); } catch(e){ state.user = null; }
   render();
+  setInterval(async ()=>{
+    if(!state.user) return;
+    try{
+      const before = unreadInterviewCount();
+      await loadBootstrap();
+      const after = unreadInterviewCount();
+      if(after !== before) render();
+      notifyUnseenInterviews();
+    }catch(e){}
+  }, 20000);
 }
 
-function setTab(tab){ state.tab = tab; render(); }
+async function setTab(tab){
+  state.tab = tab;
+  render();
+  if(tab==="applications" && state.mode==="jobseeker"){
+    const unseen = state.applications.filter(a => a.interviewAt && !a.inviteSeenAt);
+    for(const a of unseen){
+      try{
+        await api(`/api/applications/${a.id}/seen`, {method:"POST"});
+        a.inviteSeenAt = new Date().toISOString();
+      } catch(e){}
+    }
+    render();
+  }
+}
 
 function renderAuth(){
   const errBox = state.authError ? `<div class="notice" style="color:var(--bad)">${state.authError}</div>` : "";
@@ -400,8 +486,9 @@ async function doLogout(){
 
 function renderNav(){
   const nav = document.getElementById("bottomnav");
+  const unread = state.mode==="jobseeker" ? unreadInterviewCount() : 0;
   const items = state.mode==="jobseeker"
-    ? [["feed","Jobs"],["applications","Applied"],["profile","Profile"]]
+    ? [["feed","Jobs"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
     : [["home","Dashboard"],["post","Post job"],["applicants","Applicants"],["profile","Business"]];
   nav.style.gridTemplateColumns = `repeat(${items.length},1fr)`;
   nav.innerHTML = items.map(([key,label]) => `
@@ -442,6 +529,14 @@ function renderFeed(){
   const progress = Math.min(state.jobs.length, 5);
   return `
     <div class="feed-wrap">
+      ${unreadInterviewCount() ? `
+        <div class="interview-alert">
+          <strong>🔔 ${unreadInterviewCount()} new interview ${unreadInterviewCount()===1 ? "invitation" : "invitations"}</strong>
+          An employer has proposed a date, time and place. Review it and accept or decline.
+          <button class="btn btn-dark btn-block" style="margin-top:10px" onclick="setTab('applications')">View interview invitation</button>
+          ${("Notification" in window && Notification.permission !== "granted") ? `<button class="notify-btn" onclick="enableBrowserNotifications()">Enable browser notifications</button>` : ""}
+        </div>
+      ` : ""}
       <div class="feed-intro">
         <div>
           <h2>Swipe jobs</h2>
@@ -585,20 +680,39 @@ function renderApplied(){
   return `
     <div class="section-pad">
       <div class="title-row"><h2>Applications</h2><span>${state.applications.length} applied</span></div>
+      ${("Notification" in window && Notification.permission !== "granted") ? `<button class="btn btn-outline btn-block" style="margin-bottom:12px" onclick="enableBrowserNotifications()">🔔 Enable interview notifications</button>` : ""}
       ${
-        state.applications.length ? state.applications.map(a=>`
+        state.applications.length ? state.applications.map(a=>{
+          const hasInterview = !!a.interviewAt;
+          const interviewClass = a.interviewStatus==="declined" ? "declined" : (a.interviewStatus==="accepted" ? "" : "pending");
+          return `
           <div class="card list-card">
             <div class="app-item">
               <div>
                 <div style="font-weight:900">${a.title}</div>
                 <div class="small">${a.company} · applied ${a.date}</div>
               </div>
-              <span class="pill good">${cap(a.status)}</span>
+              <span class="pill ${hasInterview && a.interviewStatus!=="declined" ? 'good' : 'soft'}">${interviewStatusLabel(a)}</span>
             </div>
-            <div class="chips"><span class="chip good">Application sent</span></div>
+
+            ${hasInterview ? `
+              <div class="interview-box ${interviewClass}">
+                <strong>${a.interviewStatus==="accepted" ? "Interview confirmed" : a.interviewStatus==="declined" ? "Interview declined" : "Interview invitation"}</strong>
+                <div style="margin-top:6px"><strong>Date & time:</strong> ${formatInterview(a.interviewAt)}</div>
+                ${a.interviewLocation ? `<div style="margin-top:4px"><strong>Where:</strong> ${a.interviewLocation}</div>` : ""}
+                ${a.interviewMessage ? `<div style="margin-top:4px"><strong>Message:</strong> ${a.interviewMessage}</div>` : ""}
+              </div>
+              ${a.interviewStatus==="pending" ? `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                  <button class="btn btn-bad" onclick="respondToInterview('${a.id}','declined')">Decline</button>
+                  <button class="btn btn-good" onclick="respondToInterview('${a.id}','accepted')">Accept interview</button>
+                </div>
+              ` : ""}
+            ` : `<div class="chips"><span class="chip good">Application sent</span></div>`}
+
             <button class="btn btn-dark btn-block" onclick="showApplicationProfile('${a.jobId}')">View application</button>
           </div>
-        `).join('') : `
+        `}).join('') : `
           <div class="card dark empty">
             <h3 style="margin:0 0 8px">No applications yet</h3>
             <p style="color:#cbd5e1">Go back to the feed and swipe right on any job you want to apply for.</p>
@@ -608,6 +722,17 @@ function renderApplied(){
       }
     </div>
   `;
+}
+
+async function respondToInterview(applicationId, response){
+  const label = response==="accepted" ? "accept" : "decline";
+  if(!confirm(`Are you sure you want to ${label} this interview invitation?`)) return;
+  try{
+    await api(`/api/applications/${applicationId}/respond`, {method:"POST", body:{response}});
+    await loadBootstrap();
+    render();
+    toast(response==="accepted" ? "Interview confirmed" : "Interview declined");
+  } catch(e){ toast(e.message); }
 }
 
 function renderProfile(){
@@ -711,6 +836,7 @@ async function saveProfile(){
 function showApplicationProfile(jobId){
   const job = state.jobs.find(j=>String(j.id)===String(jobId));
   const p = state.profile || {};
+  const application = state.applications.find(a=>String(a.jobId)===String(jobId));
   const skills = (p.skills || "").split(",").map(s=>s.trim()).filter(Boolean);
   openModal(`
     <h3>${job ? job.title : "Application"}</h3>
@@ -734,6 +860,14 @@ function showApplicationProfile(jobId){
     <p><strong>Experience:</strong> ${p.experience || "Not added"}</p>
     <p><strong>Availability:</strong> ${p.availability || "Not added"}</p>
     <p><strong>CV:</strong> ${p.cv_filename || "No CV attached"}</p>
+
+    ${application && application.interviewAt ? `
+      <div class="interview-box ${application.interviewStatus==="declined" ? "declined" : (application.interviewStatus==="accepted" ? "" : "pending")}">
+        <strong>${interviewStatusLabel(application)}</strong>
+        <div style="margin-top:6px">${formatInterview(application.interviewAt)}</div>
+        ${application.interviewLocation ? `<div style="margin-top:4px">${application.interviewLocation}</div>` : ""}
+      </div>
+    ` : ""}
 
     <div class="notice">
       In a live app, the user would choose their sharing preferences during onboarding. Once set, swiping right would submit the agreed profile information automatically.
@@ -760,7 +894,7 @@ function renderEmployer(){
       <div class="stats">
         <div class="stat"><strong>${state.postedJobs.length}</strong><span>Live jobs</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
-        <div class="stat"><strong>${state.applicants.filter(a=>a.status==="invited").length}</strong><span>Invited</span></div>
+        <div class="stat"><strong>${state.applicants.filter(a=>a.interviewAt).length}</strong><span>Interviews</span></div>
       </div>
       <div class="title-row"><h2>Your jobs</h2><span>Current</span></div>
       ${!state.postedJobs.length ? `
@@ -846,17 +980,67 @@ function renderApplicants(){
               <div class="small">Applied to ${a.jobTitle}</div>
               <div class="small">${a.applicantLocation || "Location not set"} · ${a.applicantAvailability || "Availability not set"}</div>
             </div>
-            <span class="pill ${a.status==='invited' ? 'good' : 'soft'}">${cap(a.status)}</span>
+            <span class="pill ${a.interviewStatus==='accepted' ? 'good' : 'soft'}">${interviewStatusLabel(a)}</span>
           </div>
+
           <div class="chips"><span class="chip">${a.applicantSkills || "No skills listed"}</span></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <button class="btn btn-outline" onclick="viewApplicant('${a.id}')">View</button>
-            <button class="btn btn-dark" onclick="inviteApplicant('${a.id}')">${a.status==='invited' ? 'Invited' : 'Invite'}</button>
+
+          ${a.interviewAt ? `
+            <div class="interview-box ${a.interviewStatus==="declined" ? "declined" : (a.interviewStatus==="accepted" ? "" : "pending")}">
+              <strong>${a.interviewStatus==="accepted" ? "Candidate accepted" : a.interviewStatus==="declined" ? "Candidate declined" : "Interview invitation sent"}</strong>
+              <div style="margin-top:6px"><strong>Date & time:</strong> ${formatInterview(a.interviewAt)}</div>
+              ${a.interviewLocation ? `<div style="margin-top:4px"><strong>Place:</strong> ${a.interviewLocation}</div>` : ""}
+              ${a.interviewMessage ? `<div style="margin-top:4px"><strong>Message:</strong> ${a.interviewMessage}</div>` : ""}
+            </div>
+          ` : ""}
+
+          <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:14px">
+            <div style="font-weight:900;margin-bottom:8px">${a.interviewAt ? "Reschedule interview" : "Invite to interview"}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <label>Date</label>
+                <input id="ivDate-${a.id}" type="date" value="${a.interviewAt ? a.interviewAt.slice(0,10) : ""}">
+              </div>
+              <div>
+                <label>Time</label>
+                <input id="ivTime-${a.id}" type="time" value="${a.interviewAt ? a.interviewAt.slice(11,16) : ""}">
+              </div>
+            </div>
+            <label>Place / meeting method</label>
+            <input id="ivPlace-${a.id}" value="${a.interviewLocation || ""}" placeholder="e.g. Main Street store, Teams, phone call">
+            <label>Message to job seeker (optional)</label>
+            <textarea id="ivMessage-${a.id}" placeholder="e.g. Please ask for Sarah at reception.">${a.interviewMessage || ""}</textarea>
+            <button class="btn btn-dark btn-block" style="margin-top:10px" onclick="sendInlineInterviewInvite('${a.id}')">
+              ${a.interviewAt ? "Update interview invitation" : "Send interview invitation"}
+            </button>
           </div>
+
+          <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="viewApplicant('${a.id}')">View full applicant</button>
         </div>
       `).join('')}
     </div>
   `;
+}
+
+async function sendInlineInterviewInvite(id){
+  const date = document.getElementById(`ivDate-${id}`).value;
+  const time = document.getElementById(`ivTime-${id}`).value;
+  const place = document.getElementById(`ivPlace-${id}`).value.trim();
+  const message = document.getElementById(`ivMessage-${id}`).value.trim();
+
+  if(!date){ toast("Choose an interview date"); return; }
+  if(!time){ toast("Choose an interview time"); return; }
+  if(!place){ toast("Add an interview place or meeting method"); return; }
+
+  try{
+    await api(`/api/applications/${id}/invite`, {
+      method:"POST",
+      body:{ interviewAt:`${date}T${time}`, interviewLocation:place, interviewMessage:message }
+    });
+    await loadBootstrap();
+    render();
+    toast("Interview invitation sent to job seeker");
+  }catch(e){ toast(e.message); }
 }
 
 function viewApplicant(id){
@@ -868,16 +1052,67 @@ function viewApplicant(id){
     <p>${a.applicantLocation || "Location not set"} · ${a.applicantAvailability || "Availability not set"}</p>
     <div class="chips"><span class="chip">${a.applicantSkills || "No skills listed"}</span></div>
     <p>Contact: ${a.applicantEmail}</p>
-    <button class="btn btn-dark btn-block" onclick="inviteApplicant('${a.id}');closeModal()">Invite to interview</button>
+
+    ${a.interviewAt ? `
+      <div class="interview-box ${a.interviewStatus==="declined" ? "declined" : (a.interviewStatus==="accepted" ? "" : "pending")}">
+        <strong>${interviewStatusLabel(a)}</strong>
+        <div style="margin-top:6px"><strong>Date & time:</strong> ${formatInterview(a.interviewAt)}</div>
+        ${a.interviewLocation ? `<div style="margin-top:4px"><strong>Where:</strong> ${a.interviewLocation}</div>` : ""}
+        ${a.interviewMessage ? `<div style="margin-top:4px"><strong>Message:</strong> ${a.interviewMessage}</div>` : ""}
+      </div>
+    ` : ""}
+
+    <button class="btn btn-dark btn-block" onclick="openInterviewInvite('${a.id}')">${a.interviewAt ? "Reschedule interview" : "Invite to interview"}</button>
   `);
 }
 
-async function inviteApplicant(id){
+function openInterviewInvite(id){
+  const a = state.applicants.find(x=>String(x.id)===String(id));
+  if(!a) return;
+
+  const existingAt = a.interviewAt || "";
+  const existingLocation = a.interviewLocation || "";
+  const existingMessage = a.interviewMessage || "";
+
+  openModal(`
+    <h3>${a.interviewAt ? "Reschedule interview" : "Invite to interview"}</h3>
+    <p>${a.applicantName || a.applicantEmail} · ${a.jobTitle}</p>
+
+    <label>Date and time</label>
+    <input id="interviewAt" type="datetime-local" value="${existingAt}">
+
+    <label>Location or meeting method</label>
+    <input id="interviewLocation" value="${existingLocation}" placeholder="e.g. Cork City store, phone call, Teams">
+
+    <label>Message to candidate</label>
+    <textarea id="interviewMessage" placeholder="e.g. Please ask for Sarah at reception.">${existingMessage}</textarea>
+
+    <div class="notice">
+      The job seeker will see a new interview notification in Buisder with the proposed date, time and location. They can accept or decline it.
+    </div>
+
+    <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="sendInterviewInvite('${a.id}')">
+      ${a.interviewAt ? "Update interview invitation" : "Send interview invitation"}
+    </button>
+  `);
+}
+
+async function sendInterviewInvite(id){
+  const interviewAt = document.getElementById("interviewAt").value;
+  if(!interviewAt){ toast("Choose an interview date and time"); return; }
+
+  const body = {
+    interviewAt,
+    interviewLocation: document.getElementById("interviewLocation").value,
+    interviewMessage: document.getElementById("interviewMessage").value
+  };
+
   try{
-    await api(`/api/applications/${id}/invite`, {method:"POST"});
+    await api(`/api/applications/${id}/invite`, {method:"POST", body});
+    closeModal();
     await loadBootstrap();
     render();
-    toast("Invite sent");
+    toast("Interview invitation sent");
   } catch(e){ toast(e.message); }
 }
 

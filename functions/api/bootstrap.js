@@ -12,8 +12,15 @@ export async function onRequestGet(context) {
   if (user.role === "jobseeker") {
     const profile = await env.DB.prepare("SELECT * FROM jobseeker_profiles WHERE user_id = ?").bind(user.id).first();
     const { results: applications } = await env.DB.prepare(
-      `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date, j.title, j.company
-       FROM applications a JOIN jobs j ON j.id = a.job_id
+      `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date, j.title, j.company,
+              ii.interview_at as interviewAt,
+              ii.location as interviewLocation,
+              ii.message as interviewMessage,
+              ii.status as interviewStatus,
+              ii.seen_at as inviteSeenAt
+       FROM applications a
+       JOIN jobs j ON j.id = a.job_id
+       LEFT JOIN interview_invites ii ON ii.application_id = a.id
        WHERE a.jobseeker_id = ? ORDER BY a.created_at DESC`
     ).bind(user.id).all();
     const { results: skipRows } = await env.DB.prepare(
@@ -41,11 +48,17 @@ export async function onRequestGet(context) {
     `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date,
             u.id as applicantId, u.name as applicantName, u.email as applicantEmail,
             jp.location as applicantLocation, jp.availability as applicantAvailability, jp.skills as applicantSkills,
-            j.title as jobTitle
+            j.title as jobTitle,
+            ii.interview_at as interviewAt,
+            ii.location as interviewLocation,
+            ii.message as interviewMessage,
+            ii.status as interviewStatus,
+            ii.seen_at as inviteSeenAt
      FROM applications a
      JOIN jobs j ON j.id = a.job_id
      JOIN users u ON u.id = a.jobseeker_id
      LEFT JOIN jobseeker_profiles jp ON jp.user_id = u.id
+     LEFT JOIN interview_invites ii ON ii.application_id = a.id
      WHERE j.employer_id = ?
      ORDER BY a.created_at DESC`
   ).bind(user.id).all();
