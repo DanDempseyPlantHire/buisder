@@ -13,15 +13,27 @@ export async function onRequestPut(context) {
   }
 
   if (user.role === "jobseeker") {
-    const { ageBand, phone, location, about, skills, education, experience, availability, interests, transport, cvFilename, photoData, onboardingComplete } = body;
+    const {
+      ageBand, phone, location, about, skills, education, experience, availability, interests,
+      transport, cvFilename, photoData, onboardingComplete,
+      maxDistanceKm, minPay, preferredEmploymentType, latitude, longitude
+    } = body;
     await env.DB.prepare(
       `UPDATE jobseeker_profiles
-       SET age_band=?, phone=?, location=?, about=?, skills=?, education=?, experience=?, availability=?, interests=?, transport=?, cv_filename=?, photo_data=?, onboarding_complete=?
+       SET age_band=?, phone=?, location=?, about=?, skills=?, education=?, experience=?, availability=?, interests=?,
+           transport=?, cv_filename=?, photo_data=?, onboarding_complete=?,
+           max_distance_km=?, min_pay=?, preferred_employment_type=?, latitude=?, longitude=?
        WHERE user_id=?`
     ).bind(
       ageBand || "", phone || "", location || "", about || "", skills || "",
       education || "", experience || "", availability || "", interests || "",
-      transport || "", cvFilename || "", photoData || "", onboardingComplete ? 1 : 0, user.id
+      transport || "", cvFilename || "", photoData || "", onboardingComplete ? 1 : 0,
+      Number.isFinite(Number(maxDistanceKm)) ? Number(maxDistanceKm) : 25,
+      minPay === "" || minPay === null || minPay === undefined ? null : Number(minPay),
+      preferredEmploymentType || "Any",
+      latitude === "" || latitude === null || latitude === undefined ? null : Number(latitude),
+      longitude === "" || longitude === null || longitude === undefined ? null : Number(longitude),
+      user.id
     ).run();
   } else {
     const { companyName, location, description } = body;

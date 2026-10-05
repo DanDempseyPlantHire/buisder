@@ -1,7 +1,15 @@
 import { json, getUser } from "../_lib/db.js";
 
+function parseArray(value) {
+  if (!value) return [];
+  try { return JSON.parse(value); } catch { return []; }
+}
 function formatJob(j) {
-  return { ...j, tags: j.tags ? JSON.parse(j.tags) : [] };
+  return {
+    ...j,
+    tags: parseArray(j.tags),
+    schedule_tags: parseArray(j.schedule_tags)
+  };
 }
 
 export async function onRequestGet(context) {

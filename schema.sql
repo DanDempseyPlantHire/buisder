@@ -32,7 +32,12 @@ CREATE TABLE IF NOT EXISTS jobseeker_profiles (
   transport TEXT,
   cv_filename TEXT,
   photo_data TEXT,
-  onboarding_complete INTEGER NOT NULL DEFAULT 0
+  onboarding_complete INTEGER NOT NULL DEFAULT 0,
+  max_distance_km INTEGER NOT NULL DEFAULT 25,
+  min_pay REAL,
+  preferred_employment_type TEXT NOT NULL DEFAULT 'Any',
+  latitude REAL,
+  longitude REAL
 );
 
 CREATE TABLE IF NOT EXISTS employer_profiles (
@@ -54,6 +59,12 @@ CREATE TABLE IF NOT EXISTS jobs (
   start_date TEXT,
   description TEXT,
   tags TEXT,                              -- JSON array, stored as text, e.g. ["Retail"]
+  employment_type TEXT NOT NULL DEFAULT 'Part-time',
+  min_age INTEGER NOT NULL DEFAULT 16,
+  pay_min REAL,
+  schedule_tags TEXT NOT NULL DEFAULT '[]',
+  latitude REAL,
+  longitude REAL,
   status TEXT NOT NULL DEFAULT 'active',  -- active | closed
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -101,8 +112,10 @@ VALUES ('seed-employer', 'seed@buisder.app', 'x', 'x', 'employer', 'Buisder Demo
 INSERT OR IGNORE INTO employer_profiles (user_id, company_name, location, description)
 VALUES ('seed-employer', 'Harbour Sports', 'Cork', 'Demo listings to preview the swipe feed.');
 
-INSERT OR IGNORE INTO jobs (id, employer_id, title, company, location, pay, hours, experience, start_date, description, tags)
+INSERT OR IGNORE INTO jobs
+(id, employer_id, title, company, location, pay, hours, experience, start_date, description, tags,
+ employment_type, min_age, pay_min, schedule_tags)
 VALUES
-('seed-job-1','seed-employer','Retail Assistant','Harbour Sports','Cork City Centre','€14.20/hr','Sat + 2 evenings','None','Next week','Fast-paced store role with customers and stock support.','["Retail"]'),
-('seed-job-2','seed-employer','Café Team Member','Bean & Co.','Douglas','€13.90/hr','Weekend shifts','None','Immediate','Friendly front-of-house role with coffee and customer service.','["Hospitality"]'),
-('seed-job-3','seed-employer','Event Crew','LiveWorks','Cork City Centre','€15.00/hr','Flexible evenings','None','This month','Set-up support for live events, venues and promotions.','["Events"]');
+('seed-job-1','seed-employer','Retail Assistant','Harbour Sports','Cork City Centre','€14.20/hr','Sat + 2 evenings','None','Next week','Fast-paced store role with customers and stock support.','["Retail"]','Part-time',16,14.20,'["Saturday","Evenings"]'),
+('seed-job-2','seed-employer','Café Team Member','Bean & Co.','Douglas','€13.90/hr','Weekend shifts','None','Immediate','Friendly front-of-house role with coffee and customer service.','["Hospitality"]','Part-time',16,13.90,'["Saturday","Sunday"]'),
+('seed-job-3','seed-employer','Event Crew','LiveWorks','Cork City Centre','€15.00/hr','Flexible evenings','None','This month','Set-up support for live events, venues and promotions.','["Events"]','Temporary / Seasonal',18,15.00,'["Evenings","Saturday","Sunday"]');

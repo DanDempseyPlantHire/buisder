@@ -270,6 +270,16 @@
     .applicant-photo{width:50px;height:50px;border-radius:50%;overflow:hidden;background:#eef2ff;color:#3730a3;display:grid;place-items:center;font-weight:900;flex:0 0 auto}
     .applicant-photo img{width:100%;height:100%;object-fit:cover}
 
+
+    .filter-bar{background:var(--panel);border:1px solid var(--line-dark);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+    .filter-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .filter-summary{font-size:12px;color:var(--muted-on-dark);line-height:1.35}
+    .filter-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .filter-chip{font-size:11px;padding:5px 7px;border-radius:7px;background:rgba(245,242,234,.1);border:1px solid var(--line-dark);color:var(--paper)}
+    .match-score{font-size:12px;font-weight:700;color:var(--good);background:var(--good-tint);padding:6px 8px;border-radius:7px}
+    .geo-status{font-size:12px;color:var(--muted);margin-top:6px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
 </style>
 </head>
 <body>
@@ -311,8 +321,21 @@ let state = {
   applicants:[],
   authMode:"login",
   authRole:"jobseeker",
-  authError:""
+  authError:"",
+  feedFilters: (() => {
+    try{
+      return JSON.parse(localStorage.getItem("buisder_feed_filters")) || {
+        category:"Any", maxDistance:25, minPay:"", employmentType:"Any",
+        experience:"Any", availability:"Match profile"
+      };
+    }catch(e){
+      return {category:"Any", maxDistance:25, minPay:"", employmentType:"Any", experience:"Any", availability:"Match profile"};
+    }
+  })()
 };
+
+let draftJobLat = null;
+let draftJobLng = null;
 
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 
@@ -533,8 +556,233 @@ function render(){
   if(state.mode==="jobseeker" && state.tab==="feed"){ setupSwipe(); }
 }
 
+function normalizeList(value){
+  if(Array.isArray(value)) return value.map(v=>String(v).trim().toLowerCase()).filter(Boolean);
+  return String(value || "").split(",").map(v=>v.trim().toLowerCase()).filter(Boolean);
+}
+
+function parsePay(job){
+  if(job.pay_min !== null && job.pay_min !== undefined && job.pay_min !== "") return Number(job.pay_min) || 0;
+  const match = String(job.pay || "").replace(",", ".").match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : 0;
+}
+
+function ageBandMinimum(ageBand){
+  const match = String(ageBand || "").match(/(\d+)/);
+  return match ? Number(match[1]) : 0;
+}
+
+function haversineKm(lat1, lon1, lat2, lon2){
+  const vals = [lat1,lon1,lat2,lon2].map(Number);
+  if(vals.some(v=>!Number.isFinite(v))) return null;
+  const [a,b,c,d] = vals;
+  const R = 6371;
+  const toRad = x => x * Math.PI / 180;
+  const dLat = toRad(c-a), dLon = toRad(d-b);
+  const q = Math.sin(dLat/2)**2 + Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(q));
+}
+
+function scheduleOverlap(job){
+  const wanted = normalizeList(state.profile.availability);
+  const offered = normalizeList(job.schedule_tags);
+  if(!wanted.length || !offered.length) return null;
+  const synonyms = {
+    "sat":"saturday","sun":"sunday","weekend":"saturday","weekends":"saturday",
+    "evening":"evenings","holiday":"holidays","school/college holidays":"holidays"
+  };
+  const normal = x => synonyms[x] || x;
+  const w = wanted.map(normal);
+  const o = offered.map(normal);
+  return w.some(x => o.some(y => x.includes(y) || y.includes(x)));
+}
+
+function categoryFor(job){
+  return (job.tags && job.tags[0]) || "General";
+}
+
+function jobDistance(job){
+  return haversineKm(
+    state.profile.latitude, state.profile.longitude,
+    job.latitude, job.longitude
+  );
+}
+
+function ageEligible(job){
+  const candidateMin = ageBandMinimum(state.profile.age_band);
+  const required = Number(job.min_age || 16);
+  if(!candidateMin) return true;
+  return candidateMin >= required;
+}
+
+function scoreJob(job){
+  let score = 0;
+  let weight = 0;
+
+  // Category / interests: 25
+  const interests = normalizeList(state.profile.interests);
+  const category = categoryFor(job).toLowerCase();
+  weight += 25;
+  if(!interests.length) score += 12;
+  else if(interests.some(x => category.includes(x) || x.includes(category))) score += 25;
+
+  // Availability: 20
+  weight += 20;
+  const overlap = scheduleOverlap(job);
+  if(overlap === true) score += 20;
+  else if(overlap === null) score += 10;
+
+  // Distance / location: 20
+  weight += 20;
+  const distance = jobDistance(job);
+  const maxDistance = Number(state.feedFilters.maxDistance || state.profile.max_distance_km || 25);
+  if(distance !== null){
+    if(distance <= Math.max(5,maxDistance*.25)) score += 20;
+    else if(distance <= Math.max(10,maxDistance*.6)) score += 16;
+    else if(distance <= maxDistance) score += 10;
+  } else {
+    const pl = String(state.profile.location || "").toLowerCase();
+    const jl = String(job.location || "").toLowerCase();
+    if(pl && jl && (pl.includes(jl) || jl.includes(pl))) score += 16;
+    else score += 8;
+  }
+
+  // Pay: 15
+  weight += 15;
+  const pay = parsePay(job);
+  const minPay = Number(state.feedFilters.minPay || state.profile.min_pay || 0);
+  if(!minPay) score += pay ? 12 : 8;
+  else if(pay >= minPay) score += 15;
+
+  // Employment type: 10
+  weight += 10;
+  const preferredType = state.profile.preferred_employment_type || "Any";
+  if(preferredType === "Any") score += 7;
+  else if(job.employment_type === preferredType) score += 10;
+
+  // Experience: 10
+  weight += 10;
+  const exp = String(job.experience || "None");
+  if(exp === "None") score += 10;
+  else if(exp === "Helpful") score += 7;
+  else score += 3;
+
+  return Math.max(0, Math.min(100, Math.round(score / weight * 100)));
+}
+
 function currentFeedJobs(){
-  return state.jobs.filter(j => !state.applications.some(a=>a.jobId===j.id) && !state.skipped.includes(j.id));
+  const f = state.feedFilters || {};
+  const minPay = Number(f.minPay || 0);
+  const maxDistance = Number(f.maxDistance || 0);
+
+  return state.jobs
+    .filter(j => !state.applications.some(a=>a.jobId===j.id) && !state.skipped.includes(j.id))
+    .filter(ageEligible)
+    .filter(j => f.category==="Any" || categoryFor(j)===f.category)
+    .filter(j => f.employmentType==="Any" || (j.employment_type || "Part-time")===f.employmentType)
+    .filter(j => f.experience==="Any" || (f.experience==="None required" ? (j.experience || "None")==="None" : (j.experience || "None")!== "Required"))
+    .filter(j => !minPay || !parsePay(j) || parsePay(j) >= minPay)
+    .filter(j => {
+      if(f.availability!=="Match profile") return true;
+      const overlap = scheduleOverlap(j);
+      return overlap !== false;
+    })
+    .filter(j => {
+      if(!maxDistance) return true;
+      const distance = jobDistance(j);
+      return distance === null || distance <= maxDistance;
+    })
+    .map(j => ({...j, _matchScore:scoreJob(j), _distance:jobDistance(j)}))
+    .sort((a,b) => b._matchScore - a._matchScore);
+}
+
+function saveFeedFilters(){
+  try{ localStorage.setItem("buisder_feed_filters", JSON.stringify(state.feedFilters)); }catch(e){}
+}
+
+function activeFilterLabels(){
+  const f = state.feedFilters;
+  const out = [];
+  if(f.category!=="Any") out.push(f.category);
+  if(f.employmentType!=="Any") out.push(f.employmentType);
+  if(f.experience!=="Any") out.push(f.experience);
+  if(f.minPay) out.push(`€${f.minPay}+/hr`);
+  if(f.maxDistance) out.push(`${f.maxDistance} km`);
+  if(f.availability==="Match profile") out.push("My availability");
+  return out;
+}
+
+function openJobFilters(){
+  const f = state.feedFilters;
+  const categories = [...new Set(state.jobs.map(categoryFor).filter(Boolean))].sort();
+  openModal(`
+    <h3>Job filters</h3>
+    <p>Choose what matters to you. Your feed will be filtered and then ranked by fit.</p>
+
+    <label>Category</label>
+    <select id="filterCategory">
+      <option>Any</option>
+      ${categories.map(x=>`<option ${f.category===x?"selected":""}>${x}</option>`).join("")}
+    </select>
+
+    <label>Maximum travel distance</label>
+    <select id="filterDistance">
+      <option value="0" ${Number(f.maxDistance)===0?"selected":""}>Any distance</option>
+      <option value="5" ${Number(f.maxDistance)===5?"selected":""}>5 km</option>
+      <option value="10" ${Number(f.maxDistance)===10?"selected":""}>10 km</option>
+      <option value="25" ${Number(f.maxDistance)===25?"selected":""}>25 km</option>
+      <option value="50" ${Number(f.maxDistance)===50?"selected":""}>50 km</option>
+    </select>
+
+    <label>Minimum hourly pay</label>
+    <input id="filterPay" type="number" min="0" step="0.10" value="${f.minPay || ""}" placeholder="e.g. 14.50">
+
+    <label>Work type</label>
+    <select id="filterEmployment">
+      ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship"].map(x=>`<option ${f.employmentType===x?"selected":""}>${x}</option>`).join("")}
+    </select>
+
+    <label>Experience</label>
+    <select id="filterExperience">
+      ${["Any","None required","Helpful or less"].map(x=>`<option ${f.experience===x?"selected":""}>${x}</option>`).join("")}
+    </select>
+
+    <label>Availability</label>
+    <select id="filterAvailability">
+      <option ${f.availability==="Match profile"?"selected":""}>Match profile</option>
+      <option ${f.availability==="Any"?"selected":""}>Any</option>
+    </select>
+
+    <div class="notice">
+      Distance filtering works when you and the employer have added device locations. If either location is missing, Buisder keeps the job rather than hiding it.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+      <button class="btn btn-bad" onclick="clearJobFilters()">Clear</button>
+      <button class="btn btn-dark" onclick="applyJobFilters()">Apply filters</button>
+    </div>
+  `);
+}
+
+function applyJobFilters(){
+  state.feedFilters = {
+    category:document.getElementById("filterCategory").value,
+    maxDistance:Number(document.getElementById("filterDistance").value),
+    minPay:document.getElementById("filterPay").value,
+    employmentType:document.getElementById("filterEmployment").value,
+    experience:document.getElementById("filterExperience").value,
+    availability:document.getElementById("filterAvailability").value
+  };
+  saveFeedFilters();
+  closeModal();
+  render();
+}
+
+function clearJobFilters(){
+  state.feedFilters = {category:"Any",maxDistance:25,minPay:"",employmentType:"Any",experience:"Any",availability:"Match profile"};
+  saveFeedFilters();
+  closeModal();
+  render();
 }
 
 function renderJobseeker(){
@@ -557,6 +805,18 @@ function renderFeed(){
           ${("Notification" in window && Notification.permission !== "granted") ? `<button class="notify-btn" onclick="enableBrowserNotifications()">Enable browser notifications</button>` : ""}
         </div>
       ` : ""}
+      <div class="filter-bar">
+        <div class="filter-row">
+          <div>
+            <strong style="font-size:13px">Best-fit feed</strong>
+            <div class="filter-summary">${currentFeedJobs().length} jobs match your current filters</div>
+          </div>
+          <button class="btn btn-outline" onclick="openJobFilters()">Filters</button>
+        </div>
+        <div class="filter-chips">
+          ${activeFilterLabels().map(x=>`<span class="filter-chip">${x}</span>`).join("")}
+        </div>
+      </div>
       <div class="feed-intro">
         <div>
           <h2>Swipe jobs</h2>
@@ -594,7 +854,10 @@ function renderSwipeCard(job, remaining){
       <div class="swipe-overlay swipe-nope" id="nopeBadge">DECLINE</div>
       <div class="swipe-overlay swipe-like" id="likeBadge">APPLY</div>
       <div class="job-image">
-        <div class="job-badge">${industry}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div class="job-badge">${industry}</div>
+          <div class="match-score">${job._matchScore || scoreJob(job)}% fit</div>
+        </div>
         <h3>${job.title}</h3>
         <p>${job.company || "Employer"} · ${job.location || "Location flexible"}</p>
       </div>
@@ -602,6 +865,9 @@ function renderSwipeCard(job, remaining){
         <div class="chips">
           <span class="chip good">No CV needed</span>
           <span class="chip">${job.experience || "No experience listed"}</span>
+          <span class="chip">${job.employment_type || "Part-time"}</span>
+          <span class="chip">${Number(job.min_age || 16)}+</span>
+          ${job._distance !== null && job._distance !== undefined ? `<span class="chip">${job._distance.toFixed(1)} km away</span>` : ""}
         </div>
         <div class="grid">
           <div class="metric"><small>Pay</small><strong>${job.pay || "On request"}</strong></div>
@@ -631,6 +897,8 @@ function showJob(id){
       <span class="chip good">Pay shown upfront</span>
       <span class="chip">${j.pay || "On request"}</span>
       <span class="chip">${j.hours || "Flexible"}</span>
+      <span class="chip">${j.employment_type || "Part-time"}</span>
+      <span class="chip">${Number(j.min_age || 16)}+</span>
     </div>
     <p>${j.description || "No further description was added for this role."}</p>
     <div class="card" style="border:1px solid #e5e7eb">
@@ -835,6 +1103,26 @@ function renderProfile(){
 
         <label>General location</label>
         <input id="plocation" value="${p.location || ""}" placeholder="e.g. Cork">
+        <button type="button" class="btn btn-dark btn-block" style="margin-top:8px" onclick="captureProfileLocation()">Use my current location for distance matching</button>
+        <div class="geo-status" id="profileGeoStatus">${p.latitude && p.longitude ? "Precise location saved for distance matching." : "Optional. Used only to estimate distance to jobs."}</div>
+
+        <div class="two-col">
+          <div>
+            <label>Maximum travel distance</label>
+            <select id="pmaxdistance">
+              ${[5,10,25,50].map(x=>`<option value="${x}" ${Number(p.max_distance_km || 25)===x?"selected":""}>${x} km</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <label>Minimum hourly pay</label>
+            <input id="pminpay" type="number" min="0" step="0.10" value="${p.min_pay ?? ""}" placeholder="e.g. 14.50">
+          </div>
+        </div>
+
+        <label>Preferred work type</label>
+        <select id="ppreferredtype">
+          ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship"].map(x=>`<option ${String(p.preferred_employment_type || "Any")===x?"selected":""}>${x}</option>`).join("")}
+        </select>
 
         <label>About you</label>
         <textarea id="pabout" placeholder="A short introduction employers can read">${p.about || ""}</textarea>
@@ -876,6 +1164,25 @@ function renderProfile(){
   `;
 }
 
+function captureProfileLocation(){
+  if(!navigator.geolocation){ toast("Location is not supported on this device"); return; }
+  const el = document.getElementById("profileGeoStatus");
+  if(el) el.textContent = "Getting location…";
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      state.profile.latitude = pos.coords.latitude;
+      state.profile.longitude = pos.coords.longitude;
+      if(el) el.textContent = "Location saved for distance matching. It will be stored when you save your profile.";
+      toast("Location captured");
+    },
+    () => {
+      if(el) el.textContent = "Could not access location. You can continue without it.";
+      toast("Location permission was not granted");
+    },
+    {enableHighAccuracy:false, timeout:10000, maximumAge:300000}
+  );
+}
+
 async function saveProfile(){
   const cvInput = document.getElementById("pcv");
   const cvFilename = (cvInput && cvInput.files && cvInput.files.length)
@@ -903,7 +1210,12 @@ async function saveProfile(){
       transport: document.getElementById("ptransport").value,
       cvFilename,
       photoData,
-      onboardingComplete: true
+      onboardingComplete: true,
+      maxDistanceKm: Number(document.getElementById("pmaxdistance").value || 25),
+      minPay: document.getElementById("pminpay").value,
+      preferredEmploymentType: document.getElementById("ppreferredtype").value,
+      latitude: state.profile.latitude ?? null,
+      longitude: state.profile.longitude ?? null
     };
 
     await api("/api/profile", {method:"PUT", body});
@@ -1029,7 +1341,12 @@ async function completeOnboarding(){
       transport: state.profile.transport || "Public transport",
       cvFilename: state.profile.cv_filename || "",
       photoData,
-      onboardingComplete: true
+      onboardingComplete: true,
+      maxDistanceKm: state.profile.max_distance_km || 25,
+      minPay: state.profile.min_pay ?? "",
+      preferredEmploymentType: state.profile.preferred_employment_type || "Any",
+      latitude: state.profile.latitude ?? null,
+      longitude: state.profile.longitude ?? null
     };
 
     await api("/api/profile", {method:"PUT", body});
@@ -1084,41 +1401,114 @@ function renderEmployer(){
 function renderPostJob(){
   return `
     <div class="section-pad">
-      <div class="title-row"><h2>Post a job</h2><span>2 min</span></div>
+      <div class="title-row"><h2>Post a job</h2><span>Better matching</span></div>
       <div class="form-card">
         <label>Job title</label><input id="jtitle" placeholder="Weekend Retail Assistant">
-        <label>Location</label><input id="jlocation" value="Cork">
-        <label>Pay</label><input id="jpay" placeholder="€14.50/hr">
+
+        <label>Location</label><input id="jlocation" value="${state.profile.location || "Cork"}">
+        <button type="button" class="btn btn-dark btn-block" style="margin-top:8px" onclick="captureJobLocation()">Use this device as the workplace location</button>
+        <div class="geo-status" id="jobGeoStatus">Optional. Enables accurate distance matching for job seekers.</div>
+
+        <div class="two-col">
+          <div>
+            <label>Pay shown to candidates</label>
+            <input id="jpay" placeholder="€14.50/hr">
+          </div>
+          <div>
+            <label>Hourly rate for matching</label>
+            <input id="jpaymin" type="number" min="0" step="0.10" placeholder="14.50">
+          </div>
+        </div>
+
+        <label>Work type</label>
+        <select id="jemployment">
+          <option>Part-time</option>
+          <option>Full-time</option>
+          <option>Temporary / Seasonal</option>
+          <option>Weekend / Casual</option>
+          <option>Apprenticeship</option>
+        </select>
+
         <label>Hours</label><input id="jhours" placeholder="Saturday + Sunday">
+
+        <label>When does the person need to be available?</label>
+        <input id="jschedule" placeholder="Evenings, Saturday, Sunday">
+        <div class="geo-status">Separate items with commas. Examples: Weekdays, Evenings, Saturday, Sunday, Holidays.</div>
+
         <label>Experience</label>
         <select id="jexp"><option>None</option><option>Helpful</option><option>Required</option></select>
+
+        <label>Age eligibility</label>
+        <select id="jminage">
+          <option value="16">16+</option>
+          <option value="18">18+</option>
+        </select>
+        <div class="geo-status">Only choose 18+ where the duties or working conditions require it.</div>
+
         <label>Industry</label>
-        <select id="jindustry"><option>Retail</option><option>Hospitality</option><option>Technology</option><option>Office</option><option>Events</option></select>
+        <select id="jindustry">
+          <option>Retail</option><option>Hospitality</option><option>Technology</option>
+          <option>Office</option><option>Events</option><option>Trades</option>
+          <option>Logistics</option><option>Other</option>
+        </select>
+
         <label>Start</label><input id="jstart" placeholder="Next week">
+
         <label>Role description</label>
         <textarea id="jdescription" placeholder="What will this person actually do day-to-day?"></textarea>
-        <div class="notice"><strong>Swipe feed compatibility:</strong> keep the role simple, visual and honest so it performs well in the candidate feed.</div>
+
+        <div class="notice"><strong>Matching:</strong> structured pay, work type, availability and location help Buisder put this role in front of the best-fit candidates first.</div>
         <button class="btn btn-dark btn-block" onclick="postJob()">Publish</button>
       </div>
     </div>
   `;
 }
 
+function captureJobLocation(){
+  if(!navigator.geolocation){ toast("Location is not supported on this device"); return; }
+  const el = document.getElementById("jobGeoStatus");
+  if(el) el.textContent = "Getting workplace location…";
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      draftJobLat = pos.coords.latitude;
+      draftJobLng = pos.coords.longitude;
+      if(el) el.textContent = "Workplace location captured for distance matching.";
+      toast("Workplace location captured");
+    },
+    () => {
+      if(el) el.textContent = "Could not access location. You can still post the job.";
+      toast("Location permission was not granted");
+    },
+    {enableHighAccuracy:false, timeout:10000, maximumAge:300000}
+  );
+}
+
 async function postJob(){
   const title = document.getElementById("jtitle").value.trim();
   if(!title){ toast("Add a job title"); return; }
+  const scheduleTags = document.getElementById("jschedule").value
+    .split(",").map(x=>x.trim()).filter(Boolean);
+
   const body = {
     title,
     location: document.getElementById("jlocation").value || "Cork",
     pay: document.getElementById("jpay").value || "Pay shown on request",
+    payMin: document.getElementById("jpaymin").value,
     hours: document.getElementById("jhours").value || "Flexible",
     experience: document.getElementById("jexp").value,
+    employmentType: document.getElementById("jemployment").value,
+    minAge: Number(document.getElementById("jminage").value),
+    scheduleTags,
+    latitude: draftJobLat,
+    longitude: draftJobLng,
     startDate: document.getElementById("jstart").value || "To be agreed",
     description: document.getElementById("jdescription").value || "",
     tags: [document.getElementById("jindustry").value]
   };
   try{
     await api("/api/jobs", {method:"POST", body});
+    draftJobLat = null;
+    draftJobLng = null;
     await loadBootstrap();
     state.tab = "home";
     render();

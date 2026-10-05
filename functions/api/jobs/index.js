@@ -7,7 +7,10 @@ export async function onRequestPost(context) {
 
   const body = await request.json().catch(() => null);
   if (!body) return err("Invalid request body");
-  const { title, location, pay, hours, experience, startDate, description, tags } = body;
+  const {
+    title, location, pay, hours, experience, startDate, description, tags,
+    employmentType, minAge, payMin, scheduleTags, latitude, longitude
+  } = body;
   if (!title) return err("Job title is required");
 
   const profile = await env.DB.prepare(
@@ -17,11 +20,19 @@ export async function onRequestPost(context) {
 
   const id = newId();
   await env.DB.prepare(
-    `INSERT INTO jobs (id, employer_id, title, company, location, pay, hours, experience, start_date, description, tags)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO jobs
+      (id, employer_id, title, company, location, pay, hours, experience, start_date, description, tags,
+       employment_type, min_age, pay_min, schedule_tags, latitude, longitude)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     id, user.id, title, company, location || "", pay || "", hours || "",
-    experience || "", startDate || "", description || "", JSON.stringify(tags || [])
+    experience || "", startDate || "", description || "", JSON.stringify(tags || []),
+    employmentType || "Part-time",
+    Number.isFinite(Number(minAge)) ? Number(minAge) : 16,
+    payMin === "" || payMin === null || payMin === undefined ? null : Number(payMin),
+    JSON.stringify(scheduleTags || []),
+    latitude === "" || latitude === null || latitude === undefined ? null : Number(latitude),
+    longitude === "" || longitude === null || longitude === undefined ? null : Number(longitude)
   ).run();
 
   return json({ id }, { status: 201 });
