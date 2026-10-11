@@ -36,10 +36,27 @@ export async function onRequestPut(context) {
       user.id
     ).run();
   } else {
-    const { companyName, location, description } = body;
+    const {
+      companyName, legalName, location, description, phone, website,
+      registrationNumber, logoData
+    } = body;
+
     await env.DB.prepare(
-      `UPDATE employer_profiles SET company_name=?, location=?, description=? WHERE user_id=?`
-    ).bind(companyName || "", location || "", description || "", user.id).run();
+      `UPDATE employer_profiles
+       SET company_name=?, legal_name=?, location=?, description=?, phone=?, website=?,
+           registration_number=?, logo_data=?
+       WHERE user_id=?`
+    ).bind(
+      companyName || "",
+      legalName || "",
+      location || "",
+      description || "",
+      phone || "",
+      website || "",
+      registrationNumber || "",
+      logoData || "",
+      user.id
+    ).run();
   }
 
   return json({ ok: true });

@@ -43,8 +43,18 @@ CREATE TABLE IF NOT EXISTS jobseeker_profiles (
 CREATE TABLE IF NOT EXISTS employer_profiles (
   user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   company_name TEXT,
+  legal_name TEXT,
   location TEXT,
-  description TEXT
+  description TEXT,
+  phone TEXT,
+  website TEXT,
+  registration_number TEXT,
+  logo_data TEXT,
+  verification_status TEXT NOT NULL DEFAULT 'unverified'
+    CHECK (verification_status IN ('unverified','pending','verified','rejected')),
+  verification_submitted_at TEXT,
+  verification_reviewed_at TEXT,
+  verification_note TEXT
 );
 
 CREATE TABLE IF NOT EXISTS jobs (
@@ -109,8 +119,11 @@ CREATE INDEX IF NOT EXISTS idx_interview_invites_application ON interview_invite
 -- Safe to delete these rows once real employers start posting.
 INSERT OR IGNORE INTO users (id, email, password_hash, password_salt, role, name)
 VALUES ('seed-employer', 'seed@buisder.app', 'x', 'x', 'employer', 'Buisder Demo Employer');
-INSERT OR IGNORE INTO employer_profiles (user_id, company_name, location, description)
-VALUES ('seed-employer', 'Harbour Sports', 'Cork', 'Demo listings to preview the swipe feed.');
+INSERT OR IGNORE INTO employer_profiles
+(user_id, company_name, legal_name, location, description, verification_status, verification_reviewed_at)
+VALUES
+('seed-employer', 'Harbour Sports', 'Harbour Sports Ltd', 'Cork',
+ 'Demo listings to preview the swipe feed.', 'verified', datetime('now'));
 
 INSERT OR IGNORE INTO jobs
 (id, employer_id, title, company, location, pay, hours, experience, start_date, description, tags,

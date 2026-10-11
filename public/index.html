@@ -280,6 +280,32 @@
     .geo-status{font-size:12px;color:var(--muted);margin-top:6px}
     .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
+
+    .business-logo{
+      width:84px;height:84px;border-radius:18px;overflow:hidden;
+      background:#eef2ff;color:#3730a3;display:grid;place-items:center;
+      font-size:28px;font-weight:900;border:1px solid var(--line);
+      margin:0 auto 12px;
+    }
+    .business-logo img{width:100%;height:100%;object-fit:cover}
+    .verification-card{
+      border-radius:14px;padding:13px;margin:12px 0;
+      border:1px solid var(--line);background:#f8fafc;color:#344054;
+    }
+    .verification-card.verified{background:#ecfdf3;color:#067647;border-color:#abefc6}
+    .verification-card.pending{background:#fffaeb;color:#b54708;border-color:#fedf89}
+    .verification-card.rejected{background:#fef3f2;color:#b42318;border-color:#fecdca}
+    .verified-badge{
+      display:inline-flex;align-items:center;gap:5px;
+      border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900;
+      background:#ecfdf3;color:#067647;border:1px solid #abefc6;
+    }
+    .unverified-badge{
+      display:inline-flex;align-items:center;gap:5px;
+      border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900;
+      background:#f2f4f7;color:#667085;border:1px solid #e4e7ec;
+    }
+
 </style>
 </head>
 <body>
@@ -1357,6 +1383,34 @@ async function completeOnboarding(){
   }catch(e){ toast(e.message); }
 }
 
+
+function businessVerificationLabel(status){
+  if(status==="verified") return "Verified business";
+  if(status==="pending") return "Verification pending";
+  if(status==="rejected") return "Verification needs attention";
+  return "Not verified";
+}
+
+function businessVerificationClass(status){
+  if(status==="verified") return "verified";
+  if(status==="pending") return "pending";
+  if(status==="rejected") return "rejected";
+  return "";
+}
+
+function businessInitial(){
+  return String((state.profile && state.profile.company_name) || (state.user && state.user.name) || "B").slice(0,1).toUpperCase();
+}
+
+async function submitBusinessVerification(){
+  try{
+    await api("/api/employer/verification", {method:"POST", body:{}});
+    await loadBootstrap();
+    render();
+    toast("Verification request submitted");
+  }catch(e){ toast(e.message); }
+}
+
 function renderEmployer(){
   if(state.tab==="post") return renderPostJob();
   if(state.tab==="applicants") return renderApplicants();
@@ -1371,6 +1425,16 @@ function renderEmployer(){
       </div>
     </div>
     <div class="section-pad">
+      <div class="verification-card ${businessVerificationClass(state.profile.verification_status)}">
+        <strong>${businessVerificationLabel(state.profile.verification_status)}</strong>
+        <div style="margin-top:4px;font-size:12px">
+          ${state.profile.verification_status==="verified"
+            ? "Candidates will see a verified badge on your listings."
+            : state.profile.verification_status==="pending"
+              ? "Your business details have been submitted for manual review."
+              : "Complete your Business Profile and submit it for verification."}
+        </div>
+      </div>
       <div class="stats">
         <div class="stat"><strong>${state.postedJobs.length}</strong><span>Live jobs</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
@@ -1673,35 +1737,89 @@ async function sendInterviewInvite(id){
 
 function renderBusinessProfile(){
   const p = state.profile || {};
+  const status = p.verification_status || "unverified";
   return `
     <div class="section-pad">
-      <div class="title-row"><h2>Business profile</h2><span>Account</span></div>
+      <div class="title-row"><h2>Business profile</h2><span>${businessVerificationLabel(status)}</span></div>
+
       <div class="form-card">
+        ${p.logo_data
+          ? `<div class="business-logo"><img src="${p.logo_data}" alt="Business profile image"></div>`
+          : `<div class="business-logo">${businessInitial()}</div>`}
+
+        <label>Business profile photo / logo</label>
+        <input id="blogo" type="file" accept="image/*">
+        <div class="geo-status">This image will appear on your business profile and job listings.</div>
+
         <label>Contact name</label>
         <input id="bname" value="${state.user.name || ""}">
-        <label>Business name</label>
-        <input id="bcompany" value="${p.company_name || ""}">
+
+        <label>Business / trading name</label>
+        <input id="bcompany" value="${p.company_name || ""}" placeholder="e.g. Harbour Sports">
+
+        <label>Legal business name</label>
+        <input id="blegalname" value="${p.legal_name || ""}" placeholder="e.g. Harbour Sports Limited">
+
+        <label>Company / registration number</label>
+        <input id="breg" value="${p.registration_number || ""}" placeholder="e.g. CRO number">
+
         <label>Email</label>
         <input value="${state.user.email || ""}" disabled style="opacity:.6">
+
+        <label>Business phone</label>
+        <input id="bphone" type="tel" value="${p.phone || ""}" placeholder="Business contact number">
+
+        <label>Website</label>
+        <input id="bwebsite" type="url" value="${p.website || ""}" placeholder="https://...">
+
         <label>Location</label>
         <input id="blocation" value="${p.location || ""}" placeholder="e.g. Cork">
+
         <label>About the business</label>
         <textarea id="bdescription" placeholder="A short intro candidates will see">${p.description || ""}</textarea>
-        <div class="notice"><strong>Note:</strong> a production version should verify employer identity before allowing posts into the swipe feed.</div>
-        <button class="btn btn-dark btn-block" onclick="saveBusinessProfile()">Save</button>
+
+        <div class="verification-card ${businessVerificationClass(status)}">
+          <strong>${businessVerificationLabel(status)}</strong>
+          <div style="margin-top:5px;font-size:12px;line-height:1.4">
+            ${status==="verified"
+              ? "Your account has been manually verified. Candidates will see a verified badge."
+              : status==="pending"
+                ? "Your details are waiting for manual review. You can still update your profile."
+                : status==="rejected"
+                  ? `The verification request needs attention.${p.verification_note ? " " + p.verification_note : ""}`
+                  : "Complete the required business details, save them, then submit for verification."}
+          </div>
+        </div>
+
+        <button class="btn btn-dark btn-block" onclick="saveBusinessProfile()">Save business profile</button>
+        ${status!=="verified" && status!=="pending"
+          ? `<button class="btn btn-good btn-block" style="margin-top:10px" onclick="submitBusinessVerification()">Submit for verification</button>`
+          : ""}
       </div>
     </div>
   `;
 }
 
 async function saveBusinessProfile(){
-  const body = {
-    name: document.getElementById("bname").value || "",
-    companyName: document.getElementById("bcompany").value || "",
-    location: document.getElementById("blocation").value || "",
-    description: document.getElementById("bdescription").value || ""
-  };
   try{
+    let logoData = state.profile.logo_data || "";
+    const logoInput = document.getElementById("blogo");
+    if(logoInput && logoInput.files && logoInput.files[0]){
+      logoData = await prepareProfilePhoto(logoInput.files[0]);
+    }
+
+    const body = {
+      name: document.getElementById("bname").value || "",
+      companyName: document.getElementById("bcompany").value || "",
+      legalName: document.getElementById("blegalname").value || "",
+      registrationNumber: document.getElementById("breg").value || "",
+      phone: document.getElementById("bphone").value || "",
+      website: document.getElementById("bwebsite").value || "",
+      location: document.getElementById("blocation").value || "",
+      description: document.getElementById("bdescription").value || "",
+      logoData
+    };
+
     await api("/api/profile", {method:"PUT", body});
     await loadBootstrap();
     toast("Business profile saved");

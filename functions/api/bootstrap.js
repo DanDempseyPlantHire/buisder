@@ -35,7 +35,15 @@ export async function onRequestGet(context) {
       "SELECT job_id FROM skips WHERE jobseeker_id = ?"
     ).bind(user.id).all();
     const { results: jobs } = await env.DB.prepare(
-      "SELECT * FROM jobs WHERE status = 'active' ORDER BY created_at DESC"
+      `SELECT j.*,
+              ep.logo_data AS employer_logo,
+              ep.verification_status AS employer_verification_status,
+              ep.website AS employer_website,
+              ep.description AS employer_description
+       FROM jobs j
+       LEFT JOIN employer_profiles ep ON ep.user_id = j.employer_id
+       WHERE j.status = 'active'
+       ORDER BY j.created_at DESC`
     ).all();
 
     return json({
