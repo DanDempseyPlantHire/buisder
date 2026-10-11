@@ -55,3 +55,10 @@ The UI does not yet expose the complete timeline; that remains a later roadmap i
 ## Important
 
 This release does not yet add job offers, Hired/Unsuccessful outcomes, email notifications, or the full application timeline. Those remain separate roadmap steps.
+
+
+## v9.1 migration correction
+
+Cloudflare D1/SQLite does not allow `ALTER TABLE ... ADD COLUMN` with a non-constant
+`datetime('now')` default. The corrected migration adds `updated_at` as a plain TEXT
+column, backfills existing rows, and new applications explicitly set `updated_at`.

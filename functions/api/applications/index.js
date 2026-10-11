@@ -14,7 +14,7 @@ export async function onRequestPost(context) {
 
   const id = newId();
   const insert = await env.DB.prepare(
-    "INSERT OR IGNORE INTO applications (id, job_id, jobseeker_id) VALUES (?, ?, ?)"
+    "INSERT OR IGNORE INTO applications (id, job_id, jobseeker_id, updated_at) VALUES (?, ?, ?, datetime(\'now\'))"
   ).bind(id, jobId, user.id).run();
 
   if (insert.meta?.changes) {

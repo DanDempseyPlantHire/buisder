@@ -6,7 +6,10 @@ ALTER TABLE applications ADD COLUMN interview_invited_at TEXT;
 ALTER TABLE applications ADD COLUMN interview_accepted_at TEXT;
 ALTER TABLE applications ADD COLUMN interview_declined_at TEXT;
 ALTER TABLE applications ADD COLUMN interview_completed_at TEXT;
-ALTER TABLE applications ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'));
+ALTER TABLE applications ADD COLUMN updated_at TEXT;
+
+UPDATE applications
+SET updated_at=COALESCE(updated_at, created_at, datetime('now'));
 
 CREATE TABLE IF NOT EXISTS application_status_history (
   id TEXT PRIMARY KEY,
@@ -14,7 +17,7 @@ CREATE TABLE IF NOT EXISTS application_status_history (
   status TEXT NOT NULL,
   actor_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
   note TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_application_status_history_app
