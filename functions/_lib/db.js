@@ -66,16 +66,33 @@ export async function getUser(context) {
   const token = cookies.session;
   if (!token) return null;
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.role, u.name
-     FROM sessions s JOIN users u ON u.id = s.user_id
+    `SELECT u.id, u.email, u.role, u.name, u.is_suspended,
+            CASE WHEN au.user_id IS NULL THEN 0 ELSE 1 END AS is_admin
+     FROM sessions s
+     JOIN users u ON u.id = s.user_id
+     LEFT JOIN admin_users au ON au.user_id = u.id
      WHERE s.token = ? AND s.expires_at > datetime('now')`
   ).bind(token).first();
-  return row || null;
+  if (!row || row.is_suspended) return null;
+  return {
+    id: row.id,
+    email: row.email,
+    role: row.role,
+    name: row.name,
+    isAdmin: Boolean(row.is_admin)
+  };
 }
 
 export async function requireUser(context, role) {
   const user = await getUser(context);
   if (!user) return { error: err("Not signed in", 401) };
   if (role && user.role !== role) return { error: err(`Only ${role}s can do this`, 403) };
+  return { user };
+}
+
+export async function requireAdmin(context) {
+  const user = await getUser(context);
+  if (!user) return { error: err("Not signed in", 401) };
+  if (!user.isAdmin) return { error: err("Admin access required", 403) };
   return { user };
 }

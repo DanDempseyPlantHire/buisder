@@ -306,6 +306,19 @@
       background:#f2f4f7;color:#667085;border:1px solid #e4e7ec;
     }
 
+
+    .admin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+    .admin-stat{background:#fff;color:#101828;border-radius:18px;padding:15px;border:1px solid #e4e7ec}
+    .admin-stat strong{display:block;font-size:24px;line-height:1}
+    .admin-stat span{display:block;margin-top:6px;font-size:11px;color:#667085}
+    .admin-row{background:#fff;color:#101828;border-radius:18px;padding:14px;margin-bottom:10px;border:1px solid #e4e7ec}
+    .admin-meta{font-size:12px;color:#667085;line-height:1.5;margin-top:5px}
+    .admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+    .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:#98a2b3}
+    .status-dot.good{background:#12b76a}.status-dot.warn{background:#f79009}.status-dot.bad{background:#f04438}
+    .admin-logo{width:54px;height:54px;border-radius:12px;overflow:hidden;background:#eef2ff;display:grid;place-items:center;font-weight:900;color:#3730a3;flex:0 0 auto}
+    .admin-logo img{width:100%;height:100%;object-fit:cover}
+
 </style>
 </head>
 <body>
@@ -345,6 +358,7 @@ let state = {
   lastAction:null,
   postedJobs:[],
   applicants:[],
+  admin:{overview:{}, verifications:[], users:[], jobs:[], auditLog:[]},
   authMode:"login",
   authRole:"jobseeker",
   authError:"",
@@ -428,11 +442,30 @@ async function loadBootstrap(){
   const data = await api("/api/bootstrap");
   state.user = data.user;
   if(!data.user) return;
-  state.mode = data.user.role;
+
+  state.mode = data.user.isAdmin ? "admin" : data.user.role;
+
   const validTab = state.mode==="jobseeker"
     ? ["feed","applications","profile"].includes(state.tab)
-    : ["home","post","applicants","profile"].includes(state.tab);
-  if(!validTab) state.tab = state.mode==="jobseeker" ? "feed" : "home";
+    : state.mode==="employer"
+      ? ["home","post","applicants","profile"].includes(state.tab)
+      : ["admin-home","verifications","admin-users","admin-jobs"].includes(state.tab);
+
+  if(!validTab){
+    state.tab = state.mode==="jobseeker" ? "feed" : (state.mode==="employer" ? "home" : "admin-home");
+  }
+
+  if(state.mode==="admin"){
+    state.admin = data.admin || {overview:{}, verifications:[], users:[], jobs:[], auditLog:[]};
+    state.profile = {};
+    state.jobs = [];
+    state.applications = [];
+    state.skipped = [];
+    state.postedJobs = [];
+    state.applicants = [];
+    return;
+  }
+
   state.profile = data.profile || {};
   if(state.mode==="jobseeker"){
     state.jobs = data.jobs || [];
@@ -558,7 +591,9 @@ function renderNav(){
   const unread = state.mode==="jobseeker" ? unreadInterviewCount() : 0;
   const items = state.mode==="jobseeker"
     ? [["feed","Jobs"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
-    : [["home","Dashboard"],["post","Post job"],["applicants","Applicants"],["profile","Business"]];
+    : state.mode==="employer"
+      ? [["home","Dashboard"],["post","Post job"],["applicants","Applicants"],["profile","Business"]]
+      : [["admin-home","Admin"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
   nav.style.gridTemplateColumns = `repeat(${items.length},1fr)`;
   nav.innerHTML = items.map(([key,label]) => `
     <button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>
@@ -576,9 +611,14 @@ function render(){
   }
   topbar.classList.remove("hidden");
   nav.classList.remove("hidden");
-  document.getElementById("modeLabel").textContent = state.mode==="jobseeker" ? "Job seeker account" : "Employer account";
+  document.getElementById("modeLabel").textContent =
+    state.mode==="jobseeker" ? "Job seeker account" :
+    state.mode==="employer" ? "Employer account" : "Buisder admin";
   renderNav();
-  document.getElementById("content").innerHTML = needsOnboarding() ? renderOnboarding() : (state.mode==="jobseeker" ? renderJobseeker() : renderEmployer());
+  document.getElementById("content").innerHTML =
+    state.mode==="admin"
+      ? renderAdmin()
+      : (needsOnboarding() ? renderOnboarding() : (state.mode==="jobseeker" ? renderJobseeker() : renderEmployer()));
   if(state.mode==="jobseeker" && state.tab==="feed"){ setupSwipe(); }
 }
 
@@ -1383,6 +1423,232 @@ async function completeOnboarding(){
   }catch(e){ toast(e.message); }
 }
 
+
+
+function adminStatusBadge(status){
+  if(status==="verified") return `<span class="pill good">Verified</span>`;
+  if(status==="pending") return `<span class="pill" style="background:#fffaeb;color:#b54708">Pending</span>`;
+  if(status==="rejected") return `<span class="pill" style="background:#fef3f2;color:#b42318">Rejected</span>`;
+  return `<span class="pill soft">Unverified</span>`;
+}
+
+function renderAdmin(){
+  if(state.tab==="verifications") return renderAdminVerifications();
+  if(state.tab==="admin-users") return renderAdminUsers();
+  if(state.tab==="admin-jobs") return renderAdminJobs();
+  return renderAdminHome();
+}
+
+function renderAdminHome(){
+  const o = state.admin.overview || {};
+  const pending = (state.admin.verifications || []).filter(v=>v.verificationStatus==="pending");
+  return `
+    <div class="hero">
+      <h1>Buisder Admin</h1>
+      <p>Review businesses, users and live job listings from one place.</p>
+    </div>
+    <div class="section-pad">
+      <div class="admin-grid">
+        <div class="admin-stat"><strong>${o.totalUsers || 0}</strong><span>Total users</span></div>
+        <div class="admin-stat"><strong>${o.pendingVerifications || 0}</strong><span>Pending verification</span></div>
+        <div class="admin-stat"><strong>${o.activeJobs || 0}</strong><span>Active jobs</span></div>
+        <div class="admin-stat"><strong>${o.totalApplications || 0}</strong><span>Applications</span></div>
+      </div>
+
+      <div class="title-row"><h2>Account mix</h2><span>Current</span></div>
+      <div class="card dark" style="margin-bottom:12px">
+        <div class="chips">
+          <span class="chip dark">${o.jobseekers || 0} job seekers</span>
+          <span class="chip dark">${o.employers || 0} employers</span>
+        </div>
+      </div>
+
+      <div class="title-row"><h2>Verification queue</h2><button class="btn btn-outline" onclick="setTab('verifications')">Open queue</button></div>
+      ${pending.length ? pending.slice(0,4).map(v=>`
+        <div class="admin-row">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="admin-logo">
+              ${v.logoData ? `<img src="${v.logoData}" alt="${v.companyName || "Business"}">` : (v.companyName || "B").slice(0,1).toUpperCase()}
+            </div>
+            <div style="flex:1">
+              <strong>${v.companyName || v.legalName || "Unnamed business"}</strong>
+              <div class="admin-meta">${v.email || ""}${v.registrationNumber ? " · Reg: " + v.registrationNumber : ""}</div>
+            </div>
+            ${adminStatusBadge(v.verificationStatus)}
+          </div>
+        </div>
+      `).join("") : `<div class="card dark"><div class="small" style="color:#cbd5e1">No businesses are currently waiting for verification.</div></div>`}
+
+      <div class="title-row"><h2>Recent admin activity</h2><span>${(state.admin.auditLog || []).length}</span></div>
+      ${(state.admin.auditLog || []).slice(0,8).map(a=>`
+        <div class="admin-row">
+          <strong>${String(a.action || "").replaceAll("_"," ")}</strong>
+          <div class="admin-meta">${a.targetType} · ${a.createdAt || ""}</div>
+        </div>
+      `).join("") || `<div class="card dark"><div class="small" style="color:#cbd5e1">No admin actions recorded yet.</div></div>`}
+    </div>
+  `;
+}
+
+function renderAdminVerifications(){
+  const items = state.admin.verifications || [];
+  return `
+    <div class="section-pad">
+      <div class="title-row"><h2>Business verification</h2><span>${items.filter(x=>x.verificationStatus==="pending").length} pending</span></div>
+      ${items.map(v=>`
+        <div class="admin-row">
+          <div style="display:flex;align-items:flex-start;gap:11px">
+            <div class="admin-logo">
+              ${v.logoData ? `<img src="${v.logoData}" alt="${v.companyName || "Business"}">` : (v.companyName || v.legalName || "B").slice(0,1).toUpperCase()}
+            </div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+                <strong>${v.companyName || "Unnamed business"}</strong>
+                ${adminStatusBadge(v.verificationStatus)}
+              </div>
+              <div class="admin-meta">
+                ${v.legalName ? `<div><strong>Legal:</strong> ${v.legalName}</div>` : ""}
+                <div><strong>Email:</strong> ${v.email || ""}</div>
+                ${v.phone ? `<div><strong>Phone:</strong> ${v.phone}</div>` : ""}
+                ${v.registrationNumber ? `<div><strong>Registration:</strong> ${v.registrationNumber}</div>` : ""}
+                ${v.location ? `<div><strong>Location:</strong> ${v.location}</div>` : ""}
+                ${v.website ? `<div><strong>Website:</strong> ${v.website}</div>` : ""}
+                ${v.submittedAt ? `<div><strong>Submitted:</strong> ${v.submittedAt}</div>` : ""}
+                ${v.verificationNote ? `<div><strong>Note:</strong> ${v.verificationNote}</div>` : ""}
+              </div>
+            </div>
+          </div>
+          ${v.description ? `<div class="notice">${v.description}</div>` : ""}
+          ${v.verificationStatus!=="verified" ? `
+            <div class="admin-actions">
+              <button class="btn btn-good" onclick="openAdminVerificationDecision('${v.userId}','approve')">Approve</button>
+              <button class="btn btn-bad" onclick="openAdminVerificationDecision('${v.userId}','reject')">Reject</button>
+            </div>
+          ` : `
+            <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="openAdminVerificationDecision('${v.userId}','reject')">Revoke verification</button>
+          `}
+        </div>
+      `).join("") || `<div class="card dark"><div class="small" style="color:#cbd5e1">No employer profiles found.</div></div>`}
+    </div>
+  `;
+}
+
+function openAdminVerificationDecision(userId, action){
+  const v = (state.admin.verifications || []).find(x=>String(x.userId)===String(userId));
+  if(!v) return;
+  const approving = action==="approve";
+  openModal(`
+    <h3>${approving ? "Approve business" : "Reject / revoke verification"}</h3>
+    <p><strong>${v.companyName || v.legalName || v.email}</strong></p>
+    <label>Admin note</label>
+    <textarea id="adminVerificationNote" placeholder="${approving ? "Optional approval note" : "Reason for rejection or revocation"}">${approving ? "Manually verified by Buisder admin" : ""}</textarea>
+    <div class="notice">
+      ${approving
+        ? "The business will immediately display a Verified business badge to job seekers."
+        : "The verified badge will be removed and the employer will see that verification needs attention."}
+    </div>
+    <button class="btn ${approving ? "btn-good" : "btn-bad"} btn-block" onclick="adminVerificationAction('${userId}','${action}')">
+      ${approving ? "Approve verification" : "Reject verification"}
+    </button>
+  `);
+}
+
+async function adminVerificationAction(userId, action){
+  try{
+    const note = document.getElementById("adminVerificationNote")?.value || "";
+    await api(`/api/admin/verifications/${userId}`, {method:"POST", body:{action, note}});
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast(action==="approve" ? "Business verified" : "Verification rejected");
+  }catch(e){ toast(e.message); }
+}
+
+function renderAdminUsers(){
+  const users = state.admin.users || [];
+  return `
+    <div class="section-pad">
+      <div class="title-row"><h2>Users</h2><span>${users.length} shown</span></div>
+      ${users.map(u=>`
+        <div class="admin-row">
+          <div style="display:flex;justify-content:space-between;gap:10px">
+            <div>
+              <strong>${u.name || u.email}</strong>
+              <div class="admin-meta">
+                ${u.email}<br>
+                ${cap(u.role)} · ${u.createdAt || ""}
+                ${u.isAdmin ? "<br><strong>Buisder admin</strong>" : ""}
+              </div>
+            </div>
+            <div>
+              ${u.isSuspended
+                ? `<span class="pill" style="background:#fef3f2;color:#b42318">Suspended</span>`
+                : `<span class="pill good">Active</span>`}
+            </div>
+          </div>
+          ${!u.isAdmin ? `
+            <button class="btn ${u.isSuspended ? "btn-good" : "btn-bad"} btn-block" style="margin-top:10px"
+              onclick="adminUserAction('${u.id}','${u.isSuspended ? "restore" : "suspend"}')">
+              ${u.isSuspended ? "Restore account" : "Suspend account"}
+            </button>
+          ` : ""}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+async function adminUserAction(userId, action){
+  if(action==="suspend" && !confirm("Suspend this account? The user will be signed out immediately.")) return;
+  try{
+    await api(`/api/admin/users/${userId}`, {method:"POST", body:{action}});
+    await loadBootstrap();
+    render();
+    toast(action==="suspend" ? "Account suspended" : "Account restored");
+  }catch(e){ toast(e.message); }
+}
+
+function renderAdminJobs(){
+  const jobs = state.admin.jobs || [];
+  return `
+    <div class="section-pad">
+      <div class="title-row"><h2>Job moderation</h2><span>${jobs.length} shown</span></div>
+      ${jobs.map(j=>`
+        <div class="admin-row">
+          <div style="display:flex;justify-content:space-between;gap:10px">
+            <div>
+              <strong>${j.title}</strong>
+              <div class="admin-meta">
+                ${j.company || ""} · ${j.location || ""}<br>
+                ${j.employerEmail || ""}
+              </div>
+            </div>
+            <span class="pill ${j.status==="active" ? "good" : "soft"}">${cap(j.status)}</span>
+          </div>
+          <div class="chips">
+            ${j.employerVerificationStatus==="verified"
+              ? `<span class="verified-badge">✓ Verified employer</span>`
+              : `<span class="unverified-badge">Employer not verified</span>`}
+          </div>
+          <button class="btn ${j.status==="active" ? "btn-bad" : "btn-good"} btn-block"
+            onclick="adminJobAction('${j.id}','${j.status==="active" ? "close" : "reopen"}')">
+            ${j.status==="active" ? "Close job" : "Reopen job"}
+          </button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+async function adminJobAction(jobId, action){
+  if(action==="close" && !confirm("Close this job listing? It will disappear from the active job feed.")) return;
+  try{
+    await api(`/api/admin/jobs/${jobId}`, {method:"POST", body:{action}});
+    await loadBootstrap();
+    render();
+    toast(action==="close" ? "Job closed" : "Job reopened");
+  }catch(e){ toast(e.message); }
+}
 
 function businessVerificationLabel(status){
   if(status==="verified") return "Verified business";
