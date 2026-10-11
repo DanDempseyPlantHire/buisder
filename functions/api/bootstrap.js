@@ -8,7 +8,10 @@ function formatJob(j) {
   return {
     ...j,
     tags: parseArray(j.tags),
-    schedule_tags: parseArray(j.schedule_tags)
+    schedule_tags: parseArray(j.schedule_tags),
+    employer_logo: j.employer_logo_key
+      ? `/api/files/business-logo/${j.employer_id}`
+      : (j.employer_logo || null)
   };
 }
 
@@ -41,6 +44,7 @@ export async function onRequestGet(context) {
               ep.website,
               ep.registration_number AS registrationNumber,
               ep.logo_data AS logoData,
+              ep.logo_key AS logoKey,
               ep.verification_status AS verificationStatus,
               ep.verification_submitted_at AS submittedAt,
               ep.verification_reviewed_at AS reviewedAt,
@@ -93,7 +97,10 @@ export async function onRequestGet(context) {
       user,
       admin: {
         overview: overview || {},
-        verifications,
+        verifications: verifications.map(v => ({
+          ...v,
+          logoData: v.logoKey ? `/api/files/business-logo/${v.userId}` : v.logoData
+        })),
         users: adminUsers,
         jobs: adminJobs,
         auditLog
@@ -103,6 +110,11 @@ export async function onRequestGet(context) {
 
   if (user.role === "jobseeker") {
     const profile = await env.DB.prepare("SELECT * FROM jobseeker_profiles WHERE user_id = ?").bind(user.id).first();
+    const profileOut = profile ? {
+      ...profile,
+      photo_url: profile.photo_key ? `/api/files/profile-photo/${user.id}` : null,
+      cv_url: profile.cv_key ? `/api/files/cv/${user.id}` : null
+    } : {};
     const { results: applications } = await env.DB.prepare(
       `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date, j.title, j.company,
               ii.interview_at as interviewAt,
@@ -121,6 +133,7 @@ export async function onRequestGet(context) {
     const { results: jobs } = await env.DB.prepare(
       `SELECT j.*,
               ep.logo_data AS employer_logo,
+              ep.logo_key AS employer_logo_key,
               ep.verification_status AS employer_verification_status,
               ep.website AS employer_website,
               ep.description AS employer_description
@@ -132,7 +145,7 @@ export async function onRequestGet(context) {
 
     return json({
       user,
-      profile: profile || {},
+      profile: profileOut,
       jobs: jobs.map(formatJob),
       applications,
       skipped: skipRows.map(r => r.job_id)
@@ -141,13 +154,19 @@ export async function onRequestGet(context) {
 
   // employer
   const profile = await env.DB.prepare("SELECT * FROM employer_profiles WHERE user_id = ?").bind(user.id).first();
+  const profileOut = profile ? {
+    ...profile,
+    logo_url: profile.logo_key ? `/api/files/business-logo/${user.id}` : null
+  } : {};
   const { results: postedJobs } = await env.DB.prepare(
     "SELECT * FROM jobs WHERE employer_id = ? ORDER BY created_at DESC"
   ).bind(user.id).all();
   const { results: applicants } = await env.DB.prepare(
     `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date,
             u.id as applicantId, u.name as applicantName, u.email as applicantEmail,
-            jp.location as applicantLocation, jp.availability as applicantAvailability, jp.skills as applicantSkills, jp.photo_data as applicantPhoto,
+            jp.location as applicantLocation, jp.availability as applicantAvailability, jp.skills as applicantSkills,
+            jp.photo_data as applicantPhotoLegacy, jp.photo_key as applicantPhotoKey,
+            jp.cv_key as applicantCvKey, jp.cv_filename as applicantCvFilename,
             j.title as jobTitle,
             ii.interview_at as interviewAt,
             ii.location as interviewLocation,
@@ -165,8 +184,16 @@ export async function onRequestGet(context) {
 
   return json({
     user,
-    profile: profile || {},
+    profile: profileOut,
     postedJobs: postedJobs.map(formatJob),
-    applicants
+    applicants: applicants.map(a => ({
+      ...a,
+      applicantPhoto: a.applicantPhotoKey
+        ? `/api/files/profile-photo/${a.applicantId}`
+        : (a.applicantPhotoLegacy || null),
+      applicantCvUrl: a.applicantCvKey
+        ? `/api/files/cv/${a.applicantId}`
+        : null
+    }))
   });
 }

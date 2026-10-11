@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS jobseeker_profiles (
   transport TEXT,
   cv_filename TEXT,
   photo_data TEXT,
+  photo_key TEXT,
+  cv_key TEXT,
+  cv_content_type TEXT,
+  cv_size INTEGER,
   onboarding_complete INTEGER NOT NULL DEFAULT 0,
   max_distance_km INTEGER NOT NULL DEFAULT 25,
   min_pay REAL,
@@ -69,6 +73,7 @@ CREATE TABLE IF NOT EXISTS employer_profiles (
   website TEXT,
   registration_number TEXT,
   logo_data TEXT,
+  logo_key TEXT,
   verification_status TEXT NOT NULL DEFAULT 'unverified'
     CHECK (verification_status IN ('unverified','pending','verified','rejected')),
   verification_submitted_at TEXT,

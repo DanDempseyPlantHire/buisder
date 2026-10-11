@@ -1090,10 +1090,10 @@ async function respondToInterview(applicationId, response){
 }
 
 
-async function prepareProfilePhoto(file){
-  if(!file) return "";
+async function prepareProfilePhotoFile(file){
+  if(!file) return null;
   if(!file.type || !file.type.startsWith("image/")) throw new Error("Please choose an image file");
-  if(file.size > 5 * 1024 * 1024) throw new Error("Profile photo must be under 5 MB");
+  if(file.size > 5 * 1024 * 1024) throw new Error("Image must be under 5 MB");
 
   const dataUrl = await new Promise((resolve, reject)=>{
     const reader = new FileReader();
@@ -1109,28 +1109,55 @@ async function prepareProfilePhoto(file){
     i.src = dataUrl;
   });
 
-  const size = 240;
+  const size = 480;
   const canvas = document.createElement("canvas");
-  canvas.width = size; canvas.height = size;
+  canvas.width = size;
+  canvas.height = size;
   const ctx = canvas.getContext("2d");
   const side = Math.min(img.width, img.height);
   const sx = (img.width - side) / 2;
   const sy = (img.height - side) / 2;
   ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
 
-  let quality = .72;
-  let out = canvas.toDataURL("image/jpeg", quality);
-  while(out.length > 95000 && quality > .4){
+  const canvasBlob = quality => new Promise((resolve, reject)=>{
+    canvas.toBlob(
+      blob => blob ? resolve(blob) : reject(new Error("Could not prepare image")),
+      "image/jpeg",
+      quality
+    );
+  });
+
+  let quality = .82;
+  let blob = await canvasBlob(quality);
+  while(blob.size > 600 * 1024 && quality > .45){
     quality -= .08;
-    out = canvas.toDataURL("image/jpeg", quality);
+    blob = await canvasBlob(quality);
   }
-  if(out.length > 120000) throw new Error("Please choose a smaller or simpler photo");
-  return out;
+  return blob;
+}
+
+async function uploadR2File(kind, file, filename){
+  if(!file) return null;
+  const form = new FormData();
+  form.append("kind", kind);
+  form.append("file", file, filename || file.name || "file");
+
+  const res = await fetch("/api/files/upload", {
+    method:"POST",
+    body:form,
+    credentials:"include"
+  });
+
+  let data = null;
+  try{ data = await res.json(); }catch(e){}
+  if(!res.ok) throw new Error((data && data.error) || "File upload failed");
+  return data;
 }
 
 function profilePhotoMarkup(p, name){
-  if(p && p.photo_data){
-    return `<div class="jobseeker-photo"><img src="${p.photo_data}" alt="Profile photo"></div>`;
+  const photo = p && (p.photo_url || p.photo_data);
+  if(photo){
+    return `<div class="jobseeker-photo"><img src="${photo}" alt="Profile photo"></div>`;
   }
   return `<div class="jobseeker-photo">${(name || "U").slice(0,1).toUpperCase()}</div>`;
 }
@@ -1138,7 +1165,9 @@ function profilePhotoMarkup(p, name){
 function renderProfile(){
   const p = state.profile || {};
   const cvLabel = p.cv_filename
-    ? `<div class="notice"><strong>CV added:</strong> ${p.cv_filename}</div>`
+    ? `<div class="notice"><strong>CV added:</strong> ${p.cv_filename}
+        ${p.cv_url ? `<div style="margin-top:8px"><a class="btn btn-outline" href="${p.cv_url}" target="_blank" rel="noopener">Open stored CV</a></div>` : `<div class="geo-status">Select the CV again and save your profile once to move the actual file into secure R2 storage.</div>`}
+       </div>`
     : `<div class="notice"><strong>No CV yet.</strong> You can still use the app without one, but adding a CV gives employers more information if you choose to share it.</div>`;
 
   return `
@@ -1251,15 +1280,18 @@ function captureProfileLocation(){
 
 async function saveProfile(){
   const cvInput = document.getElementById("pcv");
-  const cvFilename = (cvInput && cvInput.files && cvInput.files.length)
-    ? cvInput.files[0].name
-    : (state.profile.cv_filename || "");
-
-  let photoData = state.profile.photo_data || "";
   const photoInput = document.getElementById("pphoto");
+
   try{
     if(photoInput && photoInput.files && photoInput.files[0]){
-      photoData = await prepareProfilePhoto(photoInput.files[0]);
+      toast("Uploading profile photo…");
+      const blob = await prepareProfilePhotoFile(photoInput.files[0]);
+      await uploadR2File("profile-photo", blob, "profile.jpg");
+    }
+
+    if(cvInput && cvInput.files && cvInput.files[0]){
+      toast("Uploading CV securely…");
+      await uploadR2File("cv", cvInput.files[0], cvInput.files[0].name);
     }
 
     const body = {
@@ -1274,8 +1306,6 @@ async function saveProfile(){
       availability: document.getElementById("pavail").value,
       interests: document.getElementById("pinterests").value,
       transport: document.getElementById("ptransport").value,
-      cvFilename,
-      photoData,
       onboardingComplete: true,
       maxDistanceKm: Number(document.getElementById("pmaxdistance").value || 25),
       minPay: document.getElementById("pminpay").value,
@@ -1318,6 +1348,7 @@ function showApplicationProfile(jobId){
     <p><strong>Experience:</strong> ${p.experience || "Not added"}</p>
     <p><strong>Availability:</strong> ${p.availability || "Not added"}</p>
     <p><strong>CV:</strong> ${p.cv_filename || "No CV attached"}</p>
+    ${p.cv_url ? `<a class="btn btn-outline btn-block" href="${p.cv_url}" target="_blank" rel="noopener">Open my stored CV</a>` : ""}
 
     ${application && application.interviewAt ? `
       <div class="interview-box ${application.interviewStatus==="declined" ? "declined" : (application.interviewStatus==="accepted" ? "" : "pending")}">
@@ -1389,9 +1420,12 @@ function renderOnboarding(){
 
 async function completeOnboarding(){
   try{
-    let photoData = state.profile.photo_data || "";
     const f = document.getElementById("onboardPhoto");
-    if(f && f.files && f.files[0]) photoData = await prepareProfilePhoto(f.files[0]);
+    if(f && f.files && f.files[0]){
+      toast("Uploading profile photo…");
+      const blob = await prepareProfilePhotoFile(f.files[0]);
+      await uploadR2File("profile-photo", blob, "profile.jpg");
+    }
 
     const body = {
       name: document.getElementById("onboardName").value || "",
@@ -1405,8 +1439,6 @@ async function completeOnboarding(){
       availability: document.getElementById("onboardAvailability").value || "",
       interests: document.getElementById("onboardInterests").value || "",
       transport: state.profile.transport || "Public transport",
-      cvFilename: state.profile.cv_filename || "",
-      photoData,
       onboardingComplete: true,
       maxDistanceKm: state.profile.max_distance_km || 25,
       minPay: state.profile.min_pay ?? "",
@@ -1937,6 +1969,9 @@ function viewApplicant(id){
     <p>${a.applicantLocation || "Location not set"} · ${a.applicantAvailability || "Availability not set"}</p>
     <div class="chips"><span class="chip">${a.applicantSkills || "No skills listed"}</span></div>
     <p>Contact: ${a.applicantEmail}</p>
+    ${a.applicantCvUrl
+      ? `<a class="btn btn-outline btn-block" href="${a.applicantCvUrl}" target="_blank" rel="noopener">Open ${a.applicantCvFilename || "candidate CV"}</a>`
+      : `<div class="notice">No CV file has been uploaded by this candidate.</div>`}
 
     ${a.interviewAt ? `
       <div class="interview-box ${a.interviewStatus==="declined" ? "declined" : (a.interviewStatus==="accepted" ? "" : "pending")}">
@@ -2009,8 +2044,8 @@ function renderBusinessProfile(){
       <div class="title-row"><h2>Business profile</h2><span>${businessVerificationLabel(status)}</span></div>
 
       <div class="form-card">
-        ${p.logo_data
-          ? `<div class="business-logo"><img src="${p.logo_data}" alt="Business profile image"></div>`
+        ${(p.logo_url || p.logo_data)
+          ? `<div class="business-logo"><img src="${p.logo_url || p.logo_data}" alt="Business profile image"></div>`
           : `<div class="business-logo">${businessInitial()}</div>`}
 
         <label>Business profile photo / logo</label>
@@ -2068,10 +2103,11 @@ function renderBusinessProfile(){
 
 async function saveBusinessProfile(){
   try{
-    let logoData = state.profile.logo_data || "";
     const logoInput = document.getElementById("blogo");
     if(logoInput && logoInput.files && logoInput.files[0]){
-      logoData = await prepareProfilePhoto(logoInput.files[0]);
+      toast("Uploading business image…");
+      const blob = await prepareProfilePhotoFile(logoInput.files[0]);
+      await uploadR2File("business-logo", blob, "business-logo.jpg");
     }
 
     const body = {
@@ -2082,8 +2118,7 @@ async function saveBusinessProfile(){
       phone: document.getElementById("bphone").value || "",
       website: document.getElementById("bwebsite").value || "",
       location: document.getElementById("blocation").value || "",
-      description: document.getElementById("bdescription").value || "",
-      logoData
+      description: document.getElementById("bdescription").value || ""
     };
 
     await api("/api/profile", {method:"PUT", body});

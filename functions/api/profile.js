@@ -15,19 +15,19 @@ export async function onRequestPut(context) {
   if (user.role === "jobseeker") {
     const {
       ageBand, phone, location, about, skills, education, experience, availability, interests,
-      transport, cvFilename, photoData, onboardingComplete,
+      transport, onboardingComplete,
       maxDistanceKm, minPay, preferredEmploymentType, latitude, longitude
     } = body;
     await env.DB.prepare(
       `UPDATE jobseeker_profiles
        SET age_band=?, phone=?, location=?, about=?, skills=?, education=?, experience=?, availability=?, interests=?,
-           transport=?, cv_filename=?, photo_data=?, onboarding_complete=?,
+           transport=?, onboarding_complete=?,
            max_distance_km=?, min_pay=?, preferred_employment_type=?, latitude=?, longitude=?
        WHERE user_id=?`
     ).bind(
       ageBand || "", phone || "", location || "", about || "", skills || "",
       education || "", experience || "", availability || "", interests || "",
-      transport || "", cvFilename || "", photoData || "", onboardingComplete ? 1 : 0,
+      transport || "", onboardingComplete ? 1 : 0,
       Number.isFinite(Number(maxDistanceKm)) ? Number(maxDistanceKm) : 25,
       minPay === "" || minPay === null || minPay === undefined ? null : Number(minPay),
       preferredEmploymentType || "Any",
@@ -38,13 +38,13 @@ export async function onRequestPut(context) {
   } else {
     const {
       companyName, legalName, location, description, phone, website,
-      registrationNumber, logoData
+      registrationNumber
     } = body;
 
     await env.DB.prepare(
       `UPDATE employer_profiles
        SET company_name=?, legal_name=?, location=?, description=?, phone=?, website=?,
-           registration_number=?, logo_data=?
+           registration_number=?
        WHERE user_id=?`
     ).bind(
       companyName || "",
@@ -54,7 +54,6 @@ export async function onRequestPut(context) {
       phone || "",
       website || "",
       registrationNumber || "",
-      logoData || "",
       user.id
     ).run();
   }
