@@ -107,9 +107,24 @@ CREATE TABLE IF NOT EXISTS applications (
   id TEXT PRIMARY KEY,
   job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
   jobseeker_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'applied', -- applied | invited
+  status TEXT NOT NULL DEFAULT 'applied',
+  shortlisted_at TEXT,
+  interview_invited_at TEXT,
+  interview_accepted_at TEXT,
+  interview_declined_at TEXT,
+  interview_completed_at TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(job_id, jobseeker_id)
+);
+
+CREATE TABLE IF NOT EXISTS application_status_history (
+  id TEXT PRIMARY KEY,
+  application_id TEXT NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+  status TEXT NOT NULL,
+  actor_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS skips (
@@ -135,6 +150,7 @@ CREATE INDEX IF NOT EXISTS idx_jobs_employer ON jobs(employer_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_applications_jobseeker ON applications(jobseeker_id);
 CREATE INDEX IF NOT EXISTS idx_applications_job ON applications(job_id);
+CREATE INDEX IF NOT EXISTS idx_application_status_history_app ON application_status_history(application_id);
 CREATE INDEX IF NOT EXISTS idx_skips_jobseeker ON skips(jobseeker_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_interview_invites_application ON interview_invites(application_id);

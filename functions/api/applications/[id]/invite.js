@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
   }
 
   const app = await env.DB.prepare(
-    `SELECT a.id, j.employer_id
+    `SELECT a.id, a.status, a.shortlisted_at, j.employer_id
      FROM applications a
      JOIN jobs j ON j.id = a.job_id
      WHERE a.id = ?`
@@ -24,6 +24,8 @@ export async function onRequestPost(context) {
 
   if (!app) return err("Application not found", 404);
   if (app.employer_id !== user.id) return err("Not your job posting", 403);
+  if (app.status === "applied") return err("Shortlist the candidate before inviting them to interview");
+  if (app.status === "interview_completed") return err("This interview has already been completed");
 
   const existing = await env.DB.prepare(
     "SELECT id FROM interview_invites WHERE application_id = ?"
@@ -45,8 +47,34 @@ export async function onRequestPost(context) {
   }
 
   await env.DB.prepare(
-    "UPDATE applications SET status = 'invited' WHERE id = ?"
+    `UPDATE applications
+     SET status='interview_invited',
+         interview_invited_at=datetime('now'),
+         interview_accepted_at=NULL,
+         interview_declined_at=NULL,
+         interview_completed_at=NULL,
+         updated_at=datetime('now')
+     WHERE id=?`
   ).bind(params.id).run();
+
+  if (app.status !== "interview_invited") {
+    await env.DB.prepare(
+      `INSERT INTO application_status_history
+       (id, application_id, status, actor_user_id, note)
+       VALUES (?, ?, 'interview_invited', ?, ?)`
+    ).bind(
+      newId(),
+      params.id,
+      user.id,
+      existing ? "Interview rescheduled and invitation renewed" : "Interview invitation sent"
+    ).run();
+  } else if (existing) {
+    await env.DB.prepare(
+      `INSERT INTO application_status_history
+       (id, application_id, status, actor_user_id, note)
+       VALUES (?, ?, 'interview_invited', ?, 'Interview rescheduled')`
+    ).bind(newId(), params.id, user.id).run();
+  }
 
   return json({ ok: true });
 }

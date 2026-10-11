@@ -1,4 +1,4 @@
-import { json, err, requireUser } from "../../../_lib/db.js";
+import { json, err, newId, requireUser } from "../../../_lib/db.js";
 
 export async function onRequestPost(context) {
   const { request, env, params } = context;
@@ -28,9 +28,41 @@ export async function onRequestPost(context) {
      WHERE application_id = ?`
   ).bind(response, params.id).run();
 
-  await env.DB.prepare(
-    "UPDATE applications SET status = ? WHERE id = ?"
-  ).bind(response === "accepted" ? "interview_accepted" : "interview_declined", params.id).run();
+  const newStatus = response === "accepted" ? "interview_accepted" : "interview_declined";
 
-  return json({ ok: true });
+  if (response === "accepted") {
+    await env.DB.prepare(
+      `UPDATE applications
+       SET status='interview_accepted',
+           interview_accepted_at=datetime('now'),
+           interview_declined_at=NULL,
+           interview_completed_at=NULL,
+           updated_at=datetime('now')
+       WHERE id=?`
+    ).bind(params.id).run();
+  } else {
+    await env.DB.prepare(
+      `UPDATE applications
+       SET status='interview_declined',
+           interview_declined_at=datetime('now'),
+           interview_accepted_at=NULL,
+           interview_completed_at=NULL,
+           updated_at=datetime('now')
+       WHERE id=?`
+    ).bind(params.id).run();
+  }
+
+  await env.DB.prepare(
+    `INSERT INTO application_status_history
+     (id, application_id, status, actor_user_id, note)
+     VALUES (?, ?, ?, ?, ?)`
+  ).bind(
+    newId(),
+    params.id,
+    newStatus,
+    user.id,
+    response === "accepted" ? "Interview accepted by candidate" : "Interview declined by candidate"
+  ).run();
+
+  return json({ ok: true, status: newStatus });
 }

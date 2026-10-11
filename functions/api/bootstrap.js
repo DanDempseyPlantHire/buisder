@@ -116,7 +116,13 @@ export async function onRequestGet(context) {
       cv_url: profile.cv_key ? `/api/files/cv/${user.id}` : null
     } : {};
     const { results: applications } = await env.DB.prepare(
-      `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date, j.title, j.company,
+      `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date,
+              a.shortlisted_at as shortlistedAt,
+              a.interview_invited_at as interviewInvitedAt,
+              a.interview_accepted_at as interviewAcceptedAt,
+              a.interview_declined_at as interviewDeclinedAt,
+              a.interview_completed_at as interviewCompletedAt,
+              j.title, j.company,
               ii.interview_at as interviewAt,
               ii.location as interviewLocation,
               ii.message as interviewMessage,
@@ -127,6 +133,20 @@ export async function onRequestGet(context) {
        LEFT JOIN interview_invites ii ON ii.application_id = a.id
        WHERE a.jobseeker_id = ? ORDER BY a.created_at DESC`
     ).bind(user.id).all();
+    const { results: historyRows } = await env.DB.prepare(
+      `SELECT h.application_id as applicationId, h.status, h.note, h.created_at as createdAt
+       FROM application_status_history h
+       JOIN applications a ON a.id=h.application_id
+       WHERE a.jobseeker_id=?
+       ORDER BY h.created_at ASC`
+    ).bind(user.id).all();
+
+    const historyByApplication = {};
+    for (const row of historyRows) {
+      if (!historyByApplication[row.applicationId]) historyByApplication[row.applicationId] = [];
+      historyByApplication[row.applicationId].push(row);
+    }
+
     const { results: skipRows } = await env.DB.prepare(
       "SELECT job_id FROM skips WHERE jobseeker_id = ?"
     ).bind(user.id).all();
@@ -147,7 +167,10 @@ export async function onRequestGet(context) {
       user,
       profile: profileOut,
       jobs: jobs.map(formatJob),
-      applications,
+      applications: applications.map(a => ({
+        ...a,
+        statusHistory: historyByApplication[a.id] || []
+      })),
       skipped: skipRows.map(r => r.job_id)
     });
   }
@@ -163,6 +186,11 @@ export async function onRequestGet(context) {
   ).bind(user.id).all();
   const { results: applicants } = await env.DB.prepare(
     `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date,
+            a.shortlisted_at as shortlistedAt,
+            a.interview_invited_at as interviewInvitedAt,
+            a.interview_accepted_at as interviewAcceptedAt,
+            a.interview_declined_at as interviewDeclinedAt,
+            a.interview_completed_at as interviewCompletedAt,
             u.id as applicantId, u.name as applicantName, u.email as applicantEmail,
             jp.location as applicantLocation, jp.availability as applicantAvailability, jp.skills as applicantSkills,
             jp.photo_data as applicantPhotoLegacy, jp.photo_key as applicantPhotoKey,

@@ -319,6 +319,13 @@
     .admin-logo{width:54px;height:54px;border-radius:12px;overflow:hidden;background:#eef2ff;display:grid;place-items:center;font-weight:900;color:#3730a3;flex:0 0 auto}
     .admin-logo img{width:100%;height:100%;object-fit:cover}
 
+
+    .workflow-steps{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+    .workflow-step{font-size:10px;font-weight:800;padding:5px 7px;border-radius:999px;background:#f2f4f7;color:#667085;border:1px solid #e4e7ec}
+    .workflow-step.done{background:#ecfdf3;color:#067647;border-color:#abefc6}
+    .workflow-step.current{background:#fff4ed;color:#b93815;border-color:#ffd6ae}
+    .shortlist-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:900;padding:5px 8px;border-radius:999px;background:#eef4ff;color:#3538cd;border:1px solid #c7d7fe}
+
 </style>
 </head>
 <body>
@@ -389,15 +396,58 @@ function formatInterview(value){
   });
 }
 
+function applicationStatusLabel(a){
+  const status = a && a.status;
+  if(status==="shortlisted") return "Shortlisted";
+  if(status==="interview_invited" || status==="invited") return "Interview invited";
+  if(status==="interview_accepted") return "Interview confirmed";
+  if(status==="interview_declined") return "Interview declined";
+  if(status==="interview_completed") return "Interview completed";
+  return "Applied";
+}
+
 function interviewStatusLabel(a){
-  if(a.interviewStatus==="accepted" || a.status==="interview_accepted") return "Interview confirmed";
-  if(a.interviewStatus==="declined" || a.status==="interview_declined") return "Interview declined";
-  if(a.interviewAt) return "Interview invited";
-  return cap(a.status);
+  return applicationStatusLabel(a);
+}
+
+function applicationStatusClass(a){
+  if(["shortlisted","interview_accepted","interview_completed"].includes(a.status)) return "good";
+  if(a.status==="interview_declined") return "soft";
+  return "soft";
+}
+
+function workflowStepClass(a, step){
+  const order = {
+    applied:0,
+    shortlisted:1,
+    interview_invited:2,
+    invited:2,
+    interview_accepted:3,
+    interview_declined:3,
+    interview_completed:4
+  };
+  const here = order[a.status] ?? 0;
+  const target = order[step];
+  if(here > target) return "done";
+  if(here === target) return "current";
+  return "";
+}
+
+function renderWorkflowSteps(a){
+  const declined = a.status==="interview_declined";
+  return `
+    <div class="workflow-steps">
+      <span class="workflow-step ${workflowStepClass(a,"applied")}">Applied</span>
+      <span class="workflow-step ${workflowStepClass(a,"shortlisted")}">Shortlisted</span>
+      <span class="workflow-step ${workflowStepClass(a,"interview_invited")}">Interview invited</span>
+      <span class="workflow-step ${workflowStepClass(a,"interview_accepted")}">${declined ? "Interview declined" : "Interview accepted"}</span>
+      <span class="workflow-step ${workflowStepClass(a,"interview_completed")}">Completed</span>
+    </div>
+  `;
 }
 
 function unreadInterviewCount(){
-  return state.applications.filter(a => a.interviewAt && !a.inviteSeenAt && (a.interviewStatus==="pending" || a.status==="invited")).length;
+  return state.applications.filter(a => a.interviewAt && !a.inviteSeenAt && (a.interviewStatus==="pending" || a.status==="interview_invited" || a.status==="invited")).length;
 }
 
 const notifiedInterviewIds = new Set();
@@ -1046,12 +1096,13 @@ function renderApplied(){
                 <div style="font-weight:900">${a.title}</div>
                 <div class="small">${a.company} · applied ${a.date}</div>
               </div>
-              <span class="pill ${hasInterview && a.interviewStatus!=="declined" ? 'good' : 'soft'}">${interviewStatusLabel(a)}</span>
+              <span class="pill ${applicationStatusClass(a)}">${applicationStatusLabel(a)}</span>
             </div>
+            ${renderWorkflowSteps(a)}
 
             ${hasInterview ? `
               <div class="interview-box ${interviewClass}">
-                <strong>${a.interviewStatus==="accepted" ? "Interview confirmed" : a.interviewStatus==="declined" ? "Interview declined" : "Interview invitation"}</strong>
+                <strong>${a.status==="interview_completed" ? "Interview completed" : a.interviewStatus==="accepted" ? "Interview confirmed" : a.interviewStatus==="declined" ? "Interview declined" : "Interview invitation"}</strong>
                 <div style="margin-top:6px"><strong>Date & time:</strong> ${formatInterview(a.interviewAt)}</div>
                 ${a.interviewLocation ? `<div style="margin-top:4px"><strong>Where:</strong> ${a.interviewLocation}</div>` : ""}
                 ${a.interviewMessage ? `<div style="margin-top:4px"><strong>Message:</strong> ${a.interviewMessage}</div>` : ""}
@@ -1062,7 +1113,7 @@ function renderApplied(){
                   <button class="btn btn-good" onclick="respondToInterview('${a.id}','accepted')">Accept interview</button>
                 </div>
               ` : ""}
-            ` : `<div class="chips"><span class="chip good">Application sent</span></div>`}
+            ` : `<div class="chips"><span class="chip good">${a.status==="shortlisted" ? "Employer shortlisted you" : "Application sent"}</span></div>`}
 
             <button class="btn btn-dark btn-block" onclick="showApplicationProfile('${a.jobId}')">View application</button>
           </div>
@@ -1350,6 +1401,7 @@ function showApplicationProfile(jobId){
     <p><strong>CV:</strong> ${p.cv_filename || "No CV attached"}</p>
     ${p.cv_url ? `<a class="btn btn-outline btn-block" href="${p.cv_url}" target="_blank" rel="noopener">Open my stored CV</a>` : ""}
 
+    ${application ? renderWorkflowSteps(application) : ""}
     ${application && application.interviewAt ? `
       <div class="interview-box ${application.interviewStatus==="declined" ? "declined" : (application.interviewStatus==="accepted" ? "" : "pending")}">
         <strong>${interviewStatusLabel(application)}</strong>
@@ -1736,6 +1788,7 @@ function renderEmployer(){
       <div class="stats">
         <div class="stat"><strong>${state.postedJobs.length}</strong><span>Live jobs</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
+        <div class="stat"><strong>${state.applicants.filter(a=>a.status==="shortlisted").length}</strong><span>Shortlisted</span></div>
         <div class="stat"><strong>${state.applicants.filter(a=>a.interviewAt).length}</strong><span>Interviews</span></div>
       </div>
       <div class="title-row"><h2>Your jobs</h2><span>Current</span></div>
@@ -1896,22 +1949,38 @@ function renderApplicants(){
               <div class="small">Applied to ${a.jobTitle}</div>
               <div class="small">${a.applicantLocation || "Location not set"} · ${a.applicantAvailability || "Availability not set"}</div>
             </div>
-            <span class="pill ${a.interviewStatus==='accepted' ? 'good' : 'soft'}">${interviewStatusLabel(a)}</span>
+            <span class="pill ${applicationStatusClass(a)}">${applicationStatusLabel(a)}</span>
           </div>
 
-          <div class="chips"><span class="chip">${a.applicantSkills || "No skills listed"}</span></div>
+          <div class="chips">
+            <span class="chip">${a.applicantSkills || "No skills listed"}</span>
+            ${a.status==="shortlisted" ? `<span class="shortlist-badge">★ Shortlisted</span>` : ""}
+          </div>
+          ${renderWorkflowSteps(a)}
+
+          ${["applied","shortlisted"].includes(a.status) ? `
+            <div style="margin-top:10px">
+              <button class="btn ${a.status==="shortlisted" ? "btn-outline" : "btn-good"} btn-block"
+                onclick="setShortlist('${a.id}', ${a.status==="shortlisted" ? "false" : "true"})">
+                ${a.status==="shortlisted" ? "Remove from shortlist" : "Shortlist candidate"}
+              </button>
+            </div>
+          ` : ""}
 
           ${a.interviewAt ? `
             <div class="interview-box ${a.interviewStatus==="declined" ? "declined" : (a.interviewStatus==="accepted" ? "" : "pending")}">
-              <strong>${a.interviewStatus==="accepted" ? "Candidate accepted" : a.interviewStatus==="declined" ? "Candidate declined" : "Interview invitation sent"}</strong>
+              <strong>${a.status==="interview_completed" ? "Interview completed" : a.interviewStatus==="accepted" ? "Candidate accepted" : a.interviewStatus==="declined" ? "Candidate declined" : "Interview invitation sent"}</strong>
               <div style="margin-top:6px"><strong>Date & time:</strong> ${formatInterview(a.interviewAt)}</div>
               ${a.interviewLocation ? `<div style="margin-top:4px"><strong>Place:</strong> ${a.interviewLocation}</div>` : ""}
               ${a.interviewMessage ? `<div style="margin-top:4px"><strong>Message:</strong> ${a.interviewMessage}</div>` : ""}
             </div>
           ` : ""}
 
+          ${a.status==="applied" ? `
+            <div class="notice" style="margin-top:12px"><strong>Shortlist first.</strong> Move this candidate to the shortlist before inviting them to interview.</div>
+          ` : `
           <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:14px">
-            <div style="font-weight:900;margin-bottom:8px">${a.interviewAt ? "Reschedule interview" : "Invite to interview"}</div>
+            <div style="font-weight:900;margin-bottom:8px">${a.interviewAt ? "Interview stage" : "Invite shortlisted candidate to interview"}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
               <div>
                 <label>Date</label>
@@ -1930,12 +1999,45 @@ function renderApplicants(){
               ${a.interviewAt ? "Update interview invitation" : "Send interview invitation"}
             </button>
           </div>
+          `}
+
+          ${a.status==="interview_accepted" ? `
+            <button class="btn btn-good btn-block" style="margin-top:10px" onclick="markInterviewCompleted('${a.id}')">Mark interview completed</button>
+          ` : ""}
+          ${a.status==="interview_completed" ? `
+            <div class="notice" style="margin-top:10px"><strong>Interview completed.</strong> This candidate is ready for the next hiring stage.</div>
+          ` : ""}
 
           <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="viewApplicant('${a.id}')">View full applicant</button>
         </div>
       `).join('')}
     </div>
   `;
+}
+
+async function setShortlist(id, shouldShortlist){
+  try{
+    await api(`/api/applications/${id}/status`, {
+      method:"POST",
+      body:{action: shouldShortlist ? "shortlist" : "remove_shortlist"}
+    });
+    await loadBootstrap();
+    render();
+    toast(shouldShortlist ? "Candidate shortlisted" : "Candidate moved back to Applied");
+  }catch(e){ toast(e.message); }
+}
+
+async function markInterviewCompleted(id){
+  if(!confirm("Mark this interview as completed?")) return;
+  try{
+    await api(`/api/applications/${id}/status`, {
+      method:"POST",
+      body:{action:"interview_completed"}
+    });
+    await loadBootstrap();
+    render();
+    toast("Interview marked completed");
+  }catch(e){ toast(e.message); }
 }
 
 async function sendInlineInterviewInvite(id){
@@ -1966,6 +2068,8 @@ function viewApplicant(id){
     ${a.applicantPhoto ? `<div class="jobseeker-photo"><img src="${a.applicantPhoto}" alt="Applicant photo"></div>` : `<div class="jobseeker-photo">${(a.applicantName || a.applicantEmail || "U").slice(0,1).toUpperCase()}</div>`}
     <h3>${a.applicantName || a.applicantEmail}</h3>
     <p>Applied to ${a.jobTitle}</p>
+    <div style="margin-bottom:8px"><span class="pill ${applicationStatusClass(a)}">${applicationStatusLabel(a)}</span></div>
+    ${renderWorkflowSteps(a)}
     <p>${a.applicantLocation || "Location not set"} · ${a.applicantAvailability || "Availability not set"}</p>
     <div class="chips"><span class="chip">${a.applicantSkills || "No skills listed"}</span></div>
     <p>Contact: ${a.applicantEmail}</p>
@@ -1982,7 +2086,18 @@ function viewApplicant(id){
       </div>
     ` : ""}
 
-    <button class="btn btn-dark btn-block" onclick="openInterviewInvite('${a.id}')">${a.interviewAt ? "Reschedule interview" : "Invite to interview"}</button>
+    ${["applied","shortlisted"].includes(a.status) ? `
+      <button class="btn ${a.status==="shortlisted" ? "btn-outline" : "btn-good"} btn-block" style="margin-bottom:8px"
+        onclick="closeModal(); setShortlist('${a.id}', ${a.status==="shortlisted" ? "false" : "true"})">
+        ${a.status==="shortlisted" ? "Remove from shortlist" : "Shortlist candidate"}
+      </button>
+    ` : ""}
+    ${a.status!=="applied" && a.status!=="interview_completed" ? `
+      <button class="btn btn-dark btn-block" onclick="openInterviewInvite('${a.id}')">${a.interviewAt ? "Reschedule interview" : "Invite to interview"}</button>
+    ` : ""}
+    ${a.status==="interview_accepted" ? `
+      <button class="btn btn-good btn-block" style="margin-top:8px" onclick="closeModal(); markInterviewCompleted('${a.id}')">Mark interview completed</button>
+    ` : ""}
   `);
 }
 

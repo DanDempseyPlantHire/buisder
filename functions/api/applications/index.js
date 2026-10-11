@@ -13,9 +13,18 @@ export async function onRequestPost(context) {
   if (!job) return err("Job not found", 404);
 
   const id = newId();
-  await env.DB.prepare(
+  const insert = await env.DB.prepare(
     "INSERT OR IGNORE INTO applications (id, job_id, jobseeker_id) VALUES (?, ?, ?)"
   ).bind(id, jobId, user.id).run();
+
+  if (insert.meta?.changes) {
+    await env.DB.prepare(
+      `INSERT INTO application_status_history
+       (id, application_id, status, actor_user_id, note)
+       VALUES (?, ?, 'applied', ?, 'Application submitted')`
+    ).bind(newId(), id, user.id).run();
+  }
+
   await env.DB.prepare("DELETE FROM skips WHERE job_id = ? AND jobseeker_id = ?").bind(jobId, user.id).run();
 
   return json({ ok: true }, { status: 201 });
