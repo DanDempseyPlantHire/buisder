@@ -360,7 +360,13 @@
     .applicant-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
     .pill.bad{background:var(--bad-tint);color:var(--bad)}
 
+
+    .security-note{font-size:11px;line-height:1.45;color:var(--muted);margin-top:7px}
+    .turnstile-wrap{margin-top:12px;min-height:65px}
+    .auth-success{background:var(--good-tint);color:var(--good);border:1px solid #abefc6;border-radius:10px;padding:12px;margin:10px 0;font-size:12px;line-height:1.45}
+
 </style>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
 <div class="app">
@@ -410,6 +416,16 @@ let state = {
   authMode:"login",
   authRole:"jobseeker",
   authError:"",
+  pendingEmail:"",
+  resetToken:"",
+  security:{
+    turnstileSiteKey:"",
+    turnstileEnabled:false,
+    emailDeliveryConfigured:false,
+    emailVerificationRequired:false
+  },
+  turnstileToken:"",
+  turnstileWidgetId:null,
   feedFilters: (() => {
     try{
       return JSON.parse(localStorage.getItem("buisder_feed_filters")) || {
@@ -661,6 +677,88 @@ async function markAllNotificationsRead(){
   }catch(e){ toast(e.message); }
 }
 
+
+async function loadSecurityConfig(){
+  try{
+    const res = await fetch("/api/security/config", {credentials:"include", cache:"no-store"});
+    if(res.ok) state.security = await res.json();
+  }catch(e){}
+}
+
+function turnstileMarkup(){
+  if(!state.security.turnstileSiteKey) return "";
+  return `<div class="turnstile-wrap"><div id="turnstileAuth"></div></div>`;
+}
+
+function renderTurnstileWidget(){
+  state.turnstileToken = "";
+  state.turnstileWidgetId = null;
+  if(!state.security.turnstileSiteKey) return;
+  const target = document.getElementById("turnstileAuth");
+  if(!target) return;
+
+  const tryRender = ()=>{
+    if(!window.turnstile){
+      setTimeout(tryRender, 100);
+      return;
+    }
+    try{
+      state.turnstileWidgetId = turnstile.render(target, {
+        sitekey: state.security.turnstileSiteKey,
+        callback: token => { state.turnstileToken = token; },
+        "expired-callback": () => { state.turnstileToken = ""; },
+        "error-callback": () => { state.turnstileToken = ""; }
+      });
+    }catch(e){}
+  };
+  tryRender();
+}
+
+function resetTurnstile(){
+  state.turnstileToken = "";
+  if(window.turnstile && state.turnstileWidgetId !== null){
+    try{ turnstile.reset(state.turnstileWidgetId); }catch(e){}
+  }
+}
+
+function authTurnstileToken(){
+  if(state.security.turnstileEnabled && !state.turnstileToken){
+    throw new Error("Complete the security check");
+  }
+  return state.turnstileToken || "";
+}
+
+async function processAuthLink(){
+  const params = new URLSearchParams(location.search);
+  const verifyToken = params.get("verify");
+  const resetToken = params.get("reset");
+
+  if(verifyToken){
+    try{
+      await api("/api/auth/verify-email", {method:"POST", body:{token:verifyToken}});
+      history.replaceState({}, "", location.pathname);
+      state.authError = "";
+      return "verified";
+    }catch(e){
+      history.replaceState({}, "", location.pathname);
+      state.user = null;
+      state.authMode = "login";
+      state.authError = e.message;
+      return "failed";
+    }
+  }
+
+  if(resetToken){
+    state.user = null;
+    state.resetToken = resetToken;
+    state.authMode = "reset";
+    history.replaceState({}, "", location.pathname);
+    return "reset";
+  }
+
+  return null;
+}
+
 async function api(path, opts = {}){
   const res = await fetch(path, {
     method: opts.method || "GET",
@@ -717,8 +815,15 @@ async function loadBootstrap(){
 }
 
 async function boot(){
-  try{ await loadBootstrap(); } catch(e){ state.user = null; }
+  await loadSecurityConfig();
+  const authLink = await processAuthLink();
+
+  if(authLink !== "reset"){
+    try{ await loadBootstrap(); } catch(e){ state.user = null; }
+  }
+
   render();
+
   setInterval(async ()=>{
     if(!state.user) return;
     try{
@@ -748,6 +853,69 @@ async function setTab(tab){
 
 function renderAuth(){
   const errBox = state.authError ? `<div class="notice" style="color:var(--bad)">${state.authError}</div>` : "";
+
+  if(state.authMode === "verify-pending"){
+    return `
+      <div class="hero">
+        <h1>Check your email</h1>
+        <p>Verify your email address before logging in to Buisder.</p>
+      </div>
+      <div class="section-pad">
+        <div class="form-card">
+          <div class="auth-success">
+            We sent a verification link to <strong>${state.pendingEmail || "your email address"}</strong>.
+            The link expires in 24 hours.
+          </div>
+          ${!state.security.emailDeliveryConfigured ? `<div class="notice">Email delivery is not configured yet. Configure it before enforcing email verification.</div>` : ""}
+          ${turnstileMarkup()}
+          ${errBox}
+          <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doResendVerification()">Resend verification email</button>
+          <button class="btn btn-outline btn-block" style="margin-top:8px" onclick="state.authMode='login';state.authError='';render()">Back to login</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if(state.authMode === "forgot"){
+    return `
+      <div class="hero">
+        <h1>Reset your password</h1>
+        <p>Enter your email and we’ll send a password-reset link.</p>
+      </div>
+      <div class="section-pad">
+        <div class="form-card">
+          <label>Email</label>
+          <input id="authEmail" type="email" placeholder="you@example.com">
+          ${turnstileMarkup()}
+          ${errBox}
+          ${!state.security.emailDeliveryConfigured ? `<div class="notice">Password-reset email delivery has not been configured yet.</div>` : ""}
+          <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doForgotPassword()">Send reset link</button>
+          <div class="small" style="margin-top:12px;text-align:center"><a href="#" onclick="state.authMode='login';state.authError='';render();return false" style="color:var(--accent-ink)">Back to login</a></div>
+        </div>
+      </div>
+    `;
+  }
+
+  if(state.authMode === "reset"){
+    return `
+      <div class="hero">
+        <h1>Choose a new password</h1>
+        <p>Use a new password for your Buisder account.</p>
+      </div>
+      <div class="section-pad">
+        <div class="form-card">
+          <label>New password</label>
+          <input id="resetPassword" type="password" placeholder="At least 10 characters">
+          <label>Confirm password</label>
+          <input id="resetPassword2" type="password" placeholder="Enter it again">
+          <div class="security-note">Use at least 10 characters. Avoid passwords based on your email address.</div>
+          ${errBox}
+          <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doResetPassword()">Reset password</button>
+        </div>
+      </div>
+    `;
+  }
+
   if(state.authMode === "signup"){
     return `
       <div class="hero">
@@ -766,7 +934,9 @@ function renderAuth(){
           <label>Email</label>
           <input id="authEmail" type="email" placeholder="you@example.com">
           <label>Password</label>
-          <input id="authPassword" type="password" placeholder="At least 8 characters">
+          <input id="authPassword" type="password" placeholder="At least 10 characters">
+          <div class="security-note">New accounts can be required to verify their email before login.</div>
+          ${turnstileMarkup()}
           ${errBox}
           <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doSignup()">Create account</button>
           <div class="small" style="margin-top:12px;text-align:center">Already have an account? <a href="#" onclick="state.authMode='login';state.authError='';render();return false" style="color:var(--accent-ink)">Log in</a></div>
@@ -774,6 +944,7 @@ function renderAuth(){
       </div>
     `;
   }
+
   return `
     <div class="hero">
       <h1>Welcome back</h1>
@@ -782,11 +953,16 @@ function renderAuth(){
     <div class="section-pad">
       <div class="form-card">
         <label>Email</label>
-        <input id="authEmail" type="email" placeholder="you@example.com">
+        <input id="authEmail" type="email" value="${state.pendingEmail || ""}" placeholder="you@example.com">
         <label>Password</label>
         <input id="authPassword" type="password" placeholder="Your password">
+        ${turnstileMarkup()}
         ${errBox}
         <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doLogin()">Log in</button>
+        <div class="small" style="margin-top:12px;text-align:center">
+          <a href="#" onclick="state.authMode='forgot';state.authError='';render();return false" style="color:var(--accent-ink)">Forgot password?</a>
+        </div>
+        ${state.security.emailVerificationRequired ? `<div class="small" style="margin-top:8px;text-align:center"><a href="#" onclick="state.pendingEmail=document.getElementById('authEmail')?.value.trim()||state.pendingEmail;state.authMode='verify-pending';state.authError='';render();return false" style="color:var(--accent-ink)">Resend verification email</a></div>` : ""}
         <div class="small" style="margin-top:12px;text-align:center">New here? <a href="#" onclick="state.authMode='signup';state.authError='';render();return false" style="color:var(--accent-ink)">Create an account</a></div>
       </div>
     </div>
@@ -798,22 +974,117 @@ async function doSignup(){
   const email = document.getElementById("authEmail").value.trim();
   const password = document.getElementById("authPassword").value;
   try{
-    await api("/api/auth/signup", {method:"POST", body:{name, email, password, role:state.authRole}});
+    const turnstileToken = authTurnstileToken();
+    const result = await api("/api/auth/signup", {
+      method:"POST",
+      body:{name, email, password, role:state.authRole, turnstileToken}
+    });
+
     state.authError = "";
+    state.pendingEmail = email;
+
+    if(result.verificationRequired){
+      state.authMode = "verify-pending";
+      render();
+      return;
+    }
+
     await loadBootstrap();
     render();
-  } catch(e){ state.authError = e.message; render(); }
+  } catch(e){
+    state.authError = e.message;
+    resetTurnstile();
+    render();
+  }
 }
 
 async function doLogin(){
   const email = document.getElementById("authEmail").value.trim();
   const password = document.getElementById("authPassword").value;
   try{
-    await api("/api/auth/login", {method:"POST", body:{email, password}});
+    const turnstileToken = authTurnstileToken();
+    await api("/api/auth/login", {method:"POST", body:{email, password, turnstileToken}});
+    state.pendingEmail = email;
     state.authError = "";
     await loadBootstrap();
     render();
-  } catch(e){ state.authError = e.message; render(); }
+  } catch(e){
+    state.pendingEmail = email;
+    state.authError = e.message;
+    if(String(e.message).toLowerCase().includes("verify your email")){
+      state.authMode = "verify-pending";
+    }
+    resetTurnstile();
+    render();
+  }
+}
+
+async function doForgotPassword(){
+  const email = document.getElementById("authEmail").value.trim();
+  try{
+    const turnstileToken = authTurnstileToken();
+    await api("/api/auth/forgot-password", {method:"POST", body:{email, turnstileToken}});
+    state.pendingEmail = email;
+    state.authError = "";
+    toast("If the account exists, a reset email has been sent");
+    state.authMode = "login";
+    render();
+  } catch(e){
+    state.authError = e.message;
+    resetTurnstile();
+    render();
+  }
+}
+
+async function doResetPassword(){
+  const password = document.getElementById("resetPassword").value;
+  const confirmPassword = document.getElementById("resetPassword2").value;
+
+  if(password !== confirmPassword){
+    state.authError = "Passwords do not match";
+    render();
+    return;
+  }
+
+  try{
+    await api("/api/auth/reset-password", {
+      method:"POST",
+      body:{token:state.resetToken, password}
+    });
+    state.resetToken = "";
+    state.authError = "";
+    state.authMode = "login";
+    toast("Password reset. Log in with your new password.");
+    render();
+  }catch(e){
+    state.authError = e.message;
+    render();
+  }
+}
+
+async function doResendVerification(){
+  const email = state.pendingEmail || "";
+  if(!email){
+    state.authError = "Enter your email on the login screen first";
+    state.authMode = "login";
+    render();
+    return;
+  }
+
+  try{
+    const turnstileToken = authTurnstileToken();
+    await api("/api/auth/resend-verification", {
+      method:"POST",
+      body:{email, turnstileToken}
+    });
+    state.authError = "";
+    toast("If verification is needed, a new email has been sent");
+    resetTurnstile();
+  }catch(e){
+    state.authError = e.message;
+    resetTurnstile();
+    render();
+  }
 }
 
 async function doLogout(){
@@ -845,6 +1116,7 @@ function render(){
     topbar.classList.add("hidden");
     nav.classList.add("hidden");
     document.getElementById("content").innerHTML = renderAuth();
+    setTimeout(renderTurnstileWidget, 0);
     return;
   }
   topbar.classList.remove("hidden");
@@ -1944,7 +2216,8 @@ function renderAdminUsers(){
               <strong>${u.name || u.email}</strong>
               <div class="admin-meta">
                 ${u.email}<br>
-                ${cap(u.role)} · ${u.createdAt || ""}
+                ${cap(u.role)} · ${u.createdAt || ""}<br>
+                ${u.emailVerified ? "Email verified" : "Email not verified"}
                 ${u.isAdmin ? "<br><strong>Buisder admin</strong>" : ""}
               </div>
             </div>

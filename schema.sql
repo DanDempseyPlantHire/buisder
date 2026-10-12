@@ -12,6 +12,33 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+
+CREATE TABLE IF NOT EXISTS verified_emails (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  verified_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS auth_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  purpose TEXT NOT NULL CHECK (purpose IN ('verify_email','reset_password')),
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_tokens_user_purpose
+ON auth_tokens(user_id, purpose);
+
+CREATE TABLE IF NOT EXISTS auth_rate_limits (
+  rate_key TEXT PRIMARY KEY,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  window_start TEXT NOT NULL,
+  blocked_until TEXT,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS sessions (
   token TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -212,3 +239,8 @@ VALUES
 ('seed-job-1','seed-employer','Retail Assistant','Harbour Sports','Cork City Centre','€14.20/hr','Sat + 2 evenings','None','Next week','Fast-paced store role with customers and stock support.','["Retail"]','Part-time',16,14.20,'["Saturday","Evenings"]'),
 ('seed-job-2','seed-employer','Café Team Member','Bean & Co.','Douglas','€13.90/hr','Weekend shifts','None','Immediate','Friendly front-of-house role with coffee and customer service.','["Hospitality"]','Part-time',16,13.90,'["Saturday","Sunday"]'),
 ('seed-job-3','seed-employer','Event Crew','LiveWorks','Cork City Centre','€15.00/hr','Flexible evenings','None','This month','Set-up support for live events, venues and promotions.','["Events"]','Temporary / Seasonal',18,15.00,'["Evenings","Saturday","Sunday"]');
+
+
+-- Existing built-in demo account is trusted for fresh development databases.
+INSERT OR IGNORE INTO verified_emails (user_id)
+VALUES ('seed-employer');

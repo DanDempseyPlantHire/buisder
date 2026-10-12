@@ -53,11 +53,11 @@ export function parseCookies(request) {
 }
 
 export function sessionCookie(token, maxAgeSeconds) {
-  return `session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAgeSeconds}`;
+  return `session=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
 }
 
 export function clearSessionCookie() {
-  return `session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`;
+  return `session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
 }
 
 export async function getUser(context) {
@@ -67,10 +67,12 @@ export async function getUser(context) {
   if (!token) return null;
   const row = await env.DB.prepare(
     `SELECT u.id, u.email, u.role, u.name, u.is_suspended,
-            CASE WHEN au.user_id IS NULL THEN 0 ELSE 1 END AS is_admin
+            CASE WHEN au.user_id IS NULL THEN 0 ELSE 1 END AS is_admin,
+            CASE WHEN ve.user_id IS NULL THEN 0 ELSE 1 END AS email_verified
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      LEFT JOIN admin_users au ON au.user_id = u.id
+     LEFT JOIN verified_emails ve ON ve.user_id = u.id
      WHERE s.token = ? AND s.expires_at > datetime('now')`
   ).bind(token).first();
   if (!row || row.is_suspended) return null;
@@ -79,7 +81,8 @@ export async function getUser(context) {
     email: row.email,
     role: row.role,
     name: row.name,
-    isAdmin: Boolean(row.is_admin)
+    isAdmin: Boolean(row.is_admin),
+    emailVerified: Boolean(row.email_verified)
   };
 }
 

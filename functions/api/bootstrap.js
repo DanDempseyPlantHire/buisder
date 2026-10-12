@@ -125,9 +125,11 @@ export async function onRequestGet(context) {
 
     const { results: adminUsers } = await env.DB.prepare(
       `SELECT u.id, u.email, u.name, u.role, u.is_suspended AS isSuspended, u.created_at AS createdAt,
-              CASE WHEN au.user_id IS NULL THEN 0 ELSE 1 END AS isAdmin
+              CASE WHEN au.user_id IS NULL THEN 0 ELSE 1 END AS isAdmin,
+              CASE WHEN ve.user_id IS NULL THEN 0 ELSE 1 END AS emailVerified
        FROM users u
        LEFT JOIN admin_users au ON au.user_id = u.id
+       LEFT JOIN verified_emails ve ON ve.user_id = u.id
        ORDER BY u.created_at DESC
        LIMIT 100`
     ).all();
