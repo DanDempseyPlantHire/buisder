@@ -1,4 +1,4 @@
-import { json, err, newId, requireUser } from "../../_lib/db.js";
+import { json, err, newId, requireUser, createNotification } from "../../_lib/db.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -9,7 +9,9 @@ export async function onRequestPost(context) {
   const jobId = body && body.jobId;
   if (!jobId) return err("jobId is required");
 
-  const job = await env.DB.prepare("SELECT id FROM jobs WHERE id = ? AND status = 'active'").bind(jobId).first();
+  const job = await env.DB.prepare(
+    "SELECT id, employer_id, title, company FROM jobs WHERE id = ? AND status = 'active'"
+  ).bind(jobId).first();
   if (!job) return err("Job not found", 404);
 
   const id = newId();
@@ -23,6 +25,16 @@ export async function onRequestPost(context) {
        (id, application_id, status, actor_user_id, note)
        VALUES (?, ?, 'applied', ?, 'Application submitted')`
     ).bind(newId(), id, user.id).run();
+
+    await createNotification(env, {
+      userId: job.employer_id,
+      type: "new_application",
+      title: "New application",
+      body: `${user.name || "A candidate"} applied for ${job.title}.`,
+      applicationId: id,
+      jobId,
+      eventKey: `application:${id}:created`
+    });
   }
 
   await env.DB.prepare("DELETE FROM skips WHERE job_id = ? AND jobseeker_id = ?").bind(jobId, user.id).run();

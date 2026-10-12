@@ -1,4 +1,4 @@
-import { json, err, newId, requireUser } from "../../../_lib/db.js";
+import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
 
 export async function onRequestPost(context) {
   const { request, env, params } = context;
@@ -16,7 +16,8 @@ export async function onRequestPost(context) {
   }
 
   const app = await env.DB.prepare(
-    `SELECT a.id, a.status, a.shortlisted_at, j.employer_id
+    `SELECT a.id, a.status, a.shortlisted_at, a.jobseeker_id,
+            j.employer_id, j.id AS job_id, j.title AS job_title, j.company
      FROM applications a
      JOIN jobs j ON j.id = a.job_id
      WHERE a.id = ?`
@@ -88,6 +89,16 @@ export async function onRequestPost(context) {
        VALUES (?, ?, 'interview_invited', ?, 'Interview rescheduled')`
     ).bind(newId(), params.id, user.id).run();
   }
+
+  await createNotification(env, {
+    userId: app.jobseeker_id,
+    type: existing ? "interview_updated" : "interview_invitation",
+    title: existing ? "Interview updated" : "Interview invitation",
+    body: `${app.company || "An employer"} ${existing ? "updated" : "invited you to"} an interview for ${app.job_title} on ${interviewAt.replace("T", " ")}${interviewLocation ? " · " + interviewLocation : ""}.`,
+    applicationId: params.id,
+    jobId: app.job_id,
+    eventKey: `interview:${params.id}:${interviewAt}:${interviewLocation || ""}`
+  });
 
   return json({ ok: true });
 }

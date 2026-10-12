@@ -1,4 +1,4 @@
-import { json, err, newId, requireUser } from "../../../_lib/db.js";
+import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
 
 export async function onRequestPost(context) {
   const { request, env, params } = context;
@@ -12,8 +12,10 @@ export async function onRequestPost(context) {
   }
 
   const app = await env.DB.prepare(
-    `SELECT a.id, a.status, a.jobseeker_id, ii.id AS invite_id
+    `SELECT a.id, a.status, a.jobseeker_id, ii.id AS invite_id,
+            j.employer_id, j.id AS job_id, j.title AS job_title
      FROM applications a
+     JOIN jobs j ON j.id=a.job_id
      LEFT JOIN interview_invites ii ON ii.application_id = a.id
      WHERE a.id = ?`
   ).bind(params.id).first();
@@ -66,6 +68,16 @@ export async function onRequestPost(context) {
     user.id,
     response === "accepted" ? "Interview accepted by candidate" : "Interview declined by candidate"
   ).run();
+
+  await createNotification(env, {
+    userId: app.employer_id,
+    type: "interview_response",
+    title: response === "accepted" ? "Interview accepted" : "Interview declined",
+    body: `${user.name || "The candidate"} ${response} the interview for ${app.job_title}.`,
+    applicationId: params.id,
+    jobId: app.job_id,
+    eventKey: `interview-response:${params.id}:${newStatus}`
+  });
 
   return json({ ok: true, status: newStatus });
 }

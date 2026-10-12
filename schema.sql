@@ -128,6 +128,26 @@ CREATE TABLE IF NOT EXISTS application_status_history (
 );
 
 
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  application_id TEXT,
+  job_id TEXT,
+  event_key TEXT UNIQUE,
+  read_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created
+ON notifications(user_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
+ON notifications(user_id, read_at);
+
 CREATE TABLE IF NOT EXISTS job_offers (
   id TEXT PRIMARY KEY,
   application_id TEXT NOT NULL UNIQUE REFERENCES applications(id) ON DELETE CASCADE,

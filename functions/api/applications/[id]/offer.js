@@ -1,4 +1,4 @@
-import { json, err, newId, requireUser } from "../../../_lib/db.js";
+import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
 
 async function addHistory(env, applicationId, status, actorUserId, note = null) {
   await env.DB.prepare(
@@ -26,7 +26,8 @@ export async function onRequestPost(context) {
   if (!startDate) return err("Start date is required");
 
   const app = await env.DB.prepare(
-    `SELECT a.id, a.status, a.jobseeker_id, j.employer_id, j.title AS job_title
+    `SELECT a.id, a.status, a.jobseeker_id,
+            j.id AS job_id, j.employer_id, j.title AS job_title, j.company
      FROM applications a
      JOIN jobs j ON j.id=a.job_id
      WHERE a.id=?`
@@ -79,6 +80,15 @@ export async function onRequestPost(context) {
     existing ? "Offer updated and sent to candidate" : "Offer sent to candidate"
   );
 
+  await createNotification(env, {
+    userId: app.jobseeker_id,
+    type: existing ? "offer_updated" : "offer_made",
+    title: existing ? "Job offer updated" : "You have a job offer",
+    body: `${app.company || "An employer"} sent you an offer for ${roleTitle}: ${pay}, starting ${startDate}.`,
+    applicationId: params.id,
+    jobId: app.job_id
+  });
+
   return json({ ok: true, status: "offer_made" });
 }
 
@@ -96,9 +106,11 @@ export async function onRequestPatch(context) {
 
   const offer = await env.DB.prepare(
     `SELECT o.id, o.status, o.jobseeker_id, o.role_title,
-            a.id AS application_id, a.status AS application_status
+            a.id AS application_id, a.status AS application_status,
+            j.id AS job_id, j.employer_id, j.title AS job_title
      FROM job_offers o
      JOIN applications a ON a.id=o.application_id
+     JOIN jobs j ON j.id=a.job_id
      WHERE o.application_id=?`
   ).bind(params.id).first();
 
@@ -129,6 +141,16 @@ export async function onRequestPatch(context) {
     user.id,
     response === "accepted" ? "Offer accepted by candidate" : "Offer declined by candidate"
   );
+
+  await createNotification(env, {
+    userId: offer.employer_id,
+    type: "offer_response",
+    title: response === "accepted" ? "Offer accepted" : "Offer declined",
+    body: `${user.name || "The candidate"} ${response} the offer for ${offer.job_title}.`,
+    applicationId: params.id,
+    jobId: offer.job_id,
+    eventKey: `offer-response:${params.id}:${applicationStatus}`
+  });
 
   return json({ ok: true, status: applicationStatus });
 }

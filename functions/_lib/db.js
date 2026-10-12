@@ -96,3 +96,31 @@ export async function requireAdmin(context) {
   if (!user.isAdmin) return { error: err("Admin access required", 403) };
   return { user };
 }
+
+
+export async function createNotification(env, {
+  userId,
+  type,
+  title,
+  body,
+  applicationId = null,
+  jobId = null,
+  eventKey = null
+}) {
+  if (!userId) return;
+
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO notifications
+     (id, user_id, type, title, body, application_id, job_id, event_key)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    newId(),
+    userId,
+    type || "general",
+    title || "Buisder update",
+    body || "",
+    applicationId,
+    jobId,
+    eventKey
+  ).run();
+}

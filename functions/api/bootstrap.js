@@ -1,4 +1,4 @@
-import { json, getUser } from "../_lib/db.js";
+import { json, getUser, createNotification } from "../_lib/db.js";
 
 function parseArray(value) {
   if (!value) return [];
@@ -13,6 +13,66 @@ function formatJob(j) {
       ? `/api/files/business-logo/${j.employer_id}`
       : (j.employer_logo || null)
   };
+}
+
+
+async function ensureInterviewReminders(env, userId) {
+  const { results } = await env.DB.prepare(
+    `SELECT a.id AS applicationId, j.id AS jobId, j.title, j.company, ii.interview_at AS interviewAt
+     FROM applications a
+     JOIN jobs j ON j.id=a.job_id
+     JOIN interview_invites ii ON ii.application_id=a.id
+     WHERE a.jobseeker_id=?
+       AND a.status='interview_accepted'
+       AND ii.status='accepted'
+       AND datetime(ii.interview_at) > datetime('now')
+       AND datetime(ii.interview_at) <= datetime('now', '+24 hours')`
+  ).bind(userId).all();
+
+  for (const row of results) {
+    await createNotification(env, {
+      userId,
+      type: "interview_reminder",
+      title: "Interview reminder",
+      body: `Your interview for ${row.title} with ${row.company || "the employer"} is within 24 hours.`,
+      applicationId: row.applicationId,
+      jobId: row.jobId,
+      eventKey: `interview-reminder-24:${row.applicationId}:${row.interviewAt}`
+    });
+
+    const withinHour = await env.DB.prepare(
+      `SELECT CASE
+         WHEN datetime(?) <= datetime('now', '+1 hour') THEN 1 ELSE 0
+       END AS yes`
+    ).bind(row.interviewAt).first();
+
+    if (withinHour?.yes) {
+      await createNotification(env, {
+        userId,
+        type: "interview_reminder",
+        title: "Interview in the next hour",
+        body: `Your interview for ${row.title} is coming up soon.`,
+        applicationId: row.applicationId,
+        jobId: row.jobId,
+        eventKey: `interview-reminder-1:${row.applicationId}:${row.interviewAt}`
+      });
+    }
+  }
+}
+
+async function getNotifications(env, userId) {
+  const { results } = await env.DB.prepare(
+    `SELECT id, type, title, body,
+            application_id AS applicationId,
+            job_id AS jobId,
+            read_at AS readAt,
+            created_at AS createdAt
+     FROM notifications
+     WHERE user_id=?
+     ORDER BY created_at DESC
+     LIMIT 60`
+  ).bind(userId).all();
+  return results || [];
 }
 
 export async function onRequestGet(context) {
@@ -95,6 +155,7 @@ export async function onRequestGet(context) {
 
     return json({
       user,
+      notifications: await getNotifications(env, user.id),
       admin: {
         overview: overview || {},
         verifications: verifications.map(v => ({
@@ -109,6 +170,8 @@ export async function onRequestGet(context) {
   }
 
   if (user.role === "jobseeker") {
+    await ensureInterviewReminders(env, user.id);
+
     const profile = await env.DB.prepare("SELECT * FROM jobseeker_profiles WHERE user_id = ?").bind(user.id).first();
     const profileOut = profile ? {
       ...profile,
@@ -142,9 +205,16 @@ export async function onRequestGet(context) {
        WHERE a.jobseeker_id = ? ORDER BY a.created_at DESC`
     ).bind(user.id).all();
     const { results: historyRows } = await env.DB.prepare(
-      `SELECT h.application_id as applicationId, h.status, h.note, h.created_at as createdAt
+      `SELECT h.application_id as applicationId,
+              h.status,
+              NULL AS note,
+              h.created_at as createdAt,
+              actor.id AS actorUserId,
+              actor.name AS actorName,
+              actor.role AS actorRole
        FROM application_status_history h
        JOIN applications a ON a.id=h.application_id
+       LEFT JOIN users actor ON actor.id=h.actor_user_id
        WHERE a.jobseeker_id=?
        ORDER BY h.created_at ASC`
     ).bind(user.id).all();
@@ -179,7 +249,8 @@ export async function onRequestGet(context) {
         ...a,
         statusHistory: historyByApplication[a.id] || []
       })),
-      skipped: skipRows.map(r => r.job_id)
+      skipped: skipRows.map(r => r.job_id),
+      notifications: await getNotifications(env, user.id)
     });
   }
 
@@ -226,6 +297,31 @@ export async function onRequestGet(context) {
      ORDER BY a.created_at DESC`
   ).bind(user.id).all();
 
+
+  const { results: employerHistoryRows } = await env.DB.prepare(
+    `SELECT h.application_id AS applicationId,
+            h.status,
+            h.note,
+            h.created_at AS createdAt,
+            actor.id AS actorUserId,
+            actor.name AS actorName,
+            actor.role AS actorRole
+     FROM application_status_history h
+     JOIN applications a ON a.id=h.application_id
+     JOIN jobs j ON j.id=a.job_id
+     LEFT JOIN users actor ON actor.id=h.actor_user_id
+     WHERE j.employer_id=?
+     ORDER BY h.created_at ASC`
+  ).bind(user.id).all();
+
+  const employerHistoryByApplication = {};
+  for (const row of employerHistoryRows) {
+    if (!employerHistoryByApplication[row.applicationId]) {
+      employerHistoryByApplication[row.applicationId] = [];
+    }
+    employerHistoryByApplication[row.applicationId].push(row);
+  }
+
   return json({
     user,
     profile: profileOut,
@@ -237,7 +333,9 @@ export async function onRequestGet(context) {
         : (a.applicantPhotoLegacy || null),
       applicantCvUrl: a.applicantCvKey
         ? `/api/files/cv/${a.applicantId}`
-        : null
-    }))
+        : null,
+      statusHistory: employerHistoryByApplication[a.id] || []
+    })),
+    notifications: await getNotifications(env, user.id)
   });
 }

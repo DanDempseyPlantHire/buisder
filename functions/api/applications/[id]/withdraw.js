@@ -1,4 +1,4 @@
-import { json, err, newId, requireUser } from "../../../_lib/db.js";
+import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
 
 export async function onRequestPost(context) {
   const { env, params } = context;
@@ -6,9 +6,11 @@ export async function onRequestPost(context) {
   if (error) return error;
 
   const app = await env.DB.prepare(
-    `SELECT id, status, jobseeker_id
-     FROM applications
-     WHERE id=?`
+    `SELECT a.id, a.status, a.jobseeker_id,
+            j.id AS job_id, j.employer_id, j.title AS job_title
+     FROM applications a
+     JOIN jobs j ON j.id=a.job_id
+     WHERE a.id=?`
   ).bind(params.id).first();
 
   if (!app) return err("Application not found", 404);
@@ -47,6 +49,16 @@ export async function onRequestPost(context) {
      (id, application_id, status, actor_user_id, note)
      VALUES (?, ?, 'withdrawn', ?, 'Application withdrawn by candidate')`
   ).bind(newId(), params.id, user.id).run();
+
+  await createNotification(env, {
+    userId: app.employer_id,
+    type: "application_withdrawn",
+    title: "Application withdrawn",
+    body: `${user.name || "A candidate"} withdrew their application for ${app.job_title}.`,
+    applicationId: params.id,
+    jobId: app.job_id,
+    eventKey: `application:${params.id}:withdrawn`
+  });
 
   return json({ ok: true, status: "withdrawn" });
 }

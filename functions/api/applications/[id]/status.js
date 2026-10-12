@@ -1,4 +1,4 @@
-import { json, err, newId, requireUser } from "../../../_lib/db.js";
+import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
 
 const ALLOWED = new Set([
   "shortlist",
@@ -27,7 +27,8 @@ export async function onRequestPost(context) {
 
   const app = await env.DB.prepare(
     `SELECT a.id, a.status, a.shortlisted_at, a.interview_completed_at,
-            j.employer_id,
+            a.jobseeker_id,
+            j.employer_id, j.id AS job_id, j.title AS job_title, j.company,
             ii.status AS interview_status,
             o.status AS offer_status
      FROM applications a
@@ -60,6 +61,15 @@ export async function onRequestPost(context) {
 
     if (app.status !== "shortlisted") {
       await addHistory(env, params.id, "shortlisted", user.id, "Candidate shortlisted by employer");
+      await createNotification(env, {
+        userId: app.jobseeker_id,
+        type: "shortlisted",
+        title: "You were shortlisted",
+        body: `${app.company || "An employer"} shortlisted you for ${app.job_title}.`,
+        applicationId: params.id,
+        jobId: app.job_id,
+        eventKey: `application:${params.id}:shortlisted`
+      });
     }
 
     return json({ ok: true, status: "shortlisted" });
@@ -79,6 +89,15 @@ export async function onRequestPost(context) {
     ).bind(params.id).run();
 
     await addHistory(env, params.id, "applied", user.id, "Candidate removed from shortlist");
+    await createNotification(env, {
+      userId: app.jobseeker_id,
+      type: "application_update",
+      title: "Application updated",
+      body: `Your application for ${app.job_title} has moved back to Applied.`,
+      applicationId: params.id,
+      jobId: app.job_id,
+      eventKey: `application:${params.id}:back_to_applied`
+    });
     return json({ ok: true, status: "applied" });
   }
 
@@ -96,6 +115,15 @@ export async function onRequestPost(context) {
     ).bind(params.id).run();
 
     await addHistory(env, params.id, "interview_completed", user.id, "Interview marked completed by employer");
+    await createNotification(env, {
+      userId: app.jobseeker_id,
+      type: "interview_completed",
+      title: "Interview completed",
+      body: `${app.company || "The employer"} marked your ${app.job_title} interview as completed.`,
+      applicationId: params.id,
+      jobId: app.job_id,
+      eventKey: `application:${params.id}:interview_completed`
+    });
     return json({ ok: true, status: "interview_completed" });
   }
 
@@ -139,6 +167,16 @@ export async function onRequestPost(context) {
       note ? `Marked unsuccessful by employer: ${note}` : "Marked unsuccessful by employer"
     );
 
+    await createNotification(env, {
+      userId: app.jobseeker_id,
+      type: "unsuccessful",
+      title: "Application update",
+      body: `${app.company || "The employer"} has closed your application for ${app.job_title}.`,
+      applicationId: params.id,
+      jobId: app.job_id,
+      eventKey: `application:${params.id}:unsuccessful`
+    });
+
     return json({ ok: true, status: "unsuccessful" });
   }
 
@@ -155,6 +193,15 @@ export async function onRequestPost(context) {
     ).bind(params.id).run();
 
     await addHistory(env, params.id, "hired", user.id, "Candidate marked hired by employer");
+    await createNotification(env, {
+      userId: app.jobseeker_id,
+      type: "hired",
+      title: "You’re hired",
+      body: `${app.company || "The employer"} marked you as hired for ${app.job_title}.`,
+      applicationId: params.id,
+      jobId: app.job_id,
+      eventKey: `application:${params.id}:hired`
+    });
     return json({ ok: true, status: "hired" });
   }
 

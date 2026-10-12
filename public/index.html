@@ -339,6 +339,27 @@
     .final-state.withdrawn{background:#f2f4f7;color:#475467;border:1px solid #e4e7ec}
     .final-state.hired{background:#ecfdf3;color:#067647;border:1px solid #abefc6}
 
+
+    .notify-bell{position:relative;width:42px;height:42px;border-radius:9px;border:1px solid var(--line-dark);background:transparent;color:var(--paper);font-size:18px}
+    .notify-count{position:absolute;right:-5px;top:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font-size:10px;font-weight:900;display:grid;place-items:center;border:2px solid var(--ink)}
+    .notification-item{padding:12px 0;border-bottom:1px solid var(--line-light)}
+    .notification-item:last-child{border-bottom:0}
+    .notification-item.unread{font-weight:700}
+    .notification-time{font-size:11px;color:var(--muted);margin-top:4px}
+    .timeline{margin:12px 0;padding-left:8px}
+    .timeline-item{position:relative;padding:0 0 14px 22px;border-left:2px solid #ddd6c4}
+    .timeline-item:last-child{border-left-color:transparent;padding-bottom:0}
+    .timeline-dot{position:absolute;left:-7px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--paper)}
+    .timeline-title{font-size:12px;font-weight:900}
+    .timeline-meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+    .job-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .job-status{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}
+    .job-status.active{background:#ecfdf3;color:#067647}
+    .job-status.paused{background:#fffaeb;color:#b54708}
+    .job-status.closed{background:#f2f4f7;color:#475467}
+    .applicant-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .pill.bad{background:var(--bad-tint);color:var(--bad)}
+
 </style>
 </head>
 <body>
@@ -349,7 +370,12 @@
         <div class="brand"><div class="logo">B</div><div>Buisder</div></div>
         <div class="subtle" id="modeLabel">Swipe-friendly jobs for young people</div>
       </div>
-      <button class="btn btn-outline" onclick="doLogout()">Log out</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="notify-bell" id="notifyBell" onclick="openNotifications()" aria-label="Notifications">
+          🔔<span class="notify-count hidden" id="notifyCount">0</span>
+        </button>
+        <button class="btn btn-outline" onclick="doLogout()">Log out</button>
+      </div>
     </div>
   </header>
 
@@ -378,6 +404,8 @@ let state = {
   lastAction:null,
   postedJobs:[],
   applicants:[],
+  notifications:[],
+  applicantFilters:{jobId:"all", status:"all"},
   admin:{overview:{}, verifications:[], users:[], jobs:[], auditLog:[]},
   authMode:"login",
   authRole:"jobseeker",
@@ -407,6 +435,68 @@ function formatInterview(value){
     weekday:"short", day:"numeric", month:"short", year:"numeric",
     hour:"2-digit", minute:"2-digit"
   });
+}
+
+
+function formatTimelineDate(value){
+  if(!value) return "";
+  const normalized = String(value).includes("T") ? String(value) : String(value).replace(" ","T") + "Z";
+  const d = new Date(normalized);
+  if(Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("en-IE", {
+    day:"numeric", month:"short", year:"numeric",
+    hour:"2-digit", minute:"2-digit"
+  });
+}
+
+function statusHistoryLabel(status){
+  const map = {
+    applied:"Applied",
+    shortlisted:"Shortlisted",
+    interview_invited:"Interview invited",
+    interview_accepted:"Interview accepted",
+    interview_declined:"Interview declined",
+    interview_completed:"Interview completed",
+    offer_made:"Offer made",
+    offer_accepted:"Offer accepted",
+    offer_declined:"Offer declined",
+    hired:"Hired",
+    unsuccessful:"Unsuccessful",
+    withdrawn:"Withdrawn"
+  };
+  return map[status] || cap(String(status || "").replaceAll("_"," "));
+}
+
+function renderApplicationTimeline(a, viewer){
+  const history = Array.isArray(a?.statusHistory) ? a.statusHistory : [];
+  if(!history.length){
+    return `<div class="notice">No timeline history is available for this application yet.</div>`;
+  }
+
+  return `
+    <div class="timeline">
+      ${history.map(h=>{
+        let actor = "";
+        if(h.actorUserId){
+          if(viewer==="jobseeker"){
+            actor = h.actorRole==="jobseeker" ? "You" : (h.actorRole==="employer" ? "Employer" : (h.actorName || "Buisder"));
+          } else {
+            actor = h.actorRole==="employer" ? "You / employer" : (h.actorRole==="jobseeker" ? (h.actorName || "Candidate") : (h.actorName || "Buisder"));
+          }
+        } else {
+          actor = "Buisder";
+        }
+        return `
+          <div class="timeline-item">
+            <span class="timeline-dot"></span>
+            <div class="timeline-title">${statusHistoryLabel(h.status)}</div>
+            <div class="timeline-meta">${formatTimelineDate(h.createdAt)} · ${actor}</div>
+            ${viewer==="employer" && h.note ? `<div class="timeline-meta">${h.note}</div>` : ""}
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
 }
 
 function applicationStatusLabel(a){
@@ -485,29 +575,90 @@ function unreadInterviewCount(){
   return state.applications.filter(a => a.interviewAt && !a.inviteSeenAt && (a.interviewStatus==="pending" || a.status==="interview_invited" || a.status==="invited")).length;
 }
 
-const notifiedInterviewIds = new Set();
+function unreadNotificationCount(){
+  return (state.notifications || []).filter(n=>!n.readAt).length;
+}
+
+const shownBrowserNotificationIds = new Set();
 
 async function enableBrowserNotifications(){
-  if (!("Notification" in window)) { toast("Browser notifications are not supported on this device"); return; }
+  if (!("Notification" in window)) {
+    toast("Browser notifications are not supported on this device");
+    return;
+  }
   const permission = await Notification.requestPermission();
   if(permission === "granted"){
-    toast("Interview notifications enabled");
-    notifyUnseenInterviews();
+    toast("Browser notifications enabled");
+    notifyUnreadNotifications();
   } else {
     toast("Notifications were not enabled");
   }
 }
 
-function notifyUnseenInterviews(){
-  if(state.mode !== "jobseeker" || !("Notification" in window) || Notification.permission !== "granted") return;
-  for(const a of state.applications){
-    if(a.interviewAt && !a.inviteSeenAt && !notifiedInterviewIds.has(a.id)){
-      notifiedInterviewIds.add(a.id);
-      new Notification("New interview invitation", {
-        body: `${a.company || "An employer"} invited you to interview on ${formatInterview(a.interviewAt)}${a.interviewLocation ? " at " + a.interviewLocation : ""}.`
-      });
+function notifyUnreadNotifications(){
+  if(!("Notification" in window) || Notification.permission !== "granted") return;
+  for(const n of (state.notifications || [])){
+    if(!n.readAt && !shownBrowserNotificationIds.has(n.id)){
+      shownBrowserNotificationIds.add(n.id);
+      new Notification(n.title || "Buisder update", {body:n.body || ""});
     }
   }
+}
+
+function renderNotificationBell(){
+  const badge = document.getElementById("notifyCount");
+  if(!badge) return;
+  const count = unreadNotificationCount();
+  badge.textContent = count > 99 ? "99+" : String(count);
+  badge.classList.toggle("hidden", count === 0);
+}
+
+function openNotifications(){
+  const items = state.notifications || [];
+  openModal(`
+    <div class="title-row" style="margin-top:0">
+      <h2>Notifications</h2>
+      <span>${unreadNotificationCount()} unread</span>
+    </div>
+    ${items.length ? `
+      <button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-bottom:8px" onclick="markAllNotificationsRead()">Mark all read</button>
+      <div>
+        ${items.map(n=>`
+          <div class="notification-item ${n.readAt ? "" : "unread"}" onclick="openNotification('${n.id}')">
+            <div>${n.title}</div>
+            <div class="small" style="margin-top:4px">${n.body}</div>
+            <div class="notification-time">${formatTimelineDate(n.createdAt)}</div>
+          </div>
+        `).join("")}
+      </div>
+    ` : `<div class="notice">No notifications yet.</div>`}
+    ${("Notification" in window && Notification.permission !== "granted")
+      ? `<button class="btn btn-dark btn-block" style="margin-top:12px" onclick="enableBrowserNotifications()">Enable browser alerts</button>`
+      : ""}
+  `);
+}
+
+async function openNotification(id){
+  const n = (state.notifications || []).find(x=>String(x.id)===String(id));
+  if(!n) return;
+  try{
+    if(!n.readAt) await api(`/api/notifications/${id}`, {method:"POST"});
+  }catch(e){}
+  closeModal();
+  await loadBootstrap();
+  if(n.applicationId){
+    state.tab = state.mode==="jobseeker" ? "applications" : state.mode==="employer" ? "applicants" : state.tab;
+  }
+  render();
+}
+
+async function markAllNotificationsRead(){
+  try{
+    await api("/api/notifications/read-all", {method:"POST"});
+    await loadBootstrap();
+    render();
+    openNotifications();
+  }catch(e){ toast(e.message); }
 }
 
 async function api(path, opts = {}){
@@ -542,6 +693,7 @@ async function loadBootstrap(){
 
   if(state.mode==="admin"){
     state.admin = data.admin || {overview:{}, verifications:[], users:[], jobs:[], auditLog:[]};
+    state.notifications = data.notifications || [];
     state.profile = {};
     state.jobs = [];
     state.applications = [];
@@ -552,11 +704,12 @@ async function loadBootstrap(){
   }
 
   state.profile = data.profile || {};
+  state.notifications = data.notifications || [];
   if(state.mode==="jobseeker"){
     state.jobs = data.jobs || [];
     state.applications = data.applications || [];
     state.skipped = data.skipped || [];
-    setTimeout(notifyUnseenInterviews, 50);
+    setTimeout(notifyUnreadNotifications, 50);
   } else {
     state.postedJobs = data.postedJobs || [];
     state.applicants = data.applicants || [];
@@ -569,11 +722,11 @@ async function boot(){
   setInterval(async ()=>{
     if(!state.user) return;
     try{
-      const before = unreadInterviewCount();
+      const before = unreadNotificationCount();
       await loadBootstrap();
-      const after = unreadInterviewCount();
+      const after = unreadNotificationCount();
       if(after !== before) render();
-      notifyUnseenInterviews();
+      notifyUnreadNotifications();
     }catch(e){}
   }, 20000);
 }
@@ -700,6 +853,7 @@ function render(){
     state.mode==="jobseeker" ? "Job seeker account" :
     state.mode==="employer" ? "Employer account" : "Buisder admin";
   renderNav();
+  renderNotificationBell();
   document.getElementById("content").innerHTML =
     state.mode==="admin"
       ? renderAdmin()
@@ -1119,7 +1273,7 @@ function renderApplied(){
   return `
     <div class="section-pad">
       <div class="title-row"><h2>Applications</h2><span>${state.applications.length} applied</span></div>
-      ${("Notification" in window && Notification.permission !== "granted") ? `<button class="btn btn-outline btn-block" style="margin-bottom:12px" onclick="enableBrowserNotifications()">🔔 Enable interview notifications</button>` : ""}
+      ${("Notification" in window && Notification.permission !== "granted") ? `<button class="btn btn-outline btn-block" style="margin-bottom:12px" onclick="enableBrowserNotifications()">🔔 Enable browser notifications</button>` : ""}
       ${
         state.applications.length ? state.applications.map(a=>{
           const hasInterview = !!a.interviewAt;
@@ -1134,6 +1288,10 @@ function renderApplied(){
               <span class="pill ${applicationStatusClass(a)}">${applicationStatusLabel(a)}</span>
             </div>
             ${renderWorkflowSteps(a)}
+            <details style="margin:10px 0">
+              <summary style="font-size:12px;font-weight:800;cursor:pointer">Application timeline</summary>
+              ${renderApplicationTimeline(a, "jobseeker")}
+            </details>
 
             ${hasInterview ? `
               <div class="interview-box ${interviewClass}">
@@ -1499,6 +1657,10 @@ function showApplicationProfile(jobId){
     ${p.cv_url ? `<a class="btn btn-outline btn-block" href="${p.cv_url}" target="_blank" rel="noopener">Open my stored CV</a>` : ""}
 
     ${application ? renderWorkflowSteps(application) : ""}
+    ${application ? `
+      <div class="title-row"><h2>Application timeline</h2><span>History</span></div>
+      ${renderApplicationTimeline(application, "jobseeker")}
+    ` : ""}
     ${application && application.offerStatus ? `
       <div class="offer-box ${application.offerStatus}">
         <strong>${application.offerStatus==="accepted" ? "Offer accepted" : application.offerStatus==="declined" ? "Offer declined" : "Job offer"}</strong>
@@ -1908,7 +2070,7 @@ function renderEmployer(){
         </div>
       </div>
       <div class="stats">
-        <div class="stat"><strong>${state.postedJobs.length}</strong><span>Live jobs</span></div>
+        <div class="stat"><strong>${state.postedJobs.filter(j=>j.status==="active").length}</strong><span>Live jobs</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
         <div class="stat"><strong>${state.applicants.filter(a=>a.status==="shortlisted").length}</strong><span>Shortlisted</span></div>
         <div class="stat"><strong>${state.applicants.filter(a=>a.interviewAt).length}</strong><span>Interviews</span></div>
@@ -1922,17 +2084,52 @@ function renderEmployer(){
         </div>
       ` : state.postedJobs.map(j=>`
         <div class="card list-card">
-          <div style="font-weight:900">${j.title}</div>
-          <div class="small">${j.location} · ${j.pay}</div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+            <div>
+              <div style="font-weight:900">${j.title}</div>
+              <div class="small">${j.location} · ${j.pay}</div>
+            </div>
+            <span class="job-status ${j.status || "active"}">${cap(j.status || "active")}</span>
+          </div>
           <div class="chips">
             <span class="chip">${j.hours}</span>
             <span class="chip good">${j.experience==="None" ? "No experience" : j.experience}</span>
+            <span class="chip">${state.applicants.filter(a=>a.jobId===j.id).length} applicants</span>
           </div>
-          <button class="btn btn-dark btn-block" onclick="setTab('applicants')">See applicants</button>
+          <button class="btn btn-dark btn-block" onclick="viewJobApplicants('${j.id}')">See applicants</button>
+          <div class="job-controls">
+            ${j.status==="active" ? `
+              <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateJobStatus('${j.id}','pause')">Pause</button>
+              <button class="btn btn-bad" onclick="updateJobStatus('${j.id}','close')">Close</button>
+            ` : j.status==="paused" ? `
+              <button class="btn btn-good" onclick="updateJobStatus('${j.id}','reopen')">Reopen</button>
+              <button class="btn btn-bad" onclick="updateJobStatus('${j.id}','close')">Close</button>
+            ` : `
+              <button class="btn btn-good" style="grid-column:1/-1" onclick="updateJobStatus('${j.id}','reopen')">Reopen job</button>
+            `}
+          </div>
         </div>
       `).join('')}
     </div>
   `;
+}
+
+function viewJobApplicants(jobId){
+  state.applicantFilters.jobId = jobId;
+  state.applicantFilters.status = "all";
+  state.tab = "applicants";
+  render();
+}
+
+async function updateJobStatus(jobId, action){
+  const wording = action==="pause" ? "pause" : action==="close" ? "close" : "reopen";
+  if((action==="pause" || action==="close") && !confirm(`${cap(wording)} this job?`)) return;
+  try{
+    await api(`/api/jobs/${jobId}`, {method:"PATCH", body:{action}});
+    await loadBootstrap();
+    render();
+    toast(`Job ${action==="reopen" ? "reopened" : action==="pause" ? "paused" : "closed"}`);
+  }catch(e){ toast(e.message); }
 }
 
 function renderPostJob(){
@@ -2053,16 +2250,51 @@ async function postJob(){
   } catch(e){ toast(e.message); }
 }
 
+function applicantMatchesStatus(a, filter){
+  if(filter==="all") return true;
+  if(filter==="active") return !["hired","unsuccessful","withdrawn"].includes(a.status);
+  if(filter==="interviews") return ["interview_invited","interview_accepted","interview_declined","interview_completed"].includes(a.status);
+  if(filter==="offers") return ["offer_made","offer_accepted","offer_declined"].includes(a.status);
+  if(filter==="closed") return ["hired","unsuccessful","withdrawn"].includes(a.status);
+  return a.status===filter;
+}
+
+function setApplicantFilter(name, value){
+  state.applicantFilters[name] = value;
+  render();
+}
+
 function renderApplicants(){
+  const f = state.applicantFilters || {jobId:"all", status:"all"};
+  const filteredApplicants = state.applicants.filter(a =>
+    (f.jobId==="all" || String(a.jobId)===String(f.jobId)) &&
+    applicantMatchesStatus(a, f.status)
+  );
+
   return `
     <div class="section-pad">
-      <div class="title-row"><h2>Applicants</h2><span>${state.applicants.length} people</span></div>
-      ${!state.applicants.length ? `
+      <div class="title-row"><h2>Applicants</h2><span>${filteredApplicants.length} shown</span></div>
+      <div class="applicant-filters">
+        <select onchange="setApplicantFilter('jobId', this.value)">
+          <option value="all" ${f.jobId==="all" ? "selected" : ""}>All jobs</option>
+          ${state.postedJobs.map(j=>`<option value="${j.id}" ${String(f.jobId)===String(j.id) ? "selected" : ""}>${j.title}</option>`).join("")}
+        </select>
+        <select onchange="setApplicantFilter('status', this.value)">
+          <option value="all" ${f.status==="all" ? "selected" : ""}>All stages</option>
+          <option value="active" ${f.status==="active" ? "selected" : ""}>Active</option>
+          <option value="shortlisted" ${f.status==="shortlisted" ? "selected" : ""}>Shortlisted</option>
+          <option value="interviews" ${f.status==="interviews" ? "selected" : ""}>Interviews</option>
+          <option value="offers" ${f.status==="offers" ? "selected" : ""}>Offers</option>
+          <option value="hired" ${f.status==="hired" ? "selected" : ""}>Hired</option>
+          <option value="closed" ${f.status==="closed" ? "selected" : ""}>Closed</option>
+        </select>
+      </div>
+      ${!filteredApplicants.length ? `
         <div class="card dark empty">
           <h3 style="margin:0 0 8px">No applicants yet</h3>
           <p style="color:#cbd5e1">Once your job is live in the swipe feed, people who apply will show up here.</p>
         </div>
-      ` : state.applicants.map(a=>`
+      ` : filteredApplicants.map(a=>`
         <div class="card list-card">
           <div class="app-item">
             ${a.applicantPhoto ? `<div class="applicant-photo"><img src="${a.applicantPhoto}" alt="Applicant photo"></div>` : `<div class="applicant-photo">${(a.applicantName || a.applicantEmail || "U").slice(0,1).toUpperCase()}</div>`}
@@ -2079,6 +2311,10 @@ function renderApplicants(){
             ${a.status==="shortlisted" ? `<span class="shortlist-badge">★ Shortlisted</span>` : ""}
           </div>
           ${renderWorkflowSteps(a)}
+          <details style="margin:10px 0">
+            <summary style="font-size:12px;font-weight:800;cursor:pointer">Application timeline</summary>
+            ${renderApplicationTimeline(a, "employer")}
+          </details>
 
           ${a.offerStatus ? `
       <div class="offer-box ${a.offerStatus}">
@@ -2371,6 +2607,8 @@ function viewApplicant(id){
     <p>Applied to ${a.jobTitle}</p>
     <div style="margin-bottom:8px"><span class="pill ${applicationStatusClass(a)}">${applicationStatusLabel(a)}</span></div>
     ${renderWorkflowSteps(a)}
+    <div class="title-row"><h2>Application timeline</h2><span>History</span></div>
+    ${renderApplicationTimeline(a, "employer")}
     <p>${a.applicantLocation || "Location not set"} · ${a.applicantAvailability || "Availability not set"}</p>
     <div class="chips"><span class="chip">${a.applicantSkills || "No skills listed"}</span></div>
     <p>Contact: ${a.applicantEmail}</p>
