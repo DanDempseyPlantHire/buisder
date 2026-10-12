@@ -326,6 +326,13 @@
     .workflow-step.current{background:#fff4ed;color:#b93815;border-color:#ffd6ae}
     .shortlist-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:900;padding:5px 8px;border-radius:999px;background:#eef4ff;color:#3538cd;border:1px solid #c7d7fe}
 
+
+    .offer-box{border:1px solid #c7d7fe;background:#eef4ff;color:#3538cd;border-radius:14px;padding:12px;margin:12px 0}
+    .offer-box.accepted{background:#ecfdf3;color:#067647;border-color:#abefc6}
+    .offer-box.declined{background:#fef3f2;color:#b42318;border-color:#fecdca}
+    .offer-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .offer-value{background:rgba(255,255,255,.62);border-radius:9px;padding:8px;font-size:12px}
+
 </style>
 </head>
 <body>
@@ -403,6 +410,10 @@ function applicationStatusLabel(a){
   if(status==="interview_accepted") return "Interview confirmed";
   if(status==="interview_declined") return "Interview declined";
   if(status==="interview_completed") return "Interview completed";
+  if(status==="offer_made") return "Offer made";
+  if(status==="offer_accepted") return "Offer accepted";
+  if(status==="offer_declined") return "Offer declined";
+  if(status==="hired") return "Hired";
   return "Applied";
 }
 
@@ -411,8 +422,8 @@ function interviewStatusLabel(a){
 }
 
 function applicationStatusClass(a){
-  if(["shortlisted","interview_accepted","interview_completed"].includes(a.status)) return "good";
-  if(a.status==="interview_declined") return "soft";
+  if(["shortlisted","interview_accepted","interview_completed","offer_accepted","hired"].includes(a.status)) return "good";
+  if(["interview_declined","offer_declined"].includes(a.status)) return "soft";
   return "soft";
 }
 
@@ -424,7 +435,11 @@ function workflowStepClass(a, step){
     invited:2,
     interview_accepted:3,
     interview_declined:3,
-    interview_completed:4
+    interview_completed:4,
+    offer_made:5,
+    offer_accepted:6,
+    offer_declined:6,
+    hired:7
   };
   const here = order[a.status] ?? 0;
   const target = order[step];
@@ -434,14 +449,18 @@ function workflowStepClass(a, step){
 }
 
 function renderWorkflowSteps(a){
-  const declined = a.status==="interview_declined";
+  const interviewOutcome = a.status==="interview_declined" ? "Interview declined" : "Interview accepted";
+  const offerOutcome = a.status==="offer_declined" ? "Offer declined" : "Offer accepted";
   return `
     <div class="workflow-steps">
       <span class="workflow-step ${workflowStepClass(a,"applied")}">Applied</span>
       <span class="workflow-step ${workflowStepClass(a,"shortlisted")}">Shortlisted</span>
       <span class="workflow-step ${workflowStepClass(a,"interview_invited")}">Interview invited</span>
-      <span class="workflow-step ${workflowStepClass(a,"interview_accepted")}">${declined ? "Interview declined" : "Interview accepted"}</span>
-      <span class="workflow-step ${workflowStepClass(a,"interview_completed")}">Completed</span>
+      <span class="workflow-step ${workflowStepClass(a,"interview_accepted")}">${interviewOutcome}</span>
+      <span class="workflow-step ${workflowStepClass(a,"interview_completed")}">Interview complete</span>
+      <span class="workflow-step ${workflowStepClass(a,"offer_made")}">Offer</span>
+      <span class="workflow-step ${workflowStepClass(a,"offer_accepted")}">${offerOutcome}</span>
+      <span class="workflow-step ${workflowStepClass(a,"hired")}">Hired</span>
     </div>
   `;
 }
@@ -1115,6 +1134,26 @@ function renderApplied(){
               ` : ""}
             ` : `<div class="chips"><span class="chip good">${a.status==="shortlisted" ? "Employer shortlisted you" : "Application sent"}</span></div>`}
 
+
+            ${a.offerStatus ? `
+              <div class="offer-box ${a.offerStatus}">
+                <strong>${a.offerStatus==="accepted" ? "Offer accepted" : a.offerStatus==="declined" ? "Offer declined" : "Job offer"}</strong>
+                <div class="offer-grid">
+                  <div class="offer-value"><strong>Role</strong><br>${a.offerRoleTitle || a.title}</div>
+                  <div class="offer-value"><strong>Pay</strong><br>${a.offerPay || "Not specified"}</div>
+                  <div class="offer-value"><strong>Start date</strong><br>${a.offerStartDate || "To be agreed"}</div>
+                  <div class="offer-value"><strong>Employer</strong><br>${a.company}</div>
+                </div>
+                ${a.offerMessage ? `<div style="margin-top:9px"><strong>Message:</strong> ${a.offerMessage}</div>` : ""}
+              </div>
+              ${a.offerStatus==="pending" && a.status==="offer_made" ? `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                  <button class="btn btn-bad" onclick="respondToOffer('${a.id}','declined')">Decline offer</button>
+                  <button class="btn btn-good" onclick="respondToOffer('${a.id}','accepted')">Accept offer</button>
+                </div>
+              ` : ""}
+            ` : ""}
+
             <button class="btn btn-dark btn-block" onclick="showApplicationProfile('${a.jobId}')">View application</button>
           </div>
         `}).join('') : `
@@ -1140,6 +1179,21 @@ async function respondToInterview(applicationId, response){
   } catch(e){ toast(e.message); }
 }
 
+
+
+async function respondToOffer(applicationId, response){
+  const label = response==="accepted" ? "accept" : "decline";
+  if(!confirm(`Are you sure you want to ${label} this job offer?`)) return;
+  try{
+    await api(`/api/applications/${applicationId}/offer`, {
+      method:"PATCH",
+      body:{response}
+    });
+    await loadBootstrap();
+    render();
+    toast(response==="accepted" ? "Offer accepted" : "Offer declined");
+  }catch(e){ toast(e.message); }
+}
 
 async function prepareProfilePhotoFile(file){
   if(!file) return null;
@@ -1402,6 +1456,24 @@ function showApplicationProfile(jobId){
     ${p.cv_url ? `<a class="btn btn-outline btn-block" href="${p.cv_url}" target="_blank" rel="noopener">Open my stored CV</a>` : ""}
 
     ${application ? renderWorkflowSteps(application) : ""}
+    ${application && application.offerStatus ? `
+      <div class="offer-box ${application.offerStatus}">
+        <strong>${application.offerStatus==="accepted" ? "Offer accepted" : application.offerStatus==="declined" ? "Offer declined" : "Job offer"}</strong>
+        <div class="offer-grid">
+          <div class="offer-value"><strong>Role</strong><br>${application.offerRoleTitle || job.title}</div>
+          <div class="offer-value"><strong>Pay</strong><br>${application.offerPay || ""}</div>
+          <div class="offer-value"><strong>Start</strong><br>${application.offerStartDate || ""}</div>
+          <div class="offer-value"><strong>Status</strong><br>${cap(application.offerStatus)}</div>
+        </div>
+        ${application.offerMessage ? `<div style="margin-top:9px">${application.offerMessage}</div>` : ""}
+      </div>
+      ${application.offerStatus==="pending" && application.status==="offer_made" ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <button class="btn btn-bad" onclick="closeModal(); respondToOffer('${application.id}','declined')">Decline offer</button>
+          <button class="btn btn-good" onclick="closeModal(); respondToOffer('${application.id}','accepted')">Accept offer</button>
+        </div>
+      ` : ""}
+    ` : ""}
     ${application && application.interviewAt ? `
       <div class="interview-box ${application.interviewStatus==="declined" ? "declined" : (application.interviewStatus==="accepted" ? "" : "pending")}">
         <strong>${interviewStatusLabel(application)}</strong>
@@ -1958,7 +2030,31 @@ function renderApplicants(){
           </div>
           ${renderWorkflowSteps(a)}
 
-          ${["applied","shortlisted"].includes(a.status) ? `
+          ${a.offerStatus ? `
+      <div class="offer-box ${a.offerStatus}">
+        <strong>${a.offerStatus==="accepted" ? "Offer accepted" : a.offerStatus==="declined" ? "Offer declined" : "Offer sent"}</strong>
+        <div class="offer-grid">
+          <div class="offer-value"><strong>Role</strong><br>${a.offerRoleTitle || a.jobTitle}</div>
+          <div class="offer-value"><strong>Pay</strong><br>${a.offerPay || ""}</div>
+          <div class="offer-value"><strong>Start</strong><br>${a.offerStartDate || ""}</div>
+          <div class="offer-value"><strong>Status</strong><br>${cap(a.offerStatus)}</div>
+        </div>
+        ${a.offerMessage ? `<div style="margin-top:9px">${a.offerMessage}</div>` : ""}
+      </div>
+    ` : ""}
+
+    ${a.status==="interview_completed" ? `
+      <button class="btn btn-good btn-block" style="margin-top:8px" onclick="closeModal(); openOffer('${a.id}')">Make job offer</button>
+    ` : ""}
+    ${["offer_made","offer_declined"].includes(a.status) ? `
+      <button class="btn btn-outline btn-block" style="margin-top:8px" onclick="closeModal(); openOffer('${a.id}')">${a.status==="offer_declined" ? "Send revised offer" : "Edit offer"}</button>
+    ` : ""}
+    ${a.status==="offer_accepted" ? `
+      <button class="btn btn-good btn-block" style="margin-top:8px" onclick="closeModal(); markHired('${a.id}')">Mark as hired</button>
+    ` : ""}
+    ${a.status==="hired" ? `<div class="offer-box accepted"><strong>Hired</strong></div>` : ""}
+
+    ${["applied","shortlisted"].includes(a.status) ? `
             <div style="margin-top:10px">
               <button class="btn ${a.status==="shortlisted" ? "btn-outline" : "btn-good"} btn-block"
                 onclick="setShortlist('${a.id}', ${a.status==="shortlisted" ? "false" : "true"})">
@@ -1978,7 +2074,7 @@ function renderApplicants(){
 
           ${a.status==="applied" ? `
             <div class="notice" style="margin-top:12px"><strong>Shortlist first.</strong> Move this candidate to the shortlist before inviting them to interview.</div>
-          ` : `
+          ` : ["shortlisted","interview_invited","interview_accepted","interview_declined","interview_completed"].includes(a.status) ? `
           <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:14px">
             <div style="font-weight:900;margin-bottom:8px">${a.interviewAt ? "Interview stage" : "Invite shortlisted candidate to interview"}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1999,7 +2095,7 @@ function renderApplicants(){
               ${a.interviewAt ? "Update interview invitation" : "Send interview invitation"}
             </button>
           </div>
-          `}
+          ` : ""}
 
           ${a.status==="interview_accepted" ? `
             <button class="btn btn-good btn-block" style="margin-top:10px" onclick="markInterviewCompleted('${a.id}')">Mark interview completed</button>
@@ -2007,12 +2103,115 @@ function renderApplicants(){
           ${a.status==="interview_completed" ? `
             <div class="notice" style="margin-top:10px"><strong>Interview completed.</strong> This candidate is ready for the next hiring stage.</div>
           ` : ""}
+          ${a.status==="interview_completed" ? `
+            <button class="btn btn-good btn-block" style="margin-top:10px" onclick="openOffer('${a.id}')">Make job offer</button>
+          ` : ""}
+
+          ${a.offerStatus ? `
+            <div class="offer-box ${a.offerStatus}">
+              <strong>${a.offerStatus==="accepted" ? "Candidate accepted offer" : a.offerStatus==="declined" ? "Candidate declined offer" : "Offer awaiting candidate response"}</strong>
+              <div class="offer-grid">
+                <div class="offer-value"><strong>Role</strong><br>${a.offerRoleTitle || a.jobTitle}</div>
+                <div class="offer-value"><strong>Pay</strong><br>${a.offerPay || ""}</div>
+                <div class="offer-value"><strong>Start</strong><br>${a.offerStartDate || ""}</div>
+                <div class="offer-value"><strong>Status</strong><br>${cap(a.offerStatus)}</div>
+              </div>
+              ${a.offerMessage ? `<div style="margin-top:9px">${a.offerMessage}</div>` : ""}
+            </div>
+          ` : ""}
+
+          ${a.status==="offer_made" ? `
+            <button class="btn btn-outline btn-block" onclick="openOffer('${a.id}')">Edit / resend offer</button>
+          ` : ""}
+
+          ${a.status==="offer_declined" ? `
+            <button class="btn btn-outline btn-block" onclick="openOffer('${a.id}')">Send revised offer</button>
+          ` : ""}
+
+          ${a.status==="offer_accepted" ? `
+            <button class="btn btn-good btn-block" onclick="markHired('${a.id}')">Mark as hired</button>
+          ` : ""}
+
+          ${a.status==="hired" ? `
+            <div class="offer-box accepted"><strong>Hired</strong><div style="margin-top:5px">The candidate accepted the offer and has been marked hired.</div></div>
+          ` : ""}
 
           <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="viewApplicant('${a.id}')">View full applicant</button>
         </div>
       `).join('')}
     </div>
   `;
+}
+
+
+function openOffer(id){
+  const a = state.applicants.find(x=>String(x.id)===String(id));
+  if(!a) return;
+
+  if(!["interview_completed","offer_made","offer_declined"].includes(a.status)){
+    toast("Complete the interview before making an offer");
+    return;
+  }
+
+  openModal(`
+    <h3>${a.offerStatus ? "Update job offer" : "Make job offer"}</h3>
+    <p>${a.applicantName || a.applicantEmail} · ${a.jobTitle}</p>
+
+    <label>Role / position</label>
+    <input id="offerRoleTitle" value="${a.offerRoleTitle || a.jobTitle || ""}" placeholder="e.g. Retail Assistant">
+
+    <label>Pay</label>
+    <input id="offerPay" value="${a.offerPay || ""}" placeholder="e.g. €14.50 per hour">
+
+    <label>Start date</label>
+    <input id="offerStartDate" type="date" value="${a.offerStartDate || ""}">
+
+    <label>Message to candidate</label>
+    <textarea id="offerMessage" placeholder="Welcome message or important offer details">${a.offerMessage || ""}</textarea>
+
+    <div class="notice">
+      The candidate will see the offer in Buisder and can accept or decline it.
+    </div>
+
+    <button class="btn btn-good btn-block" style="margin-top:12px" onclick="sendOffer('${a.id}')">
+      ${a.offerStatus ? "Send updated offer" : "Send job offer"}
+    </button>
+  `);
+}
+
+async function sendOffer(id){
+  const roleTitle = document.getElementById("offerRoleTitle").value.trim();
+  const pay = document.getElementById("offerPay").value.trim();
+  const startDate = document.getElementById("offerStartDate").value;
+  const message = document.getElementById("offerMessage").value.trim();
+
+  if(!roleTitle){ toast("Add the role title"); return; }
+  if(!pay){ toast("Add the pay"); return; }
+  if(!startDate){ toast("Choose a start date"); return; }
+
+  try{
+    await api(`/api/applications/${id}/offer`, {
+      method:"POST",
+      body:{roleTitle, pay, startDate, message}
+    });
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Job offer sent");
+  }catch(e){ toast(e.message); }
+}
+
+async function markHired(id){
+  if(!confirm("Mark this candidate as hired?")) return;
+  try{
+    await api(`/api/applications/${id}/status`, {
+      method:"POST",
+      body:{action:"mark_hired"}
+    });
+    await loadBootstrap();
+    render();
+    toast("Candidate marked as hired");
+  }catch(e){ toast(e.message); }
 }
 
 async function setShortlist(id, shouldShortlist){
@@ -2092,7 +2291,7 @@ function viewApplicant(id){
         ${a.status==="shortlisted" ? "Remove from shortlist" : "Shortlist candidate"}
       </button>
     ` : ""}
-    ${a.status!=="applied" && a.status!=="interview_completed" ? `
+    ${["shortlisted","interview_invited","interview_accepted","interview_declined"].includes(a.status) ? `
       <button class="btn btn-dark btn-block" onclick="openInterviewInvite('${a.id}')">${a.interviewAt ? "Reschedule interview" : "Invite to interview"}</button>
     ` : ""}
     ${a.status==="interview_accepted" ? `

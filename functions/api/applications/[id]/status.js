@@ -3,7 +3,8 @@ import { json, err, newId, requireUser } from "../../../_lib/db.js";
 const ALLOWED = new Set([
   "shortlist",
   "remove_shortlist",
-  "interview_completed"
+  "interview_completed",
+  "mark_hired"
 ]);
 
 async function addHistory(env, applicationId, status, actorUserId, note = null) {
@@ -26,10 +27,12 @@ export async function onRequestPost(context) {
   const app = await env.DB.prepare(
     `SELECT a.id, a.status, a.shortlisted_at, a.interview_completed_at,
             j.employer_id,
-            ii.status AS interview_status
+            ii.status AS interview_status,
+            o.status AS offer_status
      FROM applications a
      JOIN jobs j ON j.id=a.job_id
      LEFT JOIN interview_invites ii ON ii.application_id=a.id
+     LEFT JOIN job_offers o ON o.application_id=a.id
      WHERE a.id=?`
   ).bind(params.id).first();
 
@@ -88,6 +91,23 @@ export async function onRequestPost(context) {
 
     await addHistory(env, params.id, "interview_completed", user.id, "Interview marked completed by employer");
     return json({ ok: true, status: "interview_completed" });
+  }
+
+
+  if (action === "mark_hired") {
+    if (app.status !== "offer_accepted" || app.offer_status !== "accepted") {
+      return err("The candidate must accept the offer before they can be marked Hired");
+    }
+
+    await env.DB.prepare(
+      `UPDATE applications
+       SET status='hired',
+           updated_at=datetime('now')
+       WHERE id=?`
+    ).bind(params.id).run();
+
+    await addHistory(env, params.id, "hired", user.id, "Candidate marked hired by employer");
+    return json({ ok: true, status: "hired" });
   }
 
   return err("Unsupported application action");

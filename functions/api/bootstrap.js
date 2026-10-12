@@ -127,10 +127,18 @@ export async function onRequestGet(context) {
               ii.location as interviewLocation,
               ii.message as interviewMessage,
               ii.status as interviewStatus,
-              ii.seen_at as inviteSeenAt
+              ii.seen_at as inviteSeenAt,
+              o.role_title as offerRoleTitle,
+              o.pay as offerPay,
+              o.start_date as offerStartDate,
+              o.message as offerMessage,
+              o.status as offerStatus,
+              o.created_at as offerCreatedAt,
+              o.responded_at as offerRespondedAt
        FROM applications a
        JOIN jobs j ON j.id = a.job_id
        LEFT JOIN interview_invites ii ON ii.application_id = a.id
+       LEFT JOIN job_offers o ON o.application_id = a.id
        WHERE a.jobseeker_id = ? ORDER BY a.created_at DESC`
     ).bind(user.id).all();
     const { results: historyRows } = await env.DB.prepare(
@@ -200,12 +208,20 @@ export async function onRequestGet(context) {
             ii.location as interviewLocation,
             ii.message as interviewMessage,
             ii.status as interviewStatus,
-            ii.seen_at as inviteSeenAt
+            ii.seen_at as inviteSeenAt,
+            o.role_title as offerRoleTitle,
+            o.pay as offerPay,
+            o.start_date as offerStartDate,
+            o.message as offerMessage,
+            o.status as offerStatus,
+            o.created_at as offerCreatedAt,
+            o.responded_at as offerRespondedAt
      FROM applications a
      JOIN jobs j ON j.id = a.job_id
      JOIN users u ON u.id = a.jobseeker_id
      LEFT JOIN jobseeker_profiles jp ON jp.user_id = u.id
      LEFT JOIN interview_invites ii ON ii.application_id = a.id
+     LEFT JOIN job_offers o ON o.application_id = a.id
      WHERE j.employer_id = ?
      ORDER BY a.created_at DESC`
   ).bind(user.id).all();
