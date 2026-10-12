@@ -4,7 +4,8 @@ const ALLOWED = new Set([
   "shortlist",
   "remove_shortlist",
   "interview_completed",
-  "mark_hired"
+  "mark_hired",
+  "mark_unsuccessful"
 ]);
 
 async function addHistory(env, applicationId, status, actorUserId, note = null) {
@@ -38,6 +39,11 @@ export async function onRequestPost(context) {
 
   if (!app) return err("Application not found", 404);
   if (app.employer_id !== user.id) return err("Not your job posting", 403);
+
+  const finalStatuses = new Set(["hired", "unsuccessful", "withdrawn"]);
+  if (finalStatuses.has(app.status)) {
+    return err("This application is already closed");
+  }
 
   if (action === "shortlist") {
     if (!["applied", "shortlisted"].includes(app.status)) {
@@ -93,6 +99,48 @@ export async function onRequestPost(context) {
     return json({ ok: true, status: "interview_completed" });
   }
 
+
+  if (action === "mark_unsuccessful") {
+    if (app.status === "offer_accepted") {
+      return err("The candidate has accepted the offer. Resolve that directly before closing the application.");
+    }
+
+    const note = String(body?.note || "").trim();
+
+    await env.DB.prepare(
+      `UPDATE applications
+       SET status='unsuccessful',
+           updated_at=datetime('now')
+       WHERE id=?`
+    ).bind(params.id).run();
+
+    // Close any still-pending candidate actions so the final state cannot be overridden.
+    await env.DB.prepare(
+      `UPDATE interview_invites
+       SET status='declined',
+           seen_at=COALESCE(seen_at, datetime('now')),
+           updated_at=datetime('now')
+       WHERE application_id=? AND status='pending'`
+    ).bind(params.id).run();
+
+    await env.DB.prepare(
+      `UPDATE job_offers
+       SET status='declined',
+           responded_at=COALESCE(responded_at, CURRENT_TIMESTAMP),
+           updated_at=CURRENT_TIMESTAMP
+       WHERE application_id=? AND status='pending'`
+    ).bind(params.id).run();
+
+    await addHistory(
+      env,
+      params.id,
+      "unsuccessful",
+      user.id,
+      note ? `Marked unsuccessful by employer: ${note}` : "Marked unsuccessful by employer"
+    );
+
+    return json({ ok: true, status: "unsuccessful" });
+  }
 
   if (action === "mark_hired") {
     if (app.status !== "offer_accepted" || app.offer_status !== "accepted") {

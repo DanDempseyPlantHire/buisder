@@ -12,7 +12,7 @@ export async function onRequestPost(context) {
   }
 
   const app = await env.DB.prepare(
-    `SELECT a.id, a.jobseeker_id, ii.id AS invite_id
+    `SELECT a.id, a.status, a.jobseeker_id, ii.id AS invite_id
      FROM applications a
      LEFT JOIN interview_invites ii ON ii.application_id = a.id
      WHERE a.id = ?`
@@ -21,6 +21,9 @@ export async function onRequestPost(context) {
   if (!app) return err("Application not found", 404);
   if (app.jobseeker_id !== user.id) return err("Not your application", 403);
   if (!app.invite_id) return err("No interview invitation found", 404);
+  if (app.status !== "interview_invited") {
+    return err("This interview invitation is no longer actionable");
+  }
 
   await env.DB.prepare(
     `UPDATE interview_invites

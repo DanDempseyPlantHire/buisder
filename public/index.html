@@ -333,6 +333,12 @@
     .offer-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
     .offer-value{background:rgba(255,255,255,.62);border-radius:9px;padding:8px;font-size:12px}
 
+
+    .final-state{border-radius:14px;padding:12px;margin:10px 0;font-size:12px;font-weight:700}
+    .final-state.unsuccessful{background:#fef3f2;color:#b42318;border:1px solid #fecdca}
+    .final-state.withdrawn{background:#f2f4f7;color:#475467;border:1px solid #e4e7ec}
+    .final-state.hired{background:#ecfdf3;color:#067647;border:1px solid #abefc6}
+
 </style>
 </head>
 <body>
@@ -414,6 +420,8 @@ function applicationStatusLabel(a){
   if(status==="offer_accepted") return "Offer accepted";
   if(status==="offer_declined") return "Offer declined";
   if(status==="hired") return "Hired";
+  if(status==="unsuccessful") return "Unsuccessful";
+  if(status==="withdrawn") return "Withdrawn";
   return "Applied";
 }
 
@@ -423,7 +431,8 @@ function interviewStatusLabel(a){
 
 function applicationStatusClass(a){
   if(["shortlisted","interview_accepted","interview_completed","offer_accepted","hired"].includes(a.status)) return "good";
-  if(["interview_declined","offer_declined"].includes(a.status)) return "soft";
+  if(["interview_declined","offer_declined","withdrawn"].includes(a.status)) return "soft";
+  if(a.status==="unsuccessful") return "bad";
   return "soft";
 }
 
@@ -449,6 +458,13 @@ function workflowStepClass(a, step){
 }
 
 function renderWorkflowSteps(a){
+  if(a.status==="unsuccessful"){
+    return `<div class="final-state unsuccessful">Application closed · Unsuccessful</div>`;
+  }
+  if(a.status==="withdrawn"){
+    return `<div class="final-state withdrawn">Application closed · Withdrawn</div>`;
+  }
+
   const interviewOutcome = a.status==="interview_declined" ? "Interview declined" : "Interview accepted";
   const offerOutcome = a.status==="offer_declined" ? "Offer declined" : "Offer accepted";
   return `
@@ -1154,6 +1170,20 @@ function renderApplied(){
               ` : ""}
             ` : ""}
 
+            ${a.status==="unsuccessful" ? `
+              <div class="final-state unsuccessful">This application has been closed by the employer.</div>
+            ` : ""}
+            ${a.status==="withdrawn" ? `
+              <div class="final-state withdrawn">You withdrew this application.</div>
+            ` : ""}
+            ${a.status==="hired" ? `
+              <div class="final-state hired">You have been marked as hired.</div>
+            ` : ""}
+
+            ${!["hired","unsuccessful","withdrawn"].includes(a.status) ? `
+              <button class="btn btn-outline btn-block" style="margin-bottom:9px" onclick="withdrawApplication('${a.id}')">Withdraw application</button>
+            ` : ""}
+
             <button class="btn btn-dark btn-block" onclick="showApplicationProfile('${a.jobId}')">View application</button>
           </div>
         `}).join('') : `
@@ -1180,6 +1210,19 @@ async function respondToInterview(applicationId, response){
 }
 
 
+
+async function withdrawApplication(applicationId){
+  if(!confirm("Withdraw this application? This closes the application and cannot be undone in the current version.")) return;
+  try{
+    await api(`/api/applications/${applicationId}/withdraw`, {
+      method:"POST",
+      body:{}
+    });
+    await loadBootstrap();
+    render();
+    toast("Application withdrawn");
+  }catch(e){ toast(e.message); }
+}
 
 async function respondToOffer(applicationId, response){
   const label = response==="accepted" ? "accept" : "decline";
@@ -1474,6 +1517,13 @@ function showApplicationProfile(jobId){
         </div>
       ` : ""}
     ` : ""}
+    ${application && application.status==="unsuccessful" ? `<div class="final-state unsuccessful">This application has been closed by the employer.</div>` : ""}
+    ${application && application.status==="withdrawn" ? `<div class="final-state withdrawn">You withdrew this application.</div>` : ""}
+    ${application && application.status==="hired" ? `<div class="final-state hired">You have been marked as hired.</div>` : ""}
+    ${application && !["hired","unsuccessful","withdrawn"].includes(application.status) ? `
+      <button class="btn btn-outline btn-block" style="margin-bottom:10px" onclick="closeModal(); withdrawApplication('${application.id}')">Withdraw application</button>
+    ` : ""}
+
     ${application && application.interviewAt ? `
       <div class="interview-box ${application.interviewStatus==="declined" ? "declined" : (application.interviewStatus==="accepted" ? "" : "pending")}">
         <strong>${interviewStatusLabel(application)}</strong>
@@ -2054,6 +2104,14 @@ function renderApplicants(){
     ` : ""}
     ${a.status==="hired" ? `<div class="offer-box accepted"><strong>Hired</strong></div>` : ""}
 
+    ${a.status==="unsuccessful" ? `<div class="final-state unsuccessful">Application closed · Unsuccessful</div>` : ""}
+    ${a.status==="withdrawn" ? `<div class="final-state withdrawn">Candidate withdrew this application.</div>` : ""}
+    ${a.status==="hired" ? `<div class="final-state hired">Application closed · Hired</div>` : ""}
+
+    ${!["hired","unsuccessful","withdrawn","offer_accepted"].includes(a.status) ? `
+      <button class="btn btn-bad btn-block" style="margin-bottom:8px" onclick="closeModal(); openMarkUnsuccessful('${a.id}')">Mark unsuccessful</button>
+    ` : ""}
+
     ${["applied","shortlisted"].includes(a.status) ? `
             <div style="margin-top:10px">
               <button class="btn ${a.status==="shortlisted" ? "btn-outline" : "btn-good"} btn-block"
@@ -2136,6 +2194,20 @@ function renderApplicants(){
             <div class="offer-box accepted"><strong>Hired</strong><div style="margin-top:5px">The candidate accepted the offer and has been marked hired.</div></div>
           ` : ""}
 
+          ${a.status==="unsuccessful" ? `
+            <div class="final-state unsuccessful">Application closed · Unsuccessful</div>
+          ` : ""}
+          ${a.status==="withdrawn" ? `
+            <div class="final-state withdrawn">Candidate withdrew this application.</div>
+          ` : ""}
+          ${a.status==="hired" ? `
+            <div class="final-state hired">Application closed · Hired</div>
+          ` : ""}
+
+          ${!["hired","unsuccessful","withdrawn","offer_accepted"].includes(a.status) ? `
+            <button class="btn btn-bad btn-block" style="margin-top:10px" onclick="openMarkUnsuccessful('${a.id}')">Mark unsuccessful</button>
+          ` : ""}
+
           <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="viewApplicant('${a.id}')">View full applicant</button>
         </div>
       `).join('')}
@@ -2143,6 +2215,36 @@ function renderApplicants(){
   `;
 }
 
+
+function openMarkUnsuccessful(id){
+  const a = state.applicants.find(x=>String(x.id)===String(id));
+  if(!a) return;
+
+  openModal(`
+    <h3>Mark candidate unsuccessful</h3>
+    <p><strong>${a.applicantName || a.applicantEmail}</strong> · ${a.jobTitle}</p>
+    <div class="notice">
+      This will close the application and remove any outstanding interview invitation or pending offer.
+    </div>
+    <label>Internal note / reason (optional)</label>
+    <textarea id="unsuccessfulNote" placeholder="Optional note for the Buisder application history"></textarea>
+    <button class="btn btn-bad btn-block" style="margin-top:12px" onclick="markUnsuccessful('${a.id}')">Confirm unsuccessful</button>
+  `);
+}
+
+async function markUnsuccessful(id){
+  const note = document.getElementById("unsuccessfulNote")?.value.trim() || "";
+  try{
+    await api(`/api/applications/${id}/status`, {
+      method:"POST",
+      body:{action:"mark_unsuccessful", note}
+    });
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Application marked unsuccessful");
+  }catch(e){ toast(e.message); }
+}
 
 function openOffer(id){
   const a = state.applicants.find(x=>String(x.id)===String(id));

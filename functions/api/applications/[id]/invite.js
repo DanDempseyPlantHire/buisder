@@ -24,8 +24,21 @@ export async function onRequestPost(context) {
 
   if (!app) return err("Application not found", 404);
   if (app.employer_id !== user.id) return err("Not your job posting", 403);
-  if (app.status === "applied") return err("Shortlist the candidate before inviting them to interview");
-  if (app.status === "interview_completed") return err("This interview has already been completed");
+
+  if (app.status === "applied") {
+    return err("Shortlist the candidate before inviting them to interview");
+  }
+
+  const interviewStages = new Set([
+    "shortlisted",
+    "interview_invited",
+    "interview_accepted",
+    "interview_declined"
+  ]);
+
+  if (!interviewStages.has(app.status)) {
+    return err("This application can no longer be moved into the interview stage");
+  }
 
   const existing = await env.DB.prepare(
     "SELECT id FROM interview_invites WHERE application_id = ?"
