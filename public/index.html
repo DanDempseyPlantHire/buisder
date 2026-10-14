@@ -739,31 +739,28 @@ function renderTurnstileWidget(){
     }
 
     try{
-      turnstile.ready(()=>{
-        try{
-          state.turnstileWidgetId = turnstile.render(target, {
-            sitekey: state.security.turnstileSiteKey,
-            theme: "auto",
-            callback: token => {
-              state.turnstileToken = token;
-              setStatus("Security check complete.", "ok");
-            },
-            "expired-callback": () => {
-              state.turnstileToken = "";
-              setStatus("Security check expired. Complete it again.", "bad");
-            },
-            "error-callback": code => {
-              state.turnstileToken = "";
-              setStatus(`Turnstile widget error${code ? `: ${code}` : ""}`, "bad");
-            }
-          });
-          setStatus("Waiting for Cloudflare security check…");
-        }catch(e){
-          setStatus(`Turnstile could not render: ${e.message || e}`, "bad");
+      // window.turnstile is already present because tryRender() polls for it.
+      // Render directly. Do not call turnstile.ready() when api.js is loaded
+      // with async/defer.
+      state.turnstileWidgetId = turnstile.render(target, {
+        sitekey: state.security.turnstileSiteKey,
+        theme: "auto",
+        callback: token => {
+          state.turnstileToken = token;
+          setStatus("Security check complete.", "ok");
+        },
+        "expired-callback": () => {
+          state.turnstileToken = "";
+          setStatus("Security check expired. Complete it again.", "bad");
+        },
+        "error-callback": code => {
+          state.turnstileToken = "";
+          setStatus(`Turnstile widget error${code ? `: ${code}` : ""}`, "bad");
         }
       });
+      setStatus("Waiting for Cloudflare security check…");
     }catch(e){
-      setStatus(`Turnstile initialization failed: ${e.message || e}`, "bad");
+      setStatus(`Turnstile could not render: ${e.message || e}`, "bad");
     }
   };
 
