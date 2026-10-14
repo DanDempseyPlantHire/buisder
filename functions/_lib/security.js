@@ -147,7 +147,10 @@ export async function verifyTurnstile(env, request, token) {
 }
 
 export function emailDeliveryConfigured(env) {
-  return Boolean(env.RESEND_API_KEY && env.EMAIL_FROM);
+  return Boolean(
+    String(env.RESEND_API_KEY || "").trim() &&
+    String(env.EMAIL_FROM || "").trim()
+  );
 }
 
 export function emailVerificationRequired(env) {
@@ -159,20 +162,30 @@ export async function sendEmail(env, { to, subject, html, text }) {
     return { ok: false, configured: false };
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${env.RESEND_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from: env.EMAIL_FROM,
-      to: [to],
-      subject,
-      html,
-      text
-    })
-  });
+  let response;
+  try {
+    response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${String(env.RESEND_API_KEY || "").trim()}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: String(env.EMAIL_FROM || "").trim(),
+        to: [to],
+        subject,
+        html,
+        text
+      })
+    });
+  } catch (e) {
+    return {
+      ok: false,
+      configured: true,
+      status: 0,
+      detail: `Email provider could not be reached: ${e?.message || e}`
+    };
+  }
 
   if (!response.ok) {
     return {
@@ -194,7 +207,10 @@ export async function createAuthToken(env, userId, purpose, lifetimeSeconds) {
 
   const raw = randomToken(32);
   const hash = await sha256Hex(raw);
-  const expiresAt = new Date(Date.now() + lifetimeSeconds * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + lifetimeSeconds * 1000)
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d{3}Z$/, "");
 
   await env.DB.prepare(
     `INSERT INTO auth_tokens
@@ -215,7 +231,7 @@ export async function getValidAuthToken(env, rawToken, purpose) {
      WHERE token_hash=?
        AND purpose=?
        AND used_at IS NULL
-       AND expires_at > datetime('now')`
+       AND datetime(expires_at) > datetime('now')`
   ).bind(hash, purpose).first();
 }
 

@@ -818,9 +818,21 @@ async function api(path, opts = {}){
     body: opts.body ? JSON.stringify(opts.body) : undefined,
     credentials:"include"
   });
+
+  const raw = await res.text();
   let data = null;
-  try{ data = await res.json(); } catch(e){}
-  if(!res.ok){ throw new Error((data && data.error) || "Something went wrong"); }
+  try{ data = raw ? JSON.parse(raw) : null; } catch(e){}
+
+  if(!res.ok){
+    const message =
+      (data && (data.error || data.message)) ||
+      (raw && raw.length < 500 ? raw : "") ||
+      `Buisder server error (${res.status})`;
+
+    const detail = data && data.detail ? ` ${data.detail}` : "";
+    throw new Error(`${message}${detail}`.trim());
+  }
+
   return data;
 }
 
