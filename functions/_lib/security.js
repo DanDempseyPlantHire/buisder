@@ -89,11 +89,12 @@ export async function verifyTurnstile(env, request, token) {
   const secret = env.TURNSTILE_SECRET_KEY;
   if (!secret) return { ok: true, enforced: false };
 
-  if (!token) return { ok: false, enforced: true, error: "Complete the security check" };
-
+  // Always call Cloudflare Siteverify when Turnstile is enabled.
+  // This makes configuration failures visible and avoids the browser
+  // preventing the server-side verification request from happening.
   const form = new FormData();
   form.append("secret", secret);
-  form.append("response", String(token));
+  form.append("response", String(token || ""));
   const ip = clientIp(request);
   if (ip && ip !== "unknown") form.append("remoteip", ip);
 
@@ -104,14 +105,44 @@ export async function verifyTurnstile(env, request, token) {
       body: form
     });
   } catch {
-    return { ok: false, enforced: true, error: "Security check unavailable. Try again." };
+    return {
+      ok: false,
+      enforced: true,
+      error: "Turnstile Siteverify could not be reached. Try again."
+    };
   }
 
   const data = await response.json().catch(() => null);
+  const codes = Array.isArray(data?.["error-codes"]) ? data["error-codes"] : [];
+
+  if (data?.success) {
+    return {
+      ok: true,
+      enforced: true,
+      hostname: data.hostname || null,
+      action: data.action || null
+    };
+  }
+
+  const friendly = {
+    "missing-input-secret": "Turnstile secret key is missing.",
+    "invalid-input-secret": "Turnstile secret key is invalid.",
+    "missing-input-response": "The Turnstile widget did not produce a token.",
+    "invalid-input-response": "The Turnstile token was invalid or expired.",
+    "bad-request": "Cloudflare rejected the Turnstile verification request.",
+    "timeout-or-duplicate": "The Turnstile check expired. Complete it again.",
+    "internal-error": "Cloudflare had a temporary Turnstile error."
+  };
+
+  const detail = codes.length
+    ? codes.map(code => friendly[code] || `Turnstile error: ${code}`).join(" ")
+    : "Turnstile validation failed.";
+
   return {
-    ok: Boolean(data?.success),
+    ok: false,
     enforced: true,
-    error: data?.success ? null : "Security check failed. Please try again."
+    error: detail,
+    errorCodes: codes
   };
 }
 

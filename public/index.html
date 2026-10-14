@@ -363,6 +363,9 @@
 
     .security-note{font-size:11px;line-height:1.45;color:var(--muted);margin-top:7px}
     .turnstile-wrap{margin-top:12px;min-height:65px}
+    .turnstile-status{font-size:11px;line-height:1.4;color:var(--muted);margin-top:5px}
+    .turnstile-status.ok{color:var(--good)}
+    .turnstile-status.bad{color:var(--bad)}
     .auth-success{background:var(--good-tint);color:var(--good);border:1px solid #abefc6;border-radius:10px;padding:12px;margin:10px 0;font-size:12px;line-height:1.45}
 
 </style>
@@ -681,36 +684,89 @@ async function markAllNotificationsRead(){
 async function loadSecurityConfig(){
   try{
     const res = await fetch("/api/security/config", {credentials:"include", cache:"no-store"});
-    if(res.ok) state.security = await res.json();
-  }catch(e){}
+    if(res.ok){
+      state.security = await res.json();
+    } else {
+      state.authError = "Buisder could not load its security configuration.";
+    }
+  }catch(e){
+    state.authError = "Buisder could not load its security configuration.";
+  }
 }
 
 function turnstileMarkup(){
-  if(!state.security.turnstileSiteKey) return "";
-  return `<div class="turnstile-wrap"><div id="turnstileAuth"></div></div>`;
+  if(!state.security.turnstileSiteKey){
+    return state.security.turnstileEnabled
+      ? `<div class="notice" style="color:var(--bad)">Turnstile is enabled on the server, but TURNSTILE_SITE_KEY is not available to this deployment.</div>`
+      : "";
+  }
+  return `
+    <div class="turnstile-wrap">
+      <div id="turnstileAuth"></div>
+      <div id="turnstileStatus" class="turnstile-status">Loading security check…</div>
+    </div>
+  `;
 }
 
 function renderTurnstileWidget(){
   state.turnstileToken = "";
   state.turnstileWidgetId = null;
   if(!state.security.turnstileSiteKey) return;
+
   const target = document.getElementById("turnstileAuth");
+  const status = document.getElementById("turnstileStatus");
   if(!target) return;
 
+  const setStatus = (message, kind="")=>{
+    const el = document.getElementById("turnstileStatus");
+    if(!el) return;
+    el.textContent = message;
+    el.className = `turnstile-status ${kind}`;
+  };
+
+  let attempts = 0;
   const tryRender = ()=>{
+    attempts += 1;
+
     if(!window.turnstile){
-      setTimeout(tryRender, 100);
+      if(attempts < 100){
+        setStatus("Loading Cloudflare security check…");
+        setTimeout(tryRender, 100);
+      } else {
+        setStatus("Cloudflare Turnstile script did not load.", "bad");
+      }
       return;
     }
+
     try{
-      state.turnstileWidgetId = turnstile.render(target, {
-        sitekey: state.security.turnstileSiteKey,
-        callback: token => { state.turnstileToken = token; },
-        "expired-callback": () => { state.turnstileToken = ""; },
-        "error-callback": () => { state.turnstileToken = ""; }
+      turnstile.ready(()=>{
+        try{
+          state.turnstileWidgetId = turnstile.render(target, {
+            sitekey: state.security.turnstileSiteKey,
+            theme: "auto",
+            callback: token => {
+              state.turnstileToken = token;
+              setStatus("Security check complete.", "ok");
+            },
+            "expired-callback": () => {
+              state.turnstileToken = "";
+              setStatus("Security check expired. Complete it again.", "bad");
+            },
+            "error-callback": code => {
+              state.turnstileToken = "";
+              setStatus(`Turnstile widget error${code ? `: ${code}` : ""}`, "bad");
+            }
+          });
+          setStatus("Waiting for Cloudflare security check…");
+        }catch(e){
+          setStatus(`Turnstile could not render: ${e.message || e}`, "bad");
+        }
       });
-    }catch(e){}
+    }catch(e){
+      setStatus(`Turnstile initialization failed: ${e.message || e}`, "bad");
+    }
   };
+
   tryRender();
 }
 
@@ -722,9 +778,8 @@ function resetTurnstile(){
 }
 
 function authTurnstileToken(){
-  if(state.security.turnstileEnabled && !state.turnstileToken){
-    throw new Error("Complete the security check");
-  }
+  // Do not stop the request in the browser. The server must always be
+  // allowed to call Cloudflare Siteverify and decide whether to accept it.
   return state.turnstileToken || "";
 }
 
