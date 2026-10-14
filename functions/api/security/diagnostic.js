@@ -5,10 +5,10 @@ export async function onRequestGet({ request, env }) {
   return json({
     ok: true,
     hostname: url.hostname,
-    turnstileSiteKeyConfigured: Boolean(env.TURNSTILE_SITE_KEY),
-    turnstileSecretKeyConfigured: Boolean(env.TURNSTILE_SECRET_KEY),
+    turnstileSiteKeyConfigured: Boolean(String(env.TURNSTILE_SITE_KEY || "").trim()),
+    turnstileSecretKeyConfigured: Boolean(String(env.TURNSTILE_SECRET_KEY || "").trim()),
     sameTurnstileConfigurationPresent:
-      Boolean(env.TURNSTILE_SITE_KEY) && Boolean(env.TURNSTILE_SECRET_KEY),
+      Boolean(String(env.TURNSTILE_SITE_KEY || "").trim()) && Boolean(String(env.TURNSTILE_SECRET_KEY || "").trim()),
     emailApiConfigured: Boolean(env.RESEND_API_KEY),
     emailFromConfigured: Boolean(env.EMAIL_FROM),
     appUrlConfigured: Boolean(env.APP_URL)

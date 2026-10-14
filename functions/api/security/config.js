@@ -3,7 +3,7 @@ import { emailDeliveryConfigured, emailVerificationRequired } from "../../_lib/s
 
 export async function onRequestGet({ env }) {
   return json({
-    turnstileSiteKey: env.TURNSTILE_SITE_KEY || "",
+    turnstileSiteKey: String(env.TURNSTILE_SITE_KEY || "").trim(),
     turnstileEnabled: Boolean(env.TURNSTILE_SECRET_KEY),
     emailDeliveryConfigured: emailDeliveryConfigured(env),
     emailVerificationRequired: emailVerificationRequired(env)

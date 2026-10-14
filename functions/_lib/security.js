@@ -86,7 +86,7 @@ export async function clearRateLimit(env, rateKey) {
 }
 
 export async function verifyTurnstile(env, request, token) {
-  const secret = env.TURNSTILE_SECRET_KEY;
+  const secret = String(env.TURNSTILE_SECRET_KEY || "").trim();
   if (!secret) return { ok: true, enforced: false };
 
   // Always call Cloudflare Siteverify when Turnstile is enabled.
