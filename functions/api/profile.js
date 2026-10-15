@@ -35,6 +35,20 @@ export async function onRequestPut(context) {
       longitude === "" || longitude === null || longitude === undefined ? null : Number(longitude),
       user.id
     ).run();
+
+    if (ageBand === "16–17") {
+      await env.DB.prepare(
+        `INSERT INTO privacy_preferences
+         (user_id, share_email, share_cv, share_photo, share_location, updated_at)
+         VALUES (?, 0, 0, 0, 1, CURRENT_TIMESTAMP)
+         ON CONFLICT(user_id) DO UPDATE SET
+           share_email=0,
+           share_cv=0,
+           share_photo=0,
+           updated_at=CURRENT_TIMESTAMP`
+      ).bind(user.id).run();
+    }
+
   } else {
     const {
       companyName, legalName, location, description, phone, website,

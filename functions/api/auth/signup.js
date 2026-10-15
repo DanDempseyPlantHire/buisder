@@ -1,4 +1,5 @@
 import { json, err, newId, hashPassword, sessionCookie } from "../../_lib/db.js";
+import { TERMS_VERSION, PRIVACY_VERSION } from "../../_lib/policy.js";
 import {
   appOrigin,
   clientIp,
@@ -17,9 +18,20 @@ export async function onRequestPost({ request, env }) {
   const body = await request.json().catch(() => null);
   if (!body) return err("Invalid request body");
 
-  const { email, password, role, name, turnstileToken } = body;
+  const {
+    email, password, role, name, turnstileToken,
+    acceptedTerms, acceptedPrivacy, eligibilityConfirmed
+  } = body;
   if (!email || !password || !role) return err("Email, password and role are required");
   if (!["jobseeker", "employer"].includes(role)) return err("Role must be jobseeker or employer");
+  if (!acceptedTerms || !acceptedPrivacy) {
+    return err("You must accept the Buisder Pilot Terms and Privacy Summary to create an account.");
+  }
+  if (!eligibilityConfirmed) {
+    return err(role === "jobseeker"
+      ? "Confirm that you are at least 16 years old."
+      : "Confirm that you are authorised to use Buisder for this business.");
+  }
 
   const cleanEmail = String(email).toLowerCase().trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return err("Enter a valid email address");
@@ -58,6 +70,18 @@ export async function onRequestPost({ request, env }) {
       "INSERT INTO employer_profiles (user_id, company_name) VALUES (?, ?)"
     ).bind(id, name || "").run();
   }
+
+  await env.DB.prepare(
+    `INSERT INTO legal_consents
+     (id, user_id, terms_version, privacy_version)
+     VALUES (?, ?, ?, ?)`
+  ).bind(newId(), id, TERMS_VERSION, PRIVACY_VERSION).run();
+
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO privacy_preferences
+     (user_id, share_email, share_cv, share_photo, share_location)
+     VALUES (?, 1, 1, 1, 1)`
+  ).bind(id).run();
 
   if (requireVerification) {
     const token = await createAuthToken(env, id, "verify_email", 24 * 3600);

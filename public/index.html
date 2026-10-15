@@ -368,6 +368,17 @@
     .turnstile-status.bad{color:var(--bad)}
     .auth-success{background:var(--good-tint);color:var(--good);border:1px solid #abefc6;border-radius:10px;padding:12px;margin:10px 0;font-size:12px;line-height:1.45}
 
+
+    .safety-card{border:1px solid var(--line-light);border-radius:14px;padding:14px;margin-top:14px;background:#fff}
+    .safety-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .privacy-toggle{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line-light)}
+    .privacy-toggle:last-child{border-bottom:0}
+    .privacy-toggle input{width:auto;margin-top:3px}
+    .report-status{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;background:#f2f4f7}
+    .report-status.open,.report-status.reviewing{background:#fffaeb;color:#b54708}
+    .report-status.resolved{background:#ecfdf3;color:#067647}
+    .report-status.dismissed{background:#f2f4f7;color:#475467}
+
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -414,8 +425,9 @@ let state = {
   postedJobs:[],
   applicants:[],
   notifications:[],
+  account:{privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},consent:null,blocks:[],reports:[]},
   applicantFilters:{jobId:"all", status:"all"},
-  admin:{overview:{}, verifications:[], users:[], jobs:[], auditLog:[]},
+  admin:{overview:{}, verifications:[], users:[], jobs:[], reports:[], auditLog:[]},
   authMode:"login",
   authRole:"jobseeker",
   authError:"",
@@ -847,14 +859,14 @@ async function loadBootstrap(){
     ? ["feed","applications","profile"].includes(state.tab)
     : state.mode==="employer"
       ? ["home","post","applicants","profile"].includes(state.tab)
-      : ["admin-home","verifications","admin-users","admin-jobs"].includes(state.tab);
+      : ["admin-home","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
 
   if(!validTab){
     state.tab = state.mode==="jobseeker" ? "feed" : (state.mode==="employer" ? "home" : "admin-home");
   }
 
   if(state.mode==="admin"){
-    state.admin = data.admin || {overview:{}, verifications:[], users:[], jobs:[], auditLog:[]};
+    state.admin = data.admin || {overview:{}, verifications:[], users:[], jobs:[], reports:[], auditLog:[]};
     state.notifications = data.notifications || [];
     state.profile = {};
     state.jobs = [];
@@ -867,6 +879,7 @@ async function loadBootstrap(){
 
   state.profile = data.profile || {};
   state.notifications = data.notifications || [];
+  state.account = data.account || {privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},consent:null,blocks:[],reports:[]};
   if(state.mode==="jobseeker"){
     state.jobs = data.jobs || [];
     state.applications = data.applications || [];
@@ -1000,6 +1013,22 @@ function renderAuth(){
           <label>Password</label>
           <input id="authPassword" type="password" placeholder="At least 10 characters">
           <div class="security-note">New accounts can be required to verify their email before login.</div>
+          <div class="privacy-toggle" style="margin-top:10px">
+            <input id="authEligibility" type="checkbox">
+            <label for="authEligibility" style="margin:0">
+              ${state.authRole==="jobseeker"
+                ? "I confirm I am at least 16 years old."
+                : "I confirm I am authorised to use Buisder for this business."}
+            </label>
+          </div>
+          <div class="privacy-toggle">
+            <input id="authTerms" type="checkbox">
+            <label for="authTerms" style="margin:0">I accept the <a href="/terms.html" target="_blank" rel="noopener">Buisder Pilot Terms</a>.</label>
+          </div>
+          <div class="privacy-toggle">
+            <input id="authPrivacy" type="checkbox">
+            <label for="authPrivacy" style="margin:0">I have read the <a href="/privacy.html" target="_blank" rel="noopener">Pilot Privacy Summary</a>.</label>
+          </div>
           ${turnstileMarkup()}
           ${errBox}
           <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doSignup()">Create account</button>
@@ -1041,7 +1070,12 @@ async function doSignup(){
     const turnstileToken = authTurnstileToken();
     const result = await api("/api/auth/signup", {
       method:"POST",
-      body:{name, email, password, role:state.authRole, turnstileToken}
+      body:{
+        name, email, password, role:state.authRole, turnstileToken,
+        acceptedTerms:Boolean(document.getElementById("authTerms")?.checked),
+        acceptedPrivacy:Boolean(document.getElementById("authPrivacy")?.checked),
+        eligibilityConfirmed:Boolean(document.getElementById("authEligibility")?.checked)
+      }
     });
 
     state.authError = "";
@@ -1166,7 +1200,7 @@ function renderNav(){
     ? [["feed","Jobs"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
     : state.mode==="employer"
       ? [["home","Dashboard"],["post","Post job"],["applicants","Applicants"],["profile","Business"]]
-      : [["admin-home","Admin"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
+      : [["admin-home","Admin"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
   nav.style.gridTemplateColumns = `repeat(${items.length},1fr)`;
   nav.innerHTML = items.map(([key,label]) => `
     <button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>
@@ -1550,6 +1584,11 @@ function showJob(id){
       <button class="btn btn-bad" onclick="skipCurrent();closeModal()">Skip</button>
       <button class="btn btn-good" onclick="acceptCurrent();closeModal()">Accept</button>
     </div>
+    <div class="safety-actions">
+      <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openReport('job','${j.id}',{jobId:'${j.id}'})">Report job</button>
+      <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openReport('employer','${j.employer_id}',{jobId:'${j.id}'})">Report employer</button>
+    </div>
+    <button class="btn btn-bad btn-block" style="margin-top:8px" onclick="blockUser('${j.employer_id}','${j.company || "this employer"}')">Block employer</button>
   `);
 }
 
@@ -1804,6 +1843,254 @@ function profilePhotoMarkup(p, name){
   return `<div class="jobseeker-photo">${(name || "U").slice(0,1).toUpperCase()}</div>`;
 }
 
+
+function privacyBool(value){
+  return value === true || value === 1 || value === "1";
+}
+
+function renderPrivacySafetyCard(){
+  const a = state.account || {};
+  const reports = a.reports || [];
+  const openReports = reports.filter(r=>["open","reviewing"].includes(r.status)).length;
+
+  return `
+    <div class="safety-card">
+      <div class="title-row" style="margin-top:0"><h2>Account & privacy</h2><span>${openReports ? `${openReports} report${openReports===1?"":"s"} open` : "Controls"}</span></div>
+      <div class="small">
+        Control what is shared, review blocked accounts, export your Buisder data or permanently delete your account.
+      </div>
+      ${!a.consent ? `<div class="notice" style="margin-top:10px"><strong>Review required:</strong> this account predates the current Pilot Terms and Privacy Summary.</div>` : ""}
+      <div class="safety-actions">
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openPrivacySettings()">Privacy settings</button>
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openSafetyCentre()">Safety centre</button>
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="downloadMyData()">Export my data</button>
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openAccountLegal()">Terms & privacy</button>
+      </div>
+      <button class="btn btn-bad btn-block" style="margin-top:10px" onclick="openDeleteAccount()">Delete account</button>
+    </div>
+  `;
+}
+
+function openPrivacySettings(){
+  const p = state.account?.privacy || {};
+  const young = state.mode==="jobseeker" && state.profile?.age_band==="16–17";
+
+  openModal(`
+    <h3>Privacy settings</h3>
+    ${young ? `<div class="notice"><strong>16–17 protection:</strong> direct email, CV and profile photo sharing are disabled. Employers can still use Buisder's interview and offer workflow.</div>` : ""}
+    ${state.mode==="jobseeker" ? `
+      <div class="privacy-toggle">
+        <input id="privacyEmail" type="checkbox" ${privacyBool(p.shareEmail)&&!young?"checked":""} ${young?"disabled":""}>
+        <label for="privacyEmail" style="margin:0"><strong>Share email with employers I apply to</strong><br><span class="small">Turn this off to keep contact inside Buisder.</span></label>
+      </div>
+      <div class="privacy-toggle">
+        <input id="privacyCv" type="checkbox" ${privacyBool(p.shareCv)&&!young?"checked":""} ${young?"disabled":""}>
+        <label for="privacyCv" style="margin:0"><strong>Share my CV with employers I apply to</strong></label>
+      </div>
+      <div class="privacy-toggle">
+        <input id="privacyPhoto" type="checkbox" ${privacyBool(p.sharePhoto)&&!young?"checked":""} ${young?"disabled":""}>
+        <label for="privacyPhoto" style="margin:0"><strong>Share my profile photo with employers I apply to</strong></label>
+      </div>
+      <div class="privacy-toggle">
+        <input id="privacyLocation" type="checkbox" ${privacyBool(p.shareLocation)?"checked":""}>
+        <label for="privacyLocation" style="margin:0"><strong>Share my general location</strong><br><span class="small">Precise matching coordinates are never shown to employers.</span></label>
+      </div>
+      <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="savePrivacySettings()">Save privacy settings</button>
+    ` : `
+      <div class="notice">Employer profiles and active job listings are visible to job seekers. Your account email is used for account access and administration.</div>
+    `}
+  `);
+}
+
+async function savePrivacySettings(){
+  try{
+    await api("/api/account/privacy", {
+      method:"PUT",
+      body:{
+        shareEmail:Boolean(document.getElementById("privacyEmail")?.checked),
+        shareCv:Boolean(document.getElementById("privacyCv")?.checked),
+        sharePhoto:Boolean(document.getElementById("privacyPhoto")?.checked),
+        shareLocation:Boolean(document.getElementById("privacyLocation")?.checked)
+      }
+    });
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Privacy settings saved");
+  }catch(e){ toast(e.message); }
+}
+
+function openSafetyCentre(){
+  const blocks = state.account?.blocks || [];
+  const reports = state.account?.reports || [];
+
+  openModal(`
+    <h3>Safety centre</h3>
+    <p class="small">Reports are reviewed by Buisder administrators. Blocking prevents future matching and closes active recruitment interactions between the two accounts.</p>
+
+    <div class="title-row"><h2>Blocked accounts</h2><span>${blocks.length}</span></div>
+    ${blocks.length ? blocks.map(b=>`
+      <div class="admin-row">
+        <strong>${b.name || cap(b.role || "user")}</strong>
+        <div class="admin-meta">${cap(b.role || "user")} · blocked ${formatTimelineDate(b.createdAt)}</div>
+        <button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-top:8px" onclick="unblockUser('${b.userId}')">Unblock</button>
+      </div>
+    `).join("") : `<div class="notice">You have not blocked any accounts.</div>`}
+
+    <div class="title-row"><h2>Your reports</h2><span>${reports.length}</span></div>
+    ${reports.length ? reports.map(r=>`
+      <div class="admin-row">
+        <strong>${cap(String(r.targetType || "").replaceAll("_"," "))}</strong>
+        <div class="admin-meta">${reportReasonLabel(r.reason)} · ${formatTimelineDate(r.createdAt)}</div>
+        <span class="report-status ${r.status}">${cap(r.status)}</span>
+      </div>
+    `).join("") : `<div class="notice">You have not submitted any reports.</div>`}
+  `);
+}
+
+async function unblockUser(userId){
+  try{
+    await api(`/api/blocks/${userId}`, {method:"DELETE"});
+    await loadBootstrap();
+    render();
+    openSafetyCentre();
+    toast("Account unblocked");
+  }catch(e){ toast(e.message); }
+}
+
+function openAccountLegal(){
+  const c = state.account?.consent;
+  openModal(`
+    <h3>Terms & privacy</h3>
+    ${c
+      ? `<div class="auth-success">Accepted Pilot Terms ${c.termsVersion} and Privacy Summary ${c.privacyVersion} on ${formatTimelineDate(c.acceptedAt)}.</div>`
+      : `<div class="notice">This account has not yet recorded acceptance of the current pilot terms and privacy summary.</div>`}
+    <a class="btn btn-outline btn-block" href="/terms.html" target="_blank" rel="noopener">Read Pilot Terms</a>
+    <a class="btn btn-outline btn-block" style="margin-top:8px" href="/privacy.html" target="_blank" rel="noopener">Read Privacy Summary</a>
+    ${!c ? `<button class="btn btn-dark btn-block" style="margin-top:12px" onclick="acceptCurrentPolicies()">Accept current terms & privacy</button>` : ""}
+  `);
+}
+
+async function acceptCurrentPolicies(){
+  try{
+    await api("/api/account/consent", {method:"POST", body:{accepted:true}});
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Terms and privacy acceptance recorded");
+  }catch(e){ toast(e.message); }
+}
+
+function downloadMyData(){
+  window.location.href = "/api/account/export";
+}
+
+function openDeleteAccount(){
+  const employerWarning = state.mode==="employer"
+    ? "<strong>Employer account:</strong> deleting this account also removes its Buisder job listings and associated recruitment records."
+    : "Your profile, applications and Buisder account data will be permanently removed.";
+
+  openModal(`
+    <h3>Delete account</h3>
+    <div class="notice" style="color:var(--bad)">${employerWarning}</div>
+    <p class="small">This cannot be undone. Export anything you want to keep first.</p>
+    <label>Your password</label>
+    <input id="deletePassword" type="password" autocomplete="current-password">
+    <label>Type DELETE to confirm</label>
+    <input id="deleteConfirm" placeholder="DELETE">
+    <button class="btn btn-bad btn-block" style="margin-top:12px" onclick="deleteMyAccount()">Permanently delete account</button>
+  `);
+}
+
+async function deleteMyAccount(){
+  if(!confirm("Permanently delete this Buisder account? This cannot be undone.")) return;
+  try{
+    await api("/api/account/delete", {
+      method:"POST",
+      body:{
+        password:document.getElementById("deletePassword")?.value || "",
+        confirm:document.getElementById("deleteConfirm")?.value || ""
+      }
+    });
+    closeModal();
+    state.user = null;
+    state.mode = null;
+    state.tab = null;
+    state.profile = {};
+    state.jobs = [];
+    state.applications = [];
+    state.postedJobs = [];
+    state.applicants = [];
+    state.account = {privacy:{},consent:null,blocks:[],reports:[]};
+    render();
+    toast("Account deleted");
+  }catch(e){ toast(e.message); }
+}
+
+function reportReasonLabel(reason){
+  const map = {
+    scam_fraud:"Scam or fraud",
+    misleading:"Misleading information",
+    inappropriate:"Inappropriate content",
+    harassment:"Harassment",
+    discrimination:"Discrimination",
+    unsafe:"Safety concern",
+    other:"Other"
+  };
+  return map[reason] || cap(String(reason || "").replaceAll("_"," "));
+}
+
+function openReport(targetType, targetId, context={}){
+  openModal(`
+    <h3>Report ${targetType}</h3>
+    <p class="small">Send this to the Buisder moderation queue. Do not include unnecessary sensitive information.</p>
+    <label>Reason</label>
+    <select id="reportReason">
+      <option value="scam_fraud">Scam or fraud</option>
+      <option value="misleading">Misleading information</option>
+      <option value="inappropriate">Inappropriate content</option>
+      <option value="harassment">Harassment</option>
+      <option value="discrimination">Discrimination</option>
+      <option value="unsafe">Safety concern</option>
+      <option value="other">Other</option>
+    </select>
+    <label>Details (optional)</label>
+    <textarea id="reportDetails" maxlength="2000" placeholder="Briefly explain what happened"></textarea>
+    <button class="btn btn-bad btn-block" style="margin-top:12px" onclick='submitReport(${JSON.stringify(targetType)}, ${JSON.stringify(targetId)}, ${JSON.stringify(context)})'>Submit report</button>
+  `);
+}
+
+async function submitReport(targetType, targetId, context){
+  try{
+    await api("/api/reports", {
+      method:"POST",
+      body:{
+        targetType,
+        targetId,
+        reason:document.getElementById("reportReason")?.value,
+        details:document.getElementById("reportDetails")?.value || "",
+        jobId:context?.jobId || null,
+        applicationId:context?.applicationId || null
+      }
+    });
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Report submitted");
+  }catch(e){ toast(e.message); }
+}
+
+async function blockUser(userId, label){
+  if(!confirm(`Block ${label || "this account"}? Active recruitment interactions between you will be closed.`)) return;
+  try{
+    await api("/api/blocks", {method:"POST", body:{blockedUserId:userId}});
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Account blocked");
+  }catch(e){ toast(e.message); }
+}
+
 function renderProfile(){
   const p = state.profile || {};
   const cvLabel = p.cv_filename
@@ -1897,6 +2184,7 @@ function renderProfile(){
 
         <button class="btn btn-dark btn-block" onclick="saveProfile()">Save profile</button>
       </div>
+      ${renderPrivacySafetyCard()}
     </div>
   `;
 }
@@ -2137,6 +2425,7 @@ function adminStatusBadge(status){
 }
 
 function renderAdmin(){
+  if(state.tab==="admin-reports") return renderAdminReports();
   if(state.tab==="verifications") return renderAdminVerifications();
   if(state.tab==="admin-users") return renderAdminUsers();
   if(state.tab==="admin-jobs") return renderAdminJobs();
@@ -2157,6 +2446,7 @@ function renderAdminHome(){
         <div class="admin-stat"><strong>${o.pendingVerifications || 0}</strong><span>Pending verification</span></div>
         <div class="admin-stat"><strong>${o.activeJobs || 0}</strong><span>Active jobs</span></div>
         <div class="admin-stat"><strong>${o.totalApplications || 0}</strong><span>Applications</span></div>
+        <div class="admin-stat"><strong>${o.openReports || 0}</strong><span>Open reports</span></div>
       </div>
 
       <div class="title-row"><h2>Account mix</h2><span>Current</span></div>
@@ -2183,6 +2473,15 @@ function renderAdminHome(){
         </div>
       `).join("") : `<div class="card dark"><div class="small" style="color:#cbd5e1">No businesses are currently waiting for verification.</div></div>`}
 
+      <div class="title-row"><h2>Safety reports</h2><button class="btn btn-outline" onclick="setTab('admin-reports')">Open queue</button></div>
+      ${(state.admin.reports || []).filter(r=>["open","reviewing"].includes(r.status)).slice(0,3).map(r=>`
+        <div class="admin-row">
+          <strong>${cap(r.targetType)} · ${reportReasonLabel(r.reason)}</strong>
+          <div class="admin-meta">${r.jobTitle || r.targetName || "Reported item"} · ${formatTimelineDate(r.createdAt)}</div>
+          <span class="report-status ${r.status}">${cap(r.status)}</span>
+        </div>
+      `).join("") || `<div class="card dark"><div class="small" style="color:#cbd5e1">No open safety reports.</div></div>`}
+
       <div class="title-row"><h2>Recent admin activity</h2><span>${(state.admin.auditLog || []).length}</span></div>
       ${(state.admin.auditLog || []).slice(0,8).map(a=>`
         <div class="admin-row">
@@ -2192,6 +2491,58 @@ function renderAdminHome(){
       `).join("") || `<div class="card dark"><div class="small" style="color:#cbd5e1">No admin actions recorded yet.</div></div>`}
     </div>
   `;
+}
+
+
+function renderAdminReports(){
+  const reports = state.admin.reports || [];
+  return `
+    <div class="section-pad">
+      <div class="title-row"><h2>Safety reports</h2><span>${reports.filter(r=>["open","reviewing"].includes(r.status)).length} open</span></div>
+      ${reports.length ? reports.map(r=>`
+        <div class="admin-row">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+            <div>
+              <strong>${cap(r.targetType)} · ${reportReasonLabel(r.reason)}</strong>
+              <div class="admin-meta">
+                Reported ${formatTimelineDate(r.createdAt)}<br>
+                Reporter: ${r.reporterEmail || "deleted account"}<br>
+                ${r.targetName || r.targetEmail ? `Target: ${r.targetName || ""} ${r.targetEmail || ""}<br>` : ""}
+                ${r.jobTitle ? `Job: ${r.jobTitle}${r.jobCompany ? " · " + r.jobCompany : ""}<br>` : ""}
+              </div>
+            </div>
+            <span class="report-status ${r.status}">${cap(r.status)}</span>
+          </div>
+          ${r.details ? `<div class="notice">${r.details}</div>` : ""}
+          ${r.adminNote ? `<div class="small"><strong>Admin note:</strong> ${r.adminNote}</div>` : ""}
+          ${["open","reviewing"].includes(r.status) ? `
+            <label>Admin note</label>
+            <textarea id="moderationNote-${r.id}" placeholder="Optional moderation note"></textarea>
+            <div class="admin-actions">
+              ${r.status==="open" ? `<button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="moderateReport('${r.id}','review')">Reviewing</button>` : ""}
+              <button class="btn btn-good" onclick="moderateReport('${r.id}','resolve')">Resolve</button>
+              <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="moderateReport('${r.id}','dismiss')">Dismiss</button>
+            </div>
+            <div class="admin-actions">
+              ${r.targetUserId ? `<button class="btn btn-bad" onclick="moderateReport('${r.id}','suspend_target')">Suspend reported user</button>` : ""}
+              ${r.jobId ? `<button class="btn btn-bad" onclick="moderateReport('${r.id}','close_job')">Close reported job</button>` : ""}
+            </div>
+          ` : ""}
+        </div>
+      `).join("") : `<div class="card dark"><div class="small" style="color:#cbd5e1">No safety reports.</div></div>`}
+    </div>
+  `;
+}
+
+async function moderateReport(reportId, action){
+  if(["suspend_target","close_job"].includes(action) && !confirm("Take this moderation action and resolve the report?")) return;
+  try{
+    const note = document.getElementById(`moderationNote-${reportId}`)?.value || "";
+    await api(`/api/admin/reports/${reportId}`, {method:"POST", body:{action, note}});
+    await loadBootstrap();
+    render();
+    toast("Moderation action saved");
+  }catch(e){ toast(e.message); }
 }
 
 function renderAdminVerifications(){
@@ -2953,6 +3304,11 @@ function viewApplicant(id){
       ? `<a class="btn btn-outline btn-block" href="${a.applicantCvUrl}" target="_blank" rel="noopener">Open ${a.applicantCvFilename || "candidate CV"}</a>`
       : `<div class="notice">No CV file has been uploaded by this candidate.</div>`}
 
+    <div class="safety-actions">
+      <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openReport('applicant','${a.applicantId}',{applicationId:'${a.id}',jobId:'${a.jobId}'})">Report applicant</button>
+      <button class="btn btn-bad" onclick="blockUser('${a.applicantId}','${a.applicantName || "this applicant"}')">Block applicant</button>
+    </div>
+
     ${a.interviewAt ? `
       <div class="interview-box ${a.interviewStatus==="declined" ? "declined" : (a.interviewStatus==="accepted" ? "" : "pending")}">
         <strong>${interviewStatusLabel(a)}</strong>
@@ -3088,6 +3444,7 @@ function renderBusinessProfile(){
           ? `<button class="btn btn-good btn-block" style="margin-top:10px" onclick="submitBusinessVerification()">Submit for verification</button>`
           : ""}
       </div>
+      ${renderPrivacySafetyCard()}
     </div>
   `;
 }

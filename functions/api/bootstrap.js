@@ -75,6 +75,53 @@ async function getNotifications(env, userId) {
   return results || [];
 }
 
+
+async function getAccountSafety(env, user) {
+  const privacy = await env.DB.prepare(
+    `SELECT share_email AS shareEmail,
+            share_cv AS shareCv,
+            share_photo AS sharePhoto,
+            share_location AS shareLocation,
+            updated_at AS updatedAt
+     FROM privacy_preferences WHERE user_id=?`
+  ).bind(user.id).first();
+
+  const consent = await env.DB.prepare(
+    `SELECT terms_version AS termsVersion,
+            privacy_version AS privacyVersion,
+            accepted_at AS acceptedAt
+     FROM legal_consents
+     WHERE user_id=?
+     ORDER BY accepted_at DESC LIMIT 1`
+  ).bind(user.id).first();
+
+  const { results: blocks } = await env.DB.prepare(
+    `SELECT b.blocked_user_id AS userId, b.created_at AS createdAt,
+            u.name, u.role
+     FROM user_blocks b
+     JOIN users u ON u.id=b.blocked_user_id
+     WHERE b.blocker_user_id=?
+     ORDER BY b.created_at DESC`
+  ).bind(user.id).all();
+
+  const { results: reports } = await env.DB.prepare(
+    `SELECT id, target_type AS targetType, reason, details, status,
+            created_at AS createdAt, updated_at AS updatedAt
+     FROM safety_reports
+     WHERE reporter_user_id=?
+     ORDER BY created_at DESC LIMIT 30`
+  ).bind(user.id).all();
+
+  return {
+    privacy: privacy || {
+      shareEmail: 1, shareCv: 1, sharePhoto: 1, shareLocation: 1
+    },
+    consent: consent || null,
+    blocks: blocks || [],
+    reports: reports || []
+  };
+}
+
 export async function onRequestGet(context) {
   const { env } = context;
   const user = await getUser(context);
@@ -89,7 +136,8 @@ export async function onRequestGet(context) {
         (SELECT COUNT(*) FROM users WHERE role='employer') AS employers,
         (SELECT COUNT(*) FROM employer_profiles WHERE verification_status='pending') AS pendingVerifications,
         (SELECT COUNT(*) FROM jobs WHERE status='active') AS activeJobs,
-        (SELECT COUNT(*) FROM applications) AS totalApplications`
+        (SELECT COUNT(*) FROM applications) AS totalApplications,
+        (SELECT COUNT(*) FROM safety_reports WHERE status IN ('open','reviewing')) AS openReports`
     ).first();
 
     const { results: verifications } = await env.DB.prepare(
@@ -145,6 +193,26 @@ export async function onRequestGet(context) {
        LIMIT 100`
     ).all();
 
+    const { results: moderationReports } = await env.DB.prepare(
+      `SELECT r.id, r.target_type AS targetType, r.reason, r.details, r.status,
+              r.created_at AS createdAt, r.updated_at AS updatedAt,
+              r.target_user_id AS targetUserId, r.job_id AS jobId,
+              r.application_id AS applicationId, r.admin_note AS adminNote,
+              reporter.email AS reporterEmail,
+              target.email AS targetEmail,
+              target.name AS targetName,
+              target.role AS targetRole,
+              j.title AS jobTitle, j.company AS jobCompany
+       FROM safety_reports r
+       LEFT JOIN users reporter ON reporter.id=r.reporter_user_id
+       LEFT JOIN users target ON target.id=r.target_user_id
+       LEFT JOIN jobs j ON j.id=r.job_id
+       ORDER BY
+         CASE r.status WHEN 'open' THEN 0 WHEN 'reviewing' THEN 1 ELSE 2 END,
+         r.created_at DESC
+       LIMIT 100`
+    ).all();
+
     const { results: auditLog } = await env.DB.prepare(
       `SELECT al.id, al.action, al.target_type AS targetType, al.target_id AS targetId,
               al.details, al.created_at AS createdAt,
@@ -166,6 +234,7 @@ export async function onRequestGet(context) {
         })),
         users: adminUsers,
         jobs: adminJobs,
+        reports: moderationReports,
         auditLog
       }
     });
@@ -240,8 +309,13 @@ export async function onRequestGet(context) {
        FROM jobs j
        LEFT JOIN employer_profiles ep ON ep.user_id = j.employer_id
        WHERE j.status = 'active'
+         AND NOT EXISTS (
+           SELECT 1 FROM user_blocks b
+           WHERE (b.blocker_user_id=? AND b.blocked_user_id=j.employer_id)
+              OR (b.blocker_user_id=j.employer_id AND b.blocked_user_id=?)
+         )
        ORDER BY j.created_at DESC`
-    ).all();
+    ).bind(user.id, user.id).all();
 
     return json({
       user,
@@ -252,7 +326,8 @@ export async function onRequestGet(context) {
         statusHistory: historyByApplication[a.id] || []
       })),
       skipped: skipRows.map(r => r.job_id),
-      notifications: await getNotifications(env, user.id)
+      notifications: await getNotifications(env, user.id),
+      account: await getAccountSafety(env, user)
     });
   }
 
@@ -272,10 +347,14 @@ export async function onRequestGet(context) {
             a.interview_accepted_at as interviewAcceptedAt,
             a.interview_declined_at as interviewDeclinedAt,
             a.interview_completed_at as interviewCompletedAt,
-            u.id as applicantId, u.name as applicantName, u.email as applicantEmail,
-            jp.location as applicantLocation, jp.availability as applicantAvailability, jp.skills as applicantSkills,
-            jp.photo_data as applicantPhotoLegacy, jp.photo_key as applicantPhotoKey,
-            jp.cv_key as applicantCvKey, jp.cv_filename as applicantCvFilename,
+            u.id as applicantId, u.name as applicantName,
+            CASE WHEN COALESCE(pp.share_email,1)=1 THEN u.email ELSE NULL END as applicantEmail,
+            CASE WHEN COALESCE(pp.share_location,1)=1 THEN jp.location ELSE NULL END as applicantLocation,
+            jp.availability as applicantAvailability, jp.skills as applicantSkills,
+            CASE WHEN COALESCE(pp.share_photo,1)=1 THEN jp.photo_data ELSE NULL END as applicantPhotoLegacy,
+            CASE WHEN COALESCE(pp.share_photo,1)=1 THEN jp.photo_key ELSE NULL END as applicantPhotoKey,
+            CASE WHEN COALESCE(pp.share_cv,1)=1 THEN jp.cv_key ELSE NULL END as applicantCvKey,
+            CASE WHEN COALESCE(pp.share_cv,1)=1 THEN jp.cv_filename ELSE NULL END as applicantCvFilename,
             j.title as jobTitle,
             ii.interview_at as interviewAt,
             ii.location as interviewLocation,
@@ -293,11 +372,17 @@ export async function onRequestGet(context) {
      JOIN jobs j ON j.id = a.job_id
      JOIN users u ON u.id = a.jobseeker_id
      LEFT JOIN jobseeker_profiles jp ON jp.user_id = u.id
+     LEFT JOIN privacy_preferences pp ON pp.user_id = u.id
      LEFT JOIN interview_invites ii ON ii.application_id = a.id
      LEFT JOIN job_offers o ON o.application_id = a.id
      WHERE j.employer_id = ?
+       AND NOT EXISTS (
+         SELECT 1 FROM user_blocks b
+         WHERE (b.blocker_user_id=? AND b.blocked_user_id=u.id)
+            OR (b.blocker_user_id=u.id AND b.blocked_user_id=?)
+       )
      ORDER BY a.created_at DESC`
-  ).bind(user.id).all();
+  ).bind(user.id, user.id, user.id).all();
 
 
   const { results: employerHistoryRows } = await env.DB.prepare(
@@ -338,6 +423,7 @@ export async function onRequestGet(context) {
         : null,
       statusHistory: employerHistoryByApplication[a.id] || []
     })),
-    notifications: await getNotifications(env, user.id)
+    notifications: await getNotifications(env, user.id),
+    account: await getAccountSafety(env, user)
   });
 }

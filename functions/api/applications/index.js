@@ -14,6 +14,15 @@ export async function onRequestPost(context) {
   ).bind(jobId).first();
   if (!job) return err("Job not found", 404);
 
+  const blocked = await env.DB.prepare(
+    `SELECT id FROM user_blocks
+     WHERE (blocker_user_id=? AND blocked_user_id=?)
+        OR (blocker_user_id=? AND blocked_user_id=?)
+     LIMIT 1`
+  ).bind(user.id, job.employer_id, job.employer_id, user.id).first();
+
+  if (blocked) return err("This application cannot be submitted because one of the accounts is blocked.", 403);
+
   const id = newId();
   const insert = await env.DB.prepare(
     "INSERT OR IGNORE INTO applications (id, job_id, jobseeker_id, updated_at) VALUES (?, ?, ?, datetime(\'now\'))"
