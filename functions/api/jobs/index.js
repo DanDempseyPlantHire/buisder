@@ -1,4 +1,5 @@
 import { json, err, newId, requireUser } from "../../_lib/db.js";
+import { recordAnalyticsEvent } from "../../_lib/analytics.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -34,6 +35,15 @@ export async function onRequestPost(context) {
     latitude === "" || latitude === null || latitude === undefined ? null : Number(latitude),
     longitude === "" || longitude === null || longitude === undefined ? null : Number(longitude)
   ).run();
+
+  await recordAnalyticsEvent(env, {
+    userId: user.id,
+    userRole: "employer",
+    eventType: "job_posted",
+    jobId: id,
+    eventKey: `job_posted:${id}`,
+    metadata: { employmentType: employmentType || "Part-time", minAge: Number(minAge) || 16 }
+  });
 
   return json({ id }, { status: 201 });
 }

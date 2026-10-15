@@ -63,6 +63,16 @@ export async function onRequestGet(context) {
     user.id
   );
 
+  const analyticsEvents = await all(
+    env,
+    `SELECT event_type AS eventType, job_id AS jobId,
+            application_id AS applicationId, created_at AS createdAt
+     FROM analytics_events
+     WHERE user_id=?
+     ORDER BY created_at DESC`,
+    user.id
+  );
+
   const exportData = {
     generatedAt: new Date().toISOString(),
     account,
@@ -70,7 +80,8 @@ export async function onRequestGet(context) {
     legalConsents: consents,
     notifications,
     reportsSubmitted,
-    blocks
+    blocks,
+    analyticsEvents
   };
 
   if (user.role === "jobseeker") {

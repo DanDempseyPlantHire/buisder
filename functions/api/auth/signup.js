@@ -1,5 +1,6 @@
 import { json, err, newId, hashPassword, sessionCookie } from "../../_lib/db.js";
 import { TERMS_VERSION, PRIVACY_VERSION } from "../../_lib/policy.js";
+import { recordAnalyticsEvent } from "../../_lib/analytics.js";
 import {
   appOrigin,
   clientIp,
@@ -82,6 +83,13 @@ export async function onRequestPost({ request, env }) {
      (user_id, share_email, share_cv, share_photo, share_location)
      VALUES (?, 1, 1, 1, 1)`
   ).bind(id).run();
+
+  await recordAnalyticsEvent(env, {
+    userId: id,
+    userRole: role,
+    eventType: "user_signup",
+    eventKey: `user_signup:${id}`
+  });
 
   if (requireVerification) {
     const token = await createAuthToken(env, id, "verify_email", 24 * 3600);

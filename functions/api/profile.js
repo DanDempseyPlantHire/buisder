@@ -1,4 +1,5 @@
 import { json, err, requireUser } from "../_lib/db.js";
+import { recordAnalyticsEvent } from "../_lib/analytics.js";
 
 export async function onRequestPut(context) {
   const { request, env } = context;
@@ -35,6 +36,15 @@ export async function onRequestPut(context) {
       longitude === "" || longitude === null || longitude === undefined ? null : Number(longitude),
       user.id
     ).run();
+
+    if (onboardingComplete) {
+      await recordAnalyticsEvent(env, {
+        userId: user.id,
+        userRole: "jobseeker",
+        eventType: "profile_completed",
+        eventKey: `profile_completed:${user.id}`
+      });
+    }
 
     if (ageBand === "16–17") {
       await env.DB.prepare(

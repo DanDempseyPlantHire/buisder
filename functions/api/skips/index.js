@@ -1,4 +1,5 @@
 import { json, err, requireUser } from "../../_lib/db.js";
+import { recordAnalyticsEvent } from "../../_lib/analytics.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -11,6 +12,14 @@ export async function onRequestPost(context) {
 
   await env.DB.prepare("INSERT OR IGNORE INTO skips (jobseeker_id, job_id) VALUES (?, ?)")
     .bind(user.id, jobId).run();
+
+  await recordAnalyticsEvent(env, {
+    userId: user.id,
+    userRole: "jobseeker",
+    eventType: "job_skip",
+    jobId,
+    eventKey: `job_skip:${user.id}:${jobId}`
+  });
 
   return json({ ok: true }, { status: 201 });
 }

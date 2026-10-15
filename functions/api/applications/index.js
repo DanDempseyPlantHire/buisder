@@ -1,4 +1,5 @@
 import { json, err, newId, requireUser, createNotification } from "../../_lib/db.js";
+import { recordAnalyticsEvent } from "../../_lib/analytics.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -43,6 +44,15 @@ export async function onRequestPost(context) {
       applicationId: id,
       jobId,
       eventKey: `application:${id}:created`
+    });
+
+    await recordAnalyticsEvent(env, {
+      userId: user.id,
+      userRole: "jobseeker",
+      eventType: "application_submitted",
+      jobId,
+      applicationId: id,
+      eventKey: `application:${id}:submitted`
     });
   }
 

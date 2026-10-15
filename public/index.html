@@ -379,6 +379,31 @@
     .report-status.resolved{background:#ecfdf3;color:#067647}
     .report-status.dismissed{background:#f2f4f7;color:#475467}
 
+
+    .analytics-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .analytics-period{display:flex;gap:6px;flex-wrap:wrap}
+    .analytics-period button{border:1px solid var(--line-light);background:#fff;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:800}
+    .analytics-period button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+    .metric-card{border:1px solid var(--line-light);border-radius:14px;padding:13px;background:#fff}
+    .metric-card strong{display:block;font-size:24px;line-height:1.05}
+    .metric-card span{display:block;margin-top:5px;color:var(--muted);font-size:11px;font-weight:700}
+    .funnel-row{display:grid;grid-template-columns:118px 1fr 48px;gap:8px;align-items:center;margin:9px 0}
+    .funnel-label{font-size:11px;font-weight:800}
+    .funnel-track{height:12px;background:#f2efe7;border-radius:999px;overflow:hidden}
+    .funnel-fill{height:100%;background:var(--accent);border-radius:999px;min-width:2px}
+    .funnel-value{text-align:right;font-size:11px;font-weight:900}
+    .analytics-table{width:100%;border-collapse:collapse;font-size:11px}
+    .analytics-table th,.analytics-table td{padding:8px 6px;border-bottom:1px solid var(--line-light);text-align:left;vertical-align:top}
+    .analytics-table th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+    .trend-grid{display:grid;grid-template-columns:repeat(14,minmax(8px,1fr));gap:4px;align-items:end;height:90px;padding-top:8px}
+    .trend-day{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%}
+    .trend-bar{border-radius:4px 4px 0 0;background:var(--accent);min-height:2px}
+    .trend-bar.secondary{background:#667085}
+    .trend-bar.goodbar{background:#12b76a}
+    .analytics-note{font-size:10px;color:var(--muted);line-height:1.45;margin-top:8px}
+    @media(min-width:700px){.metric-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -428,6 +453,10 @@ let state = {
   account:{privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},consent:null,blocks:[],reports:[]},
   applicantFilters:{jobId:"all", status:"all"},
   admin:{overview:{}, verifications:[], users:[], jobs:[], reports:[], auditLog:[]},
+  analyticsDays:30,
+  adminAnalytics:null,
+  employerAnalytics:null,
+  analyticsLoading:false,
   authMode:"login",
   authRole:"jobseeker",
   authError:"",
@@ -823,6 +852,17 @@ async function processAuthLink(){
   return null;
 }
 
+
+async function trackAnalytics(eventType, data={}){
+  if(!state.user) return;
+  try{
+    await api("/api/analytics/event", {
+      method:"POST",
+      body:{eventType, ...data}
+    });
+  }catch(e){}
+}
+
 async function api(path, opts = {}){
   const res = await fetch(path, {
     method: opts.method || "GET",
@@ -900,6 +940,7 @@ async function boot(){
   }
 
   render();
+  if(state.user) trackAnalytics("app_open");
 
   setInterval(async ()=>{
     if(!state.user) return;
@@ -916,6 +957,14 @@ async function boot(){
 async function setTab(tab){
   state.tab = tab;
   render();
+
+  if(tab==="admin-analytics" && state.mode==="admin"){
+    await loadAdminAnalytics();
+  }
+  if(tab==="employer-analytics" && state.mode==="employer"){
+    await loadEmployerAnalytics();
+  }
+
   if(tab==="applications" && state.mode==="jobseeker"){
     const unseen = state.applications.filter(a => a.interviewAt && !a.inviteSeenAt);
     for(const a of unseen){
@@ -1199,8 +1248,8 @@ function renderNav(){
   const items = state.mode==="jobseeker"
     ? [["feed","Jobs"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
     : state.mode==="employer"
-      ? [["home","Dashboard"],["post","Post job"],["applicants","Applicants"],["profile","Business"]]
-      : [["admin-home","Admin"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
+      ? [["home","Dashboard"],["employer-analytics","Analytics"],["post","Post job"],["applicants","Applicants"],["profile","Business"]]
+      : [["admin-home","Admin"],["admin-analytics","Analytics"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
   nav.style.gridTemplateColumns = `repeat(${items.length},1fr)`;
   nav.innerHTML = items.map(([key,label]) => `
     <button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>
@@ -1565,6 +1614,7 @@ function renderSwipeCard(job, remaining){
 function showJob(id){
   const j = state.jobs.find(x=>String(x.id)===String(id));
   if(!j) return;
+  trackAnalytics("job_view", {jobId:j.id});
   openModal(`
     <h3>${j.title}</h3>
     <p><strong>${j.company || "Employer"}</strong> · ${j.location || "Location flexible"}</p>
@@ -2424,7 +2474,290 @@ function adminStatusBadge(status){
   return `<span class="pill soft">Unverified</span>`;
 }
 
+
+function analyticsPeriodLabel(days){
+  return days===0 ? "All time" : `${days} days`;
+}
+
+function analyticsPct(value){
+  return `${Number(value || 0).toFixed(Number(value || 0)%1 ? 1 : 0)}%`;
+}
+
+function metricValue(value, suffix=""){
+  if(value===null || value===undefined || Number.isNaN(Number(value))) return "—";
+  return `${value}${suffix}`;
+}
+
+function renderAnalyticsPeriodButtons(scope){
+  return `
+    <div class="analytics-period">
+      ${[7,30,90,365,0].map(d=>`
+        <button class="${state.analyticsDays===d?"active":""}" onclick="changeAnalyticsPeriod(${d},'${scope}')">
+          ${d===0?"All":d+"d"}
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
+async function changeAnalyticsPeriod(days, scope){
+  state.analyticsDays = days;
+  if(scope==="admin") await loadAdminAnalytics(true);
+  else await loadEmployerAnalytics(true);
+}
+
+async function loadAdminAnalytics(force=false){
+  if(state.analyticsLoading) return;
+  if(state.adminAnalytics && !force) return;
+  state.analyticsLoading = true;
+  render();
+  try{
+    state.adminAnalytics = await api(`/api/admin/analytics?days=${state.analyticsDays}`);
+  }catch(e){
+    state.adminAnalytics = {error:e.message};
+  }finally{
+    state.analyticsLoading = false;
+    render();
+  }
+}
+
+async function loadEmployerAnalytics(force=false){
+  if(state.analyticsLoading) return;
+  if(state.employerAnalytics && !force) return;
+  state.analyticsLoading = true;
+  render();
+  try{
+    state.employerAnalytics = await api(`/api/employer/analytics?days=${state.analyticsDays}`);
+  }catch(e){
+    state.employerAnalytics = {error:e.message};
+  }finally{
+    state.analyticsLoading = false;
+    render();
+  }
+}
+
+function renderFunnel(rows){
+  const max = Math.max(1, ...rows.map(r=>Number(r.value || 0)));
+  return rows.map(r=>`
+    <div class="funnel-row">
+      <div class="funnel-label">${r.label}</div>
+      <div class="funnel-track"><div class="funnel-fill" style="width:${Math.max(2,Math.round(Number(r.value||0)/max*100))}%"></div></div>
+      <div class="funnel-value">${Number(r.value || 0)}</div>
+    </div>
+  `).join("");
+}
+
+function renderTrend(trend){
+  const rows = Array.isArray(trend) ? trend : [];
+  const max = Math.max(1, ...rows.flatMap(r=>[Number(r.signups||0),Number(r.applications||0),Number(r.hires||0)]));
+  return `
+    <div class="trend-grid" title="14-day trend: applications, signups and hires">
+      ${rows.map(r=>`
+        <div class="trend-day" title="${r.day}: ${r.applications} applications, ${r.signups} signups, ${r.hires} hires">
+          <div class="trend-bar goodbar" style="height:${Math.max(2,Number(r.hires||0)/max*80)}px"></div>
+          <div class="trend-bar secondary" style="height:${Math.max(2,Number(r.signups||0)/max*80)}px"></div>
+          <div class="trend-bar" style="height:${Math.max(2,Number(r.applications||0)/max*80)}px"></div>
+        </div>
+      `).join("")}
+    </div>
+    <div class="analytics-note">Each day shows applications, signups and hires. Hover a bar group for exact values.</div>
+  `;
+}
+
+function adminAnalyticsCsv(){
+  const a = state.adminAnalytics;
+  if(!a || a.error) return;
+  const rows = [
+    ["Metric","Value"],
+    ["Period", analyticsPeriodLabel(a.period?.days)],
+    ["New users",a.kpis?.newUsers||0],
+    ["New job seekers",a.kpis?.newJobseekers||0],
+    ["New employers",a.kpis?.newEmployers||0],
+    ["Profile completion rate",analyticsPct(a.kpis?.profileCompletionRate)],
+    ["Jobs posted",a.kpis?.jobsPosted||0],
+    ["Active jobs",a.kpis?.activeJobs||0],
+    ["Applications",a.funnel?.applications||0],
+    ["Shortlisted",a.funnel?.shortlisted||0],
+    ["Interview invited",a.funnel?.interviewInvited||0],
+    ["Offers",a.funnel?.offers||0],
+    ["Hired",a.funnel?.hired||0],
+    ["Application to hire",analyticsPct(a.rates?.applicationToHire)],
+    ["Offer acceptance",analyticsPct(a.rates?.offerAcceptance)],
+    ["Employer posting to hire",analyticsPct(a.rates?.employerHireConversion)],
+    ["Average days to hire",a.kpis?.avgDaysToHire ?? ""]
+  ];
+  const csv = rows.map(row=>row.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `buisder-pilot-metrics-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function renderAdminAnalytics(){
+  const a = state.adminAnalytics;
+  if(!a && !state.analyticsLoading){
+    setTimeout(()=>loadAdminAnalytics(),0);
+  }
+  if(state.analyticsLoading || !a){
+    return `<div class="section-pad"><div class="notice">Loading pilot analytics…</div></div>`;
+  }
+  if(a.error){
+    return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${a.error}</div><button class="btn btn-dark btn-block" onclick="loadAdminAnalytics(true)">Retry</button></div>`;
+  }
+
+  const f = a.funnel || {};
+  return `
+    <div class="hero">
+      <h1>Pilot analytics</h1>
+      <p>Measure whether candidates and employers are progressing from signup to hire.</p>
+    </div>
+    <div class="section-pad">
+      <div class="analytics-toolbar">
+        ${renderAnalyticsPeriodButtons("admin")}
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="adminAnalyticsCsv()">Export CSV</button>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-card"><strong>${a.kpis.newUsers}</strong><span>New users</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.kpis.profileCompletionRate)}</strong><span>Candidate profile completion</span></div>
+        <div class="metric-card"><strong>${a.kpis.jobsPosted}</strong><span>Jobs posted</span></div>
+        <div class="metric-card"><strong>${a.funnel.applications}</strong><span>Applications</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.applicationToHire)}</strong><span>Application → hire</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.offerAcceptance)}</strong><span>Offer acceptance</span></div>
+        <div class="metric-card"><strong>${metricValue(a.kpis.avgDaysToHire," days")}</strong><span>Average time to hire</span></div>
+        <div class="metric-card"><strong>${a.kpis.activeUsers}</strong><span>Active users tracked</span></div>
+      </div>
+
+      <div class="card">
+        <div class="title-row" style="margin-top:0"><h2>Recruitment funnel</h2><span>${analyticsPeriodLabel(a.period.days)}</span></div>
+        ${renderFunnel([
+          {label:"Applications",value:f.applications},
+          {label:"Shortlisted",value:f.shortlisted},
+          {label:"Interview",value:f.interviewInvited},
+          {label:"Interview complete",value:f.interviewCompleted},
+          {label:"Offers",value:f.offers},
+          {label:"Offer accepted",value:f.offersAccepted},
+          {label:"Hired",value:f.hired}
+        ])}
+      </div>
+
+      <div class="metric-grid" style="margin-top:14px">
+        <div class="metric-card"><strong>${analyticsPct(a.rates.swipeRightRate)}</strong><span>Apply vs skip decisions</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.viewToApply)}</strong><span>Job view → application</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.employerApplicantConversion)}</strong><span>Posting employers getting applicants</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.employerHireConversion)}</strong><span>Posting employers reaching hire</span></div>
+      </div>
+
+      <div class="card">
+        <div class="title-row" style="margin-top:0"><h2>Recent pulse</h2><span>14 days</span></div>
+        ${renderTrend(a.trend)}
+      </div>
+
+      <div class="title-row"><h2>Top jobs</h2><span>By applications</span></div>
+      <div class="card" style="overflow:auto">
+        <table class="analytics-table">
+          <thead><tr><th>Job</th><th>Apps</th><th>Interviews</th><th>Offers</th><th>Hires</th></tr></thead>
+          <tbody>
+            ${(a.topJobs||[]).map(j=>`<tr><td><strong>${j.title}</strong><br>${j.company||""}</td><td>${j.applications}</td><td>${j.interviews}</td><td>${j.offers}</td><td>${j.hires}</td></tr>`).join("") ||
+              `<tr><td colspan="5">No application activity in this period.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="title-row"><h2>Demand by category</h2><span>Applications</span></div>
+      <div class="card" style="overflow:auto">
+        <table class="analytics-table">
+          <thead><tr><th>Category</th><th>Jobs</th><th>Apps</th><th>Hires</th></tr></thead>
+          <tbody>${(a.categories||[]).map(x=>`<tr><td>${x.category}</td><td>${x.jobs}</td><td>${x.applications}</td><td>${x.hires}</td></tr>`).join("") || `<tr><td colspan="4">No data yet.</td></tr>`}</tbody>
+        </table>
+      </div>
+
+      <div class="title-row"><h2>Demand by location</h2><span>Applications</span></div>
+      <div class="card" style="overflow:auto">
+        <table class="analytics-table">
+          <thead><tr><th>Location</th><th>Jobs</th><th>Apps</th><th>Hires</th></tr></thead>
+          <tbody>${(a.locations||[]).map(x=>`<tr><td>${x.location}</td><td>${x.jobs}</td><td>${x.applications}</td><td>${x.hires}</td></tr>`).join("") || `<tr><td colspan="4">No data yet.</td></tr>`}</tbody>
+        </table>
+      </div>
+
+      <div class="notice">
+        <strong>Measurement note:</strong> ${a.notes.engagementTracking}
+        ${a.notes.historicalSwipeCaveat}
+      </div>
+    </div>
+  `;
+}
+
+function renderEmployerAnalytics(){
+  const a = state.employerAnalytics;
+  if(!a && !state.analyticsLoading){
+    setTimeout(()=>loadEmployerAnalytics(),0);
+  }
+  if(state.analyticsLoading || !a){
+    return `<div class="section-pad"><div class="notice">Loading hiring analytics…</div></div>`;
+  }
+  if(a.error){
+    return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${a.error}</div><button class="btn btn-dark btn-block" onclick="loadEmployerAnalytics(true)">Retry</button></div>`;
+  }
+
+  const f = a.funnel || {};
+  return `
+    <div class="hero">
+      <h1>Hiring analytics</h1>
+      <p>See how your jobs are converting from candidate interest to hires.</p>
+    </div>
+    <div class="section-pad">
+      <div class="analytics-toolbar">${renderAnalyticsPeriodButtons("employer")}</div>
+
+      <div class="metric-grid">
+        <div class="metric-card"><strong>${a.kpis.jobViews}</strong><span>Job views tracked</span></div>
+        <div class="metric-card"><strong>${f.applications}</strong><span>Applications</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.hireRate)}</strong><span>Application → hire</span></div>
+        <div class="metric-card"><strong>${metricValue(a.kpis.avgDaysToHire," days")}</strong><span>Average time to hire</span></div>
+      </div>
+
+      <div class="card">
+        <div class="title-row" style="margin-top:0"><h2>Your funnel</h2><span>${analyticsPeriodLabel(a.period.days)}</span></div>
+        ${renderFunnel([
+          {label:"Applications",value:f.applications},
+          {label:"Shortlisted",value:f.shortlisted},
+          {label:"Interviews",value:f.interviews},
+          {label:"Offers",value:f.offers},
+          {label:"Offer accepted",value:f.offersAccepted},
+          {label:"Hired",value:f.hired}
+        ])}
+      </div>
+
+      <div class="metric-grid" style="margin-top:14px">
+        <div class="metric-card"><strong>${analyticsPct(a.rates.shortlistRate)}</strong><span>Shortlist rate</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.interviewRate)}</strong><span>Interview rate</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.offerRate)}</strong><span>Offer rate</span></div>
+        <div class="metric-card"><strong>${analyticsPct(a.rates.offerAcceptance)}</strong><span>Offer acceptance</span></div>
+      </div>
+
+      <div class="title-row"><h2>Job performance</h2><span>${a.kpis.activeJobs} active</span></div>
+      <div class="card" style="overflow:auto">
+        <table class="analytics-table">
+          <thead><tr><th>Job</th><th>Apps</th><th>Interview</th><th>Offers</th><th>Hires</th></tr></thead>
+          <tbody>
+            ${(a.jobs||[]).map(j=>`<tr><td><strong>${j.title}</strong><br>${j.location||""} · ${cap(j.status||"")}</td><td>${j.applications}</td><td>${j.interviews}</td><td>${j.offers}</td><td>${j.hires}</td></tr>`).join("") ||
+              `<tr><td colspan="5">No jobs yet.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="analytics-note">${a.notes.engagementTracking}</div>
+    </div>
+  `;
+}
+
 function renderAdmin(){
+  if(state.tab==="admin-analytics") return renderAdminAnalytics();
   if(state.tab==="admin-reports") return renderAdminReports();
   if(state.tab==="verifications") return renderAdminVerifications();
   if(state.tab==="admin-users") return renderAdminUsers();
@@ -2447,6 +2780,11 @@ function renderAdminHome(){
         <div class="admin-stat"><strong>${o.activeJobs || 0}</strong><span>Active jobs</span></div>
         <div class="admin-stat"><strong>${o.totalApplications || 0}</strong><span>Applications</span></div>
         <div class="admin-stat"><strong>${o.openReports || 0}</strong><span>Open reports</span></div>
+      </div>
+
+      <div class="title-row"><h2>Pilot performance</h2><button class="btn btn-outline" onclick="setTab('admin-analytics')">Open analytics</button></div>
+      <div class="card dark" style="margin-bottom:12px">
+        <div class="small" style="color:#cbd5e1">Track signup, profile completion, job activity, recruitment conversion and hires in one dashboard.</div>
       </div>
 
       <div class="title-row"><h2>Account mix</h2><span>Current</span></div>
@@ -2734,6 +3072,7 @@ async function submitBusinessVerification(){
 }
 
 function renderEmployer(){
+  if(state.tab==="employer-analytics") return renderEmployerAnalytics();
   if(state.tab==="post") return renderPostJob();
   if(state.tab==="applicants") return renderApplicants();
   if(state.tab==="profile") return renderBusinessProfile();
@@ -2744,6 +3083,7 @@ function renderEmployer(){
       <div class="cta-row">
         <button class="btn btn-light" onclick="setTab('post')">Post job</button>
         <button class="btn btn-soft" onclick="setTab('applicants')">View applicants</button>
+        <button class="btn btn-soft" onclick="setTab('employer-analytics')">View analytics</button>
       </div>
     </div>
     <div class="section-pad">
