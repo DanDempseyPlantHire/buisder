@@ -421,6 +421,16 @@
     .commercial-stat span{font-size:10px;color:var(--muted);font-weight:800}
     @media(min-width:720px){.plan-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.commercial-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
+
+    .launch-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+    .launch-kpi{background:var(--paper);color:var(--ink);border:1px solid var(--line-light);border-radius:10px;padding:13px}
+    .launch-kpi strong{display:block;font-size:24px;line-height:1}.launch-kpi span{display:block;margin-top:6px;font-size:11px;color:var(--muted);font-weight:700}
+    .readiness-check{background:var(--paper);color:var(--ink);border:1px solid var(--line-light);border-radius:10px;padding:13px;margin-bottom:9px}
+    .readiness-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.readiness-title{font-size:13px;font-weight:800}.readiness-detail{font-size:11px;line-height:1.45;color:var(--muted);margin-top:5px}
+    .readiness-status{border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;white-space:nowrap}.readiness-status.pass{background:var(--good-tint);color:var(--good)}.readiness-status.warning{background:#fff4d6;color:#8a5b00}.readiness-status.critical{background:var(--bad-tint);color:var(--bad)}.readiness-status.info{background:#e9eef8;color:#36517a}
+    .launch-check-item{display:flex;align-items:flex-start;gap:10px;background:var(--paper);color:var(--ink);border:1px solid var(--line-light);border-radius:10px;padding:12px;margin-bottom:8px}.launch-check-item input{width:auto;margin-top:2px}.launch-check-item label{margin:0;line-height:1.4;cursor:pointer}
+    .launch-ready{background:var(--good-tint);color:var(--good);border:1px solid #b8ccb9;border-radius:10px;padding:14px;font-weight:800}.launch-not-ready{background:var(--accent-tint);color:var(--accent-ink);border:1px solid #d7b19b;border-radius:10px;padding:14px;font-weight:800}.maintenance-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -477,6 +487,9 @@ let state = {
   commercial:null,
   adminCommercial:null,
   commercialLoading:false,
+  launchReadiness:null,
+  launchLoading:false,
+  serviceError:"",
   authMode:"login",
   authRole:"jobseeker",
   authError:"",
@@ -910,6 +923,7 @@ async function api(path, opts = {}){
 
 async function loadBootstrap(){
   const data = await api("/api/bootstrap");
+  state.serviceError = "";
   state.user = data.user;
   if(!data.user) return;
 
@@ -919,7 +933,7 @@ async function loadBootstrap(){
     ? ["feed","applications","profile"].includes(state.tab)
     : state.mode==="employer"
       ? ["home","employer-analytics","commercial","post","applicants","profile"].includes(state.tab)
-      : ["admin-home","admin-analytics","admin-commercial","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
+      : ["admin-home","admin-launch","admin-analytics","admin-commercial","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
 
   if(!validTab){
     state.tab = state.mode==="jobseeker" ? "feed" : (state.mode==="employer" ? "home" : "admin-home");
@@ -957,7 +971,12 @@ async function boot(){
   const authLink = await processAuthLink();
 
   if(authLink !== "reset"){
-    try{ await loadBootstrap(); } catch(e){ state.user = null; }
+    try{
+      await loadBootstrap();
+    }catch(e){
+      state.user = null;
+      state.serviceError = "Buisder could not connect to the service. Check the deployment and try again.";
+    }
   }
 
   render();
@@ -979,6 +998,9 @@ async function setTab(tab){
   state.tab = tab;
   render();
 
+  if(tab==="admin-launch" && state.mode==="admin"){
+    await loadLaunchReadiness();
+  }
   if(tab==="admin-analytics" && state.mode==="admin"){
     await loadAdminAnalytics();
   }
@@ -1266,6 +1288,14 @@ async function doLogout(){
   render();
 }
 
+
+async function retryService(){
+  state.serviceError=""; render();
+  try{ await loadBootstrap(); }
+  catch(e){ state.serviceError="Buisder could not connect to the service. Check the deployment and try again."; }
+  render();
+}
+
 function renderNav(){
   const nav = document.getElementById("bottomnav");
   const unread = state.mode==="jobseeker" ? unreadInterviewCount() : 0;
@@ -1273,7 +1303,7 @@ function renderNav(){
     ? [["feed","Jobs"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
     : state.mode==="employer"
       ? [["home","Dashboard"],["employer-analytics","Analytics"],["commercial","Plan"],["post","Post job"],["applicants","Applicants"],["profile","Business"]]
-      : [["admin-home","Admin"],["admin-analytics","Analytics"],["admin-commercial","Commercial"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
+      : [["admin-home","Admin"],["admin-launch","Launch"],["admin-analytics","Analytics"],["admin-commercial","Commercial"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
   nav.style.gridTemplateColumns = `repeat(${items.length},1fr)`;
   nav.innerHTML = items.map(([key,label]) => `
     <button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>
@@ -1283,6 +1313,13 @@ function renderNav(){
 function render(){
   const topbar = document.getElementById("topbar");
   const nav = document.getElementById("bottomnav");
+  if(state.serviceError){
+    topbar.classList.add("hidden"); nav.classList.add("hidden");
+    document.getElementById("content").innerHTML = `
+      <div class="hero"><h1>Service unavailable</h1><p>${state.serviceError}</p></div>
+      <div class="section-pad"><div class="card"><strong>Your account data has not been changed.</strong><p class="small">Retry the connection. If the problem continues, check Cloudflare Pages and D1 before making database changes.</p><button class="btn btn-dark btn-block" onclick="retryService()">Retry</button></div></div>`;
+    return;
+  }
   if(!state.user){
     topbar.classList.add("hidden");
     nav.classList.add("hidden");
@@ -3131,6 +3168,52 @@ function renderAdminCommercial(){
   `;
 }
 
+
+async function loadLaunchReadiness(force=false){
+  if(state.launchLoading) return;
+  if(state.launchReadiness && !force) return;
+  state.launchLoading=true; render();
+  try{ state.launchReadiness=await api("/api/admin/launch"); }
+  catch(e){ state.launchReadiness={error:e.message}; }
+  finally{ state.launchLoading=false; render(); }
+}
+function launchStatusLabel(s){ return s==="critical"?"Critical":s==="warning"?"Warning":s==="info"?"Info":"Pass"; }
+async function toggleLaunchCheck(key,completed){
+  try{ await api(`/api/admin/launch/checklist/${key}`,{method:"POST",body:{completed}}); state.launchReadiness=null; await loadLaunchReadiness(true); }
+  catch(e){ toast(e.message); }
+}
+async function runLaunchMaintenance(action){
+  const words={cleanup_auth:"Clean expired authentication records",repair_defaults:"Repair missing account defaults",close_suspended_jobs:"Close jobs belonging to suspended employers",remove_demo_data:"Permanently remove the built-in demo employer and demo jobs"};
+  if(!confirm(`${words[action]||"Run maintenance"}?`)) return;
+  try{ const x=await api("/api/admin/launch/maintenance",{method:"POST",body:{action}}); toast(`${words[action]||"Maintenance"}: ${x.affected||0} record(s) changed`); state.launchReadiness=null; await loadBootstrap(); await loadLaunchReadiness(true); }
+  catch(e){ toast(e.message); }
+}
+function downloadLaunchReport(){
+  const d=state.launchReadiness; if(!d||d.error) return;
+  const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`buisder-launch-readiness-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function renderAdminLaunch(){
+  const r=state.launchReadiness;
+  if(!r&&!state.launchLoading) setTimeout(()=>loadLaunchReadiness(),0);
+  if(state.launchLoading||!r) return `<div class="section-pad"><div class="notice">Running Buisder pilot preflight checks…</div></div>`;
+  if(r.error) return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${r.error}</div><button class="btn btn-dark btn-block" onclick="loadLaunchReadiness(true)">Retry preflight</button></div>`;
+  const completed=(r.checklist||[]).filter(x=>Boolean(x.completed)).length,total=(r.checklist||[]).length;
+  return `
+    <div class="hero"><h1>Pilot launch readiness</h1><p>Production preflight, recovery controls and the manual go-live checklist.</p></div>
+    <div class="section-pad">
+      ${r.launchReady?`<div class="launch-ready">Automated preflight passes and the manual pilot checklist is complete.</div>`:`<div class="launch-not-ready">${r.automatedReady?"Automated preflight passes.":"Automated preflight needs attention."} Manual checklist: ${completed}/${total} complete.</div>`}
+      <div class="launch-summary" style="margin-top:12px"><div class="launch-kpi"><strong>${r.summary?.critical||0}</strong><span>Critical issues</span></div><div class="launch-kpi"><strong>${r.summary?.warning||0}</strong><span>Warnings</span></div><div class="launch-kpi"><strong>${r.summary?.pass||0}</strong><span>Checks passed</span></div><div class="launch-kpi"><strong>${completed}/${total}</strong><span>Manual checks complete</span></div></div>
+      <div class="analytics-toolbar"><button class="btn btn-dark" onclick="loadLaunchReadiness(true)">Refresh preflight</button><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="downloadLaunchReport()">Download report</button></div>
+      <div class="title-row"><h2>Automated preflight</h2><span>${formatTimelineDate(r.checkedAt)}</span></div>
+      ${(r.checks||[]).map(c=>`<div class="readiness-check"><div class="readiness-head"><div><div class="readiness-title">${c.label}</div><div class="readiness-detail">${c.detail}</div></div><span class="readiness-status ${c.status}">${launchStatusLabel(c.status)}</span></div>${c.action?`<button class="btn btn-outline btn-block" style="margin-top:9px;color:var(--ink);border-color:var(--line-light)" onclick="runLaunchMaintenance('${c.action}')">Fix / clean up</button>`:""}</div>`).join("")}
+      <div class="title-row"><h2>Go-live checklist</h2><span>${completed}/${total}</span></div>
+      ${(r.checklist||[]).map(x=>`<div class="launch-check-item"><input id="launch-${x.itemKey}" type="checkbox" ${x.completed?"checked":""} onchange="toggleLaunchCheck('${x.itemKey}',this.checked)"><label for="launch-${x.itemKey}"><strong>${x.label}</strong>${x.completedAt?`<br><span class="small">Completed ${formatTimelineDate(x.completedAt)}</span>`:""}</label></div>`).join("")}
+      <div class="title-row"><h2>Safe maintenance</h2><span>Admin only</span></div>
+      <div class="card"><div class="maintenance-grid"><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="runLaunchMaintenance('cleanup_auth')">Clean expired auth</button><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="runLaunchMaintenance('repair_defaults')">Repair defaults</button><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="runLaunchMaintenance('close_suspended_jobs')">Close suspended jobs</button><button class="btn btn-bad" onclick="runLaunchMaintenance('remove_demo_data')">Remove demo data</button></div><div class="analytics-note">Maintenance actions are recorded in the admin audit log. Demo removal only targets the built-in seed-employer account and cascading demo records.</div></div>
+      <div class="notice"><strong>Backup rule:</strong> export the production D1 database before pilot launch and before significant migrations.</div>
+    </div>`;
+}
+
 function renderAdmin(){
   if(state.tab==="admin-commercial") return renderAdminCommercial();
   if(state.tab==="admin-analytics") return renderAdminAnalytics();
@@ -3157,6 +3240,9 @@ function renderAdminHome(){
         <div class="admin-stat"><strong>${o.totalApplications || 0}</strong><span>Applications</span></div>
         <div class="admin-stat"><strong>${o.openReports || 0}</strong><span>Open reports</span></div>
       </div>
+
+      <div class="title-row"><h2>Pilot launch</h2><button class="btn btn-outline" onclick="setTab('admin-launch')">Run preflight</button></div>
+      <div class="card dark" style="margin-bottom:12px"><div class="small" style="color:#cbd5e1">Check production configuration, data integrity, demo data and the manual go-live checklist before inviting pilot users.</div></div>
 
       <div class="title-row"><h2>Pilot performance</h2><button class="btn btn-outline" onclick="setTab('admin-analytics')">Open analytics</button></div>
       <div class="card dark" style="margin-bottom:12px">
