@@ -404,6 +404,23 @@
     .analytics-note{font-size:10px;color:var(--muted);line-height:1.45;margin-top:8px}
     @media(min-width:700px){.metric-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
+
+    .plan-card{border:1px solid var(--line-light);border-radius:16px;padding:16px;background:#fff;margin-bottom:12px}
+    .plan-card.current{border:2px solid var(--accent)}
+    .plan-price{font-size:24px;font-weight:950;letter-spacing:-.03em}
+    .plan-grid{display:grid;grid-template-columns:1fr;gap:12px}
+    .usage-meter{height:10px;background:#f2efe7;border-radius:999px;overflow:hidden;margin-top:7px}
+    .usage-meter>span{display:block;height:100%;background:var(--accent);border-radius:999px}
+    .commercial-badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;background:#f2f4f7;color:#344054}
+    .commercial-badge.featured{background:#fffaeb;color:#b54708}
+    .commercial-badge.pilot{background:#eef4ff;color:#3538cd}
+    .featured-job{border:2px solid #fdb022}
+    .commercial-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .commercial-stat{border:1px solid var(--line-light);border-radius:14px;padding:12px;background:#fff}
+    .commercial-stat strong{display:block;font-size:22px}
+    .commercial-stat span{font-size:10px;color:var(--muted);font-weight:800}
+    @media(min-width:720px){.plan-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.commercial-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -457,6 +474,9 @@ let state = {
   adminAnalytics:null,
   employerAnalytics:null,
   analyticsLoading:false,
+  commercial:null,
+  adminCommercial:null,
+  commercialLoading:false,
   authMode:"login",
   authRole:"jobseeker",
   authError:"",
@@ -898,8 +918,8 @@ async function loadBootstrap(){
   const validTab = state.mode==="jobseeker"
     ? ["feed","applications","profile"].includes(state.tab)
     : state.mode==="employer"
-      ? ["home","post","applicants","profile"].includes(state.tab)
-      : ["admin-home","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
+      ? ["home","employer-analytics","commercial","post","applicants","profile"].includes(state.tab)
+      : ["admin-home","admin-analytics","admin-commercial","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
 
   if(!validTab){
     state.tab = state.mode==="jobseeker" ? "feed" : (state.mode==="employer" ? "home" : "admin-home");
@@ -920,6 +940,7 @@ async function loadBootstrap(){
   state.profile = data.profile || {};
   state.notifications = data.notifications || [];
   state.account = data.account || {privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},consent:null,blocks:[],reports:[]};
+  state.commercial = data.commercial || null;
   if(state.mode==="jobseeker"){
     state.jobs = data.jobs || [];
     state.applications = data.applications || [];
@@ -960,6 +981,9 @@ async function setTab(tab){
 
   if(tab==="admin-analytics" && state.mode==="admin"){
     await loadAdminAnalytics();
+  }
+  if(tab==="admin-commercial" && state.mode==="admin"){
+    await loadAdminCommercial();
   }
   if(tab==="employer-analytics" && state.mode==="employer"){
     await loadEmployerAnalytics();
@@ -1248,8 +1272,8 @@ function renderNav(){
   const items = state.mode==="jobseeker"
     ? [["feed","Jobs"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
     : state.mode==="employer"
-      ? [["home","Dashboard"],["employer-analytics","Analytics"],["post","Post job"],["applicants","Applicants"],["profile","Business"]]
-      : [["admin-home","Admin"],["admin-analytics","Analytics"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
+      ? [["home","Dashboard"],["employer-analytics","Analytics"],["commercial","Plan"],["post","Post job"],["applicants","Applicants"],["profile","Business"]]
+      : [["admin-home","Admin"],["admin-analytics","Analytics"],["admin-commercial","Commercial"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
   nav.style.gridTemplateColumns = `repeat(${items.length},1fr)`;
   nav.innerHTML = items.map(([key,label]) => `
     <button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>
@@ -1417,7 +1441,11 @@ function currentFeedJobs(){
       return distance === null || distance <= maxDistance;
     })
     .map(j => ({...j, _matchScore:scoreJob(j), _distance:jobDistance(j)}))
-    .sort((a,b) => b._matchScore - a._matchScore);
+    .sort((a,b) => {
+      const featuredDelta = Number(Boolean(b.is_featured)) - Number(Boolean(a.is_featured));
+      if(featuredDelta) return featuredDelta;
+      return b._matchScore - a._matchScore;
+    });
 }
 
 function saveFeedFilters(){
@@ -1579,7 +1607,10 @@ function renderSwipeCard(job, remaining){
       <div class="swipe-overlay swipe-like" id="likeBadge">APPLY</div>
       <div class="job-image">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <div class="job-badge">${industry}</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <div class="job-badge">${industry}</div>
+            ${job.is_featured ? `<span class="commercial-badge featured">Featured</span>` : ""}
+          </div>
           <div class="match-score">${job._matchScore || scoreJob(job)}% fit</div>
         </div>
         <h3>${job.title}</h3>
@@ -1619,6 +1650,7 @@ function showJob(id){
     <h3>${j.title}</h3>
     <p><strong>${j.company || "Employer"}</strong> · ${j.location || "Location flexible"}</p>
     <div class="chips">
+      ${j.is_featured ? `<span class="commercial-badge featured">Featured</span>` : ""}
       <span class="chip good">Pay shown upfront</span>
       <span class="chip">${j.pay || "On request"}</span>
       <span class="chip">${j.hours || "Flexible"}</span>
@@ -2756,7 +2788,351 @@ function renderEmployerAnalytics(){
   `;
 }
 
+
+function moneyFromCents(cents){
+  if(cents===null || cents===undefined) return "Price not set";
+  return `€${(Number(cents)/100).toFixed(Number(cents)%100 ? 2 : 0)}/month`;
+}
+
+function commercialPrice(plan){
+  if(!plan) return "";
+  if(plan.priceMode==="free") return "€0/month";
+  if(plan.priceMode==="unset") return "Price not set";
+  return moneyFromCents(plan.monthlyPriceCents);
+}
+
+function planUsagePercent(value, limit){
+  if(Number(limit)<0) return 0;
+  if(!Number(limit)) return value ? 100 : 0;
+  return Math.min(100, Math.round(Number(value||0)/Number(limit)*100));
+}
+
+function commercialEndLabel(value){
+  if(!value) return "No scheduled end date";
+  return `Access ends ${formatTimelineDate(value)}`;
+}
+
+async function requestPlan(planCode){
+  const plan = (state.commercial?.plans || []).find(p=>p.code===planCode);
+  openModal(`
+    <h3>Request ${plan?.name || cap(planCode)}</h3>
+    <p class="small">Buisder is not taking online payments in v17. This sends the request to the admin commercial queue.</p>
+    <label>Message (optional)</label>
+    <textarea id="planRequestMessage" maxlength="1000" placeholder="Tell us what you need this plan for"></textarea>
+    <button class="btn btn-dark btn-block" onclick="submitPlanRequest('${planCode}')">Send request</button>
+  `);
+}
+
+async function submitPlanRequest(planCode){
+  try{
+    await api('/api/commercial/request-plan', {
+      method:'POST',
+      body:{planCode, message:document.getElementById('planRequestMessage')?.value || ''}
+    });
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast('Plan request sent');
+  }catch(e){ toast(e.message); }
+}
+
+async function applyCommercialCode(){
+  const code = document.getElementById('commercialCode')?.value?.trim();
+  if(!code){ toast('Enter a code'); return; }
+  try{
+    const result = await api('/api/commercial/apply-code', {method:'POST', body:{code}});
+    await loadBootstrap();
+    render();
+    toast(result.type==='promo' ? 'Promo applied' : 'Referral recorded');
+  }catch(e){ toast(e.message); }
+}
+
+async function toggleFeaturedJob(jobId, featured){
+  try{
+    await api(`/api/jobs/${jobId}/feature`, {method:'POST', body:{action:featured?'unfeature':'feature'}});
+    await loadBootstrap();
+    render();
+    toast(featured ? 'Featured placement removed' : 'Job featured');
+  }catch(e){ toast(e.message); }
+}
+
+function renderCommercialPlan(){
+  const c = state.commercial;
+  if(!c) return `<div class="section-pad"><div class="notice">Commercial account information is loading. Refresh if this persists.</div></div>`;
+  const a = c.account || {};
+  const u = c.usage || {};
+  const pending = (c.requests || []).find(r=>r.status==='pending');
+
+  return `
+    <div class="hero">
+      <h1>Employer plan</h1>
+      <p>Control job capacity and featured placement. Online billing is not enabled yet.</p>
+    </div>
+    <div class="section-pad">
+      <div class="plan-card current">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+          <div>
+            <span class="commercial-badge ${a.planCode==='pilot'?'pilot':''}">${a.status==='trial'?'Trial':cap(a.status||'active')}</span>
+            <h2 style="margin:8px 0 2px">${a.planName || cap(a.planCode || 'free')}</h2>
+            <div class="plan-price">${commercialPrice(a)}</div>
+            <div class="small">${a.planDescription || ''}</div>
+          </div>
+          <div class="small" style="text-align:right">${commercialEndLabel(a.accessEndsAt)}</div>
+        </div>
+
+        <div style="margin-top:14px">
+          <strong>${u.activeJobs || 0} / ${a.activeJobLimit < 0 ? 'Unlimited' : a.activeJobLimit} active jobs</strong>
+          <div class="usage-meter"><span style="width:${planUsagePercent(u.activeJobs,a.activeJobLimit)}%"></span></div>
+        </div>
+        <div style="margin-top:12px">
+          <strong>${u.featuredJobs || 0} / ${a.featuredJobLimit < 0 ? 'Unlimited' : a.featuredJobLimit} featured jobs</strong>
+          <div class="usage-meter"><span style="width:${planUsagePercent(u.featuredJobs,a.featuredJobLimit)}%"></span></div>
+        </div>
+      </div>
+
+      ${pending ? `<div class="notice"><strong>Upgrade request pending:</strong> ${pending.requestedPlanName}. Buisder admin will review it.</div>` : ''}
+
+      <div class="title-row"><h2>Available plans</h2><span>No payment taken</span></div>
+      <div class="plan-grid">
+        ${(c.plans || []).filter(p=>p.isPublic || p.code===a.planCode).map(plan=>`
+          <div class="plan-card ${plan.code===a.planCode?'current':''}">
+            <strong>${plan.name}</strong>
+            <div class="plan-price" style="font-size:19px;margin:6px 0">${commercialPrice(plan)}</div>
+            <div class="small">${plan.description || ''}</div>
+            <div class="chips">
+              <span class="chip">${plan.activeJobLimit < 0 ? 'Unlimited' : plan.activeJobLimit} active jobs</span>
+              <span class="chip">${plan.featuredJobLimit < 0 ? 'Unlimited' : plan.featuredJobLimit} featured</span>
+            </div>
+            ${plan.code===a.planCode
+              ? `<button class="btn btn-soft btn-block" disabled>Current plan</button>`
+              : plan.isPublic
+                ? `<button class="btn btn-dark btn-block" ${pending?'disabled':''} onclick="requestPlan('${plan.code}')">Request ${plan.name}</button>`
+                : ''}
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="title-row"><h2>Promo or referral code</h2><span>Optional</span></div>
+      <div class="form-card">
+        <input id="commercialCode" placeholder="Enter code">
+        <button class="btn btn-dark btn-block" style="margin-top:8px" onclick="applyCommercialCode()">Apply code</button>
+      </div>
+
+      <div class="title-row"><h2>Your referral code</h2><span>${c.referralCount || 0} referrals</span></div>
+      <div class="card">
+        <strong style="font-size:18px">${c.referralCode || 'Not available'}</strong>
+        <div class="small">Share this with another employer. v17 records referrals but does not automatically award a financial benefit.</div>
+      </div>
+
+      <div class="title-row"><h2>Commercial history</h2><span>${(c.history||[]).length}</span></div>
+      ${(c.history||[]).length ? (c.history||[]).slice(0,10).map(h=>`
+        <div class="admin-row"><strong>${cap(String(h.eventType||'').replaceAll('_',' '))}</strong><div class="admin-meta">${h.description || ''}<br>${formatTimelineDate(h.createdAt)}</div></div>
+      `).join('') : `<div class="notice">No commercial changes yet.</div>`}
+
+      <div class="notice"><strong>v17 commercial mode:</strong> plan prices can be configured by an admin, but Buisder does not charge cards, create invoices or collect subscription payments in this release.</div>
+    </div>
+  `;
+}
+
+async function loadAdminCommercial(force=false){
+  if(state.commercialLoading) return;
+  if(state.adminCommercial && !force) return;
+  state.commercialLoading = true;
+  render();
+  try{
+    state.adminCommercial = await api('/api/admin/commercial');
+  }catch(e){ state.adminCommercial = {error:e.message}; }
+  finally{ state.commercialLoading=false; render(); }
+}
+
+function openEmployerPlanAdmin(employerId){
+  const c = state.adminCommercial;
+  const e = (c?.employers || []).find(x=>x.id===employerId);
+  if(!e) return;
+  openModal(`
+    <h3>Commercial access</h3>
+    <p><strong>${e.companyName || e.name || e.email}</strong><br><span class="small">Current: ${e.planName || cap(e.planCode || 'free')}</span></p>
+    <label>Plan</label>
+    <select id="adminEmployerPlan">${(c.plans||[]).map(p=>`<option value="${p.code}" ${p.code===e.planCode?'selected':''}>${p.name}</option>`).join('')}</select>
+    <label>Access type</label>
+    <select id="adminEmployerAccessType" onchange="document.getElementById('adminEmployerTrialDays').disabled=this.value!=='trial'">
+      <option value="active">Active / no expiry</option>
+      <option value="trial">Timed trial</option>
+    </select>
+    <label>Trial days</label>
+    <input id="adminEmployerTrialDays" type="number" min="1" max="3650" value="30" disabled>
+    <label>Admin note</label>
+    <textarea id="adminEmployerPlanNote" maxlength="500" placeholder="Optional reason"></textarea>
+    <button class="btn btn-dark btn-block" onclick="assignEmployerPlan('${employerId}')">Save plan</button>
+  `);
+}
+
+async function assignEmployerPlan(employerId){
+  try{
+    const status = document.getElementById('adminEmployerAccessType')?.value || 'active';
+    await api(`/api/admin/commercial/employers/${employerId}`, {
+      method:'POST',
+      body:{
+        planCode:document.getElementById('adminEmployerPlan')?.value,
+        status,
+        durationDays:status==='trial' ? Number(document.getElementById('adminEmployerTrialDays')?.value || 30) : null,
+        note:document.getElementById('adminEmployerPlanNote')?.value || ''
+      }
+    });
+    closeModal();
+    await loadAdminCommercial(true);
+    toast('Employer plan updated');
+  }catch(e){ toast(e.message); }
+}
+
+function openPlanEditor(code){
+  const p = (state.adminCommercial?.plans || []).find(x=>x.code===code);
+  if(!p) return;
+  openModal(`
+    <h3>Edit ${p.name}</h3>
+    <label>Name</label><input id="planEditName" value="${p.name || ''}">
+    <label>Description</label><textarea id="planEditDescription">${p.description || ''}</textarea>
+    <label>Pricing</label>
+    <select id="planEditPriceMode" onchange="document.getElementById('planEditPrice').disabled=this.value!=='fixed'">
+      <option value="free" ${p.priceMode==='free'?'selected':''}>Free</option>
+      <option value="unset" ${p.priceMode==='unset'?'selected':''}>Price not set</option>
+      <option value="fixed" ${p.priceMode==='fixed'?'selected':''}>Fixed monthly price</option>
+    </select>
+    <label>Monthly price (€)</label>
+    <input id="planEditPrice" type="number" min="0" step="0.01" value="${p.monthlyPriceCents===null||p.monthlyPriceCents===undefined?'':Number(p.monthlyPriceCents)/100}" ${p.priceMode==='fixed'?'':'disabled'}>
+    <div class="two-col">
+      <div><label>Active job limit</label><input id="planEditJobs" type="number" min="1" value="${p.activeJobLimit}"></div>
+      <div><label>Featured job limit</label><input id="planEditFeatured" type="number" min="0" value="${p.featuredJobLimit}"></div>
+    </div>
+    <div class="privacy-toggle"><input id="planEditPublic" type="checkbox" ${p.isPublic?'checked':''}><label for="planEditPublic" style="margin:0">Employers can request this plan</label></div>
+    <button class="btn btn-dark btn-block" onclick="saveCommercialPlan('${p.code}')">Save plan</button>
+  `);
+}
+
+async function saveCommercialPlan(code){
+  try{
+    const priceMode = document.getElementById('planEditPriceMode')?.value;
+    const euro = document.getElementById('planEditPrice')?.value;
+    await api(`/api/admin/commercial/plans/${code}`, {method:'POST', body:{
+      name:document.getElementById('planEditName')?.value,
+      description:document.getElementById('planEditDescription')?.value,
+      priceMode,
+      monthlyPriceCents:priceMode==='fixed' ? Math.round(Number(euro||0)*100) : null,
+      activeJobLimit:Number(document.getElementById('planEditJobs')?.value),
+      featuredJobLimit:Number(document.getElementById('planEditFeatured')?.value),
+      isPublic:Boolean(document.getElementById('planEditPublic')?.checked)
+    }});
+    closeModal();
+    await loadAdminCommercial(true);
+    toast('Plan updated');
+  }catch(e){ toast(e.message); }
+}
+
+function openPlanRequestReview(requestId){
+  const r = (state.adminCommercial?.requests || []).find(x=>x.id===requestId);
+  if(!r) return;
+  openModal(`
+    <h3>Review plan request</h3>
+    <p><strong>${r.companyName || r.name || r.email}</strong><br>Requested: ${r.requestedPlanName}</p>
+    ${r.message ? `<div class="notice">${r.message}</div>` : ''}
+    <label>Optional trial days</label><input id="requestTrialDays" type="number" min="1" max="3650" placeholder="Leave blank for no expiry">
+    <label>Admin note</label><textarea id="requestAdminNote" maxlength="500"></textarea>
+    <div class="admin-actions">
+      <button class="btn btn-good" onclick="reviewPlanRequest('${requestId}','approve')">Approve</button>
+      <button class="btn btn-bad" onclick="reviewPlanRequest('${requestId}','reject')">Reject</button>
+    </div>
+  `);
+}
+
+async function reviewPlanRequest(requestId, action){
+  try{
+    const raw = document.getElementById('requestTrialDays')?.value;
+    await api(`/api/admin/commercial/requests/${requestId}`, {method:'POST', body:{
+      action,
+      trialDays:raw ? Number(raw) : null,
+      note:document.getElementById('requestAdminNote')?.value || ''
+    }});
+    closeModal();
+    await loadAdminCommercial(true);
+    toast(action==='approve' ? 'Plan request approved' : 'Plan request rejected');
+  }catch(e){ toast(e.message); }
+}
+
+async function createPromoCode(){
+  try{
+    const rawMax = document.getElementById('promoMax')?.value;
+    await api('/api/admin/commercial/promos', {method:'POST', body:{
+      code:document.getElementById('promoCode')?.value,
+      planCode:document.getElementById('promoPlan')?.value,
+      durationDays:Number(document.getElementById('promoDays')?.value || 30),
+      maxRedemptions:rawMax ? Number(rawMax) : null,
+      expiresAt:document.getElementById('promoExpires')?.value || null
+    }});
+    await loadAdminCommercial(true);
+    toast('Promo code created');
+  }catch(e){ toast(e.message); }
+}
+
+async function togglePromo(promoId, active){
+  try{
+    await api(`/api/admin/commercial/promos/${promoId}`, {method:'POST', body:{action:active?'deactivate':'activate'}});
+    await loadAdminCommercial(true);
+    toast(active ? 'Promo deactivated' : 'Promo activated');
+  }catch(e){ toast(e.message); }
+}
+
+function renderAdminCommercial(){
+  const c = state.adminCommercial;
+  if(!c && !state.commercialLoading) setTimeout(()=>loadAdminCommercial(),0);
+  if(state.commercialLoading || !c) return `<div class="section-pad"><div class="notice">Loading commercial controls…</div></div>`;
+  if(c.error) return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${c.error}</div><button class="btn btn-dark btn-block" onclick="loadAdminCommercial(true)">Retry</button></div>`;
+  const s = c.summary || {};
+  return `
+    <div class="hero">
+      <h1>Commercial controls</h1>
+      <p>Configure employer plans and pilot access before payment processing is switched on.</p>
+    </div>
+    <div class="section-pad">
+      <div class="commercial-grid">
+        <div class="commercial-stat"><strong>${s.employers||0}</strong><span>Employer accounts</span></div>
+        <div class="commercial-stat"><strong>${s.pendingRequests||0}</strong><span>Upgrade requests</span></div>
+        <div class="commercial-stat"><strong>${s.activeTrials||0}</strong><span>Active trials</span></div>
+        <div class="commercial-stat"><strong>${s.featuredJobs||0}</strong><span>Featured jobs</span></div>
+        <div class="commercial-stat"><strong>${s.freeAccounts||0}</strong><span>Free</span></div>
+        <div class="commercial-stat"><strong>${s.pilotAccounts||0}</strong><span>Pilot</span></div>
+        <div class="commercial-stat"><strong>${s.growthAccounts||0}</strong><span>Growth</span></div>
+        <div class="commercial-stat"><strong>${s.proAccounts||0}</strong><span>Pro</span></div>
+      </div>
+      <div class="notice"><strong>Assigned monthly plan value:</strong> ${moneyFromCents(s.assignedMonthlyPlanValueCents||0)}. This is plan value, not collected revenue. v17 does not process payments.</div>
+
+      <div class="title-row"><h2>Plans</h2><span>Admin configurable</span></div>
+      <div class="plan-grid">
+        ${(c.plans||[]).map(p=>`<div class="plan-card"><strong>${p.name}</strong><div class="plan-price" style="font-size:18px">${commercialPrice(p)}</div><div class="small">${p.description||''}</div><div class="chips"><span class="chip">${p.activeJobLimit} active jobs</span><span class="chip">${p.featuredJobLimit} featured</span><span class="chip">${p.isPublic?'Public request':'Admin only'}</span></div><button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light)" onclick="openPlanEditor('${p.code}')">Edit plan</button></div>`).join('')}
+      </div>
+
+      <div class="title-row"><h2>Upgrade requests</h2><span>${(c.requests||[]).filter(r=>r.status==='pending').length} pending</span></div>
+      ${(c.requests||[]).filter(r=>r.status==='pending').map(r=>`<div class="admin-row"><strong>${r.companyName||r.name||r.email}</strong><div class="admin-meta">Requests ${r.requestedPlanName} · ${formatTimelineDate(r.createdAt)}${r.message?`<br>${r.message}`:''}</div><button class="btn btn-dark btn-block" style="margin-top:8px" onclick="openPlanRequestReview('${r.id}')">Review request</button></div>`).join('') || `<div class="notice">No pending upgrade requests.</div>`}
+
+      <div class="title-row"><h2>Employer plans</h2><span>${(c.employers||[]).length}</span></div>
+      ${(c.employers||[]).map(e=>`<div class="admin-row"><div style="display:flex;justify-content:space-between;gap:10px"><div><strong>${e.companyName||e.name||e.email}</strong><div class="admin-meta">${e.email}<br>${e.planName||cap(e.planCode||'free')} · ${cap(e.status||'active')}${e.accessEndsAt?` · ends ${formatTimelineDate(e.accessEndsAt)}`:''}<br>${e.activeJobs||0}/${e.activeJobLimit||0} active jobs · ${e.featuredJobs||0}/${e.featuredJobLimit||0} featured · ${e.referralCount||0} referrals</div></div><span class="commercial-badge">${e.planName||cap(e.planCode||'free')}</span></div><button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-top:8px" onclick="openEmployerPlanAdmin('${e.id}')">Manage plan</button></div>`).join('')}
+
+      <div class="title-row"><h2>Promo codes</h2><span>${(c.promos||[]).filter(p=>p.active).length} active</span></div>
+      <div class="form-card">
+        <div class="two-col"><div><label>Code</label><input id="promoCode" placeholder="PILOT30"></div><div><label>Plan</label><select id="promoPlan">${(c.plans||[]).map(p=>`<option value="${p.code}">${p.name}</option>`).join('')}</select></div></div>
+        <div class="two-col"><div><label>Access days</label><input id="promoDays" type="number" min="1" max="3650" value="30"></div><div><label>Max redemptions</label><input id="promoMax" type="number" min="1" placeholder="Unlimited"></div></div>
+        <label>Code expiry (optional)</label><input id="promoExpires" type="datetime-local">
+        <button class="btn btn-dark btn-block" onclick="createPromoCode()">Create promo code</button>
+      </div>
+      ${(c.promos||[]).map(p=>`<div class="admin-row"><div style="display:flex;justify-content:space-between;gap:10px"><div><strong>${p.code}</strong><div class="admin-meta">${p.planName} · ${p.durationDays} days · ${p.redemptionCount}/${p.maxRedemptions??'∞'} used${p.expiresAt?` · expires ${formatTimelineDate(p.expiresAt)}`:''}</div></div><span class="pill ${p.active?'good':'soft'}">${p.active?'Active':'Inactive'}</span></div><button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-top:8px" onclick="togglePromo('${p.id}',${Boolean(p.active)})">${p.active?'Deactivate':'Activate'}</button></div>`).join('') || `<div class="notice">No promo codes yet.</div>`}
+
+      <div class="title-row"><h2>Recent commercial history</h2><span>${(c.history||[]).length}</span></div>
+      ${(c.history||[]).slice(0,20).map(h=>`<div class="admin-row"><strong>${h.companyName||h.email}</strong><div class="admin-meta">${cap(String(h.eventType||'').replaceAll('_',' '))} · ${h.description||''}<br>${formatTimelineDate(h.createdAt)}</div></div>`).join('') || `<div class="notice">No commercial history yet.</div>`}
+    </div>
+  `;
+}
+
 function renderAdmin(){
+  if(state.tab==="admin-commercial") return renderAdminCommercial();
   if(state.tab==="admin-analytics") return renderAdminAnalytics();
   if(state.tab==="admin-reports") return renderAdminReports();
   if(state.tab==="verifications") return renderAdminVerifications();
@@ -3072,6 +3448,7 @@ async function submitBusinessVerification(){
 }
 
 function renderEmployer(){
+  if(state.tab==="commercial") return renderCommercialPlan();
   if(state.tab==="employer-analytics") return renderEmployerAnalytics();
   if(state.tab==="post") return renderPostJob();
   if(state.tab==="applicants") return renderApplicants();
@@ -3084,6 +3461,7 @@ function renderEmployer(){
         <button class="btn btn-light" onclick="setTab('post')">Post job</button>
         <button class="btn btn-soft" onclick="setTab('applicants')">View applicants</button>
         <button class="btn btn-soft" onclick="setTab('employer-analytics')">View analytics</button>
+        <button class="btn btn-soft" onclick="setTab('commercial')">Manage plan</button>
       </div>
     </div>
     <div class="section-pad">
@@ -3097,6 +3475,7 @@ function renderEmployer(){
               : "Complete your Business Profile and submit it for verification."}
         </div>
       </div>
+      ${state.commercial ? `<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><span class="commercial-badge ${state.commercial.account?.planCode==='pilot'?'pilot':''}">${state.commercial.account?.planName || cap(state.commercial.account?.planCode || 'free')}</span><div class="small" style="margin-top:6px">${state.commercial.usage?.activeJobs || 0}/${state.commercial.account?.activeJobLimit || 0} active jobs · ${state.commercial.usage?.featuredJobs || 0}/${state.commercial.account?.featuredJobLimit || 0} featured</div></div><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="setTab('commercial')">Plan</button></div></div>` : ''}
       <div class="stats">
         <div class="stat"><strong>${state.postedJobs.filter(j=>j.status==="active").length}</strong><span>Live jobs</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
@@ -3111,13 +3490,16 @@ function renderEmployer(){
           <button class="btn btn-light btn-block" onclick="setTab('post')">Post a job</button>
         </div>
       ` : state.postedJobs.map(j=>`
-        <div class="card list-card">
+        <div class="card list-card ${j.is_featured ? 'featured-job' : ''}">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
             <div>
               <div style="font-weight:900">${j.title}</div>
               <div class="small">${j.location} · ${j.pay}</div>
             </div>
-            <span class="job-status ${j.status || "active"}">${cap(j.status || "active")}</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+              ${j.is_featured ? `<span class="commercial-badge featured">Featured</span>` : ''}
+              <span class="job-status ${j.status || "active"}">${cap(j.status || "active")}</span>
+            </div>
           </div>
           <div class="chips">
             <span class="chip">${j.hours}</span>
@@ -3125,6 +3507,7 @@ function renderEmployer(){
             <span class="chip">${state.applicants.filter(a=>a.jobId===j.id).length} applicants</span>
           </div>
           <button class="btn btn-dark btn-block" onclick="viewJobApplicants('${j.id}')">See applicants</button>
+          ${j.status==='active' ? `<button class="btn ${j.is_featured?'btn-outline':'btn-soft'} btn-block" style="margin-top:8px;${j.is_featured?'color:var(--ink);border-color:var(--line-light)':''}" onclick="toggleFeaturedJob('${j.id}',${Boolean(j.is_featured)})">${j.is_featured?'Remove featured placement':'Feature this job'}</button>` : ''}
           <div class="job-controls">
             ${j.status==="active" ? `
               <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateJobStatus('${j.id}','pause')">Pause</button>
@@ -3164,6 +3547,7 @@ function renderPostJob(){
   return `
     <div class="section-pad">
       <div class="title-row"><h2>Post a job</h2><span>Better matching</span></div>
+      ${state.commercial ? `<div class="notice"><strong>${state.commercial.account?.planName || 'Current'} plan:</strong> ${state.commercial.usage?.activeJobs || 0} of ${state.commercial.account?.activeJobLimit || 0} active job slots in use. ${Number(state.commercial.usage?.activeJobs || 0) >= Number(state.commercial.account?.activeJobLimit || 0) ? 'You need to pause/close a job or change plan before publishing another active role.' : ''}</div>` : ''}
       <div class="form-card">
         <label>Job title</label><input id="jtitle" placeholder="Weekend Retail Assistant">
 

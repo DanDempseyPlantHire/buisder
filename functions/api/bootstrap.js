@@ -1,4 +1,5 @@
 import { json, getUser, createNotification } from "../_lib/db.js";
+import { getCommercialSnapshot } from "../_lib/commercial.js";
 
 function parseArray(value) {
   if (!value) return [];
@@ -305,16 +306,24 @@ export async function onRequestGet(context) {
               ep.logo_key AS employer_logo_key,
               ep.verification_status AS employer_verification_status,
               ep.website AS employer_website,
-              ep.description AS employer_description
+              ep.description AS employer_description,
+              CASE WHEN jp.job_id IS NOT NULL
+                     AND (jp.ends_at IS NULL OR datetime(jp.ends_at)>datetime('now'))
+                   THEN 1 ELSE 0 END AS is_featured
        FROM jobs j
        LEFT JOIN employer_profiles ep ON ep.user_id = j.employer_id
+       LEFT JOIN job_promotions jp ON jp.job_id=j.id
        WHERE j.status = 'active'
          AND NOT EXISTS (
            SELECT 1 FROM user_blocks b
            WHERE (b.blocker_user_id=? AND b.blocked_user_id=j.employer_id)
               OR (b.blocker_user_id=j.employer_id AND b.blocked_user_id=?)
          )
-       ORDER BY j.created_at DESC`
+       ORDER BY
+         CASE WHEN jp.job_id IS NOT NULL
+                   AND (jp.ends_at IS NULL OR datetime(jp.ends_at)>datetime('now'))
+              THEN 0 ELSE 1 END,
+         j.created_at DESC`
     ).bind(user.id, user.id).all();
 
     return json({
@@ -338,7 +347,14 @@ export async function onRequestGet(context) {
     logo_url: profile.logo_key ? `/api/files/business-logo/${user.id}` : null
   } : {};
   const { results: postedJobs } = await env.DB.prepare(
-    "SELECT * FROM jobs WHERE employer_id = ? ORDER BY created_at DESC"
+    `SELECT j.*,
+            CASE WHEN jp.job_id IS NOT NULL
+                   AND (jp.ends_at IS NULL OR datetime(jp.ends_at)>datetime('now'))
+                 THEN 1 ELSE 0 END AS is_featured
+     FROM jobs j
+     LEFT JOIN job_promotions jp ON jp.job_id=j.id
+     WHERE j.employer_id=?
+     ORDER BY j.created_at DESC`
   ).bind(user.id).all();
   const { results: applicants } = await env.DB.prepare(
     `SELECT a.id, a.job_id as jobId, a.status, a.created_at as date,
@@ -424,6 +440,7 @@ export async function onRequestGet(context) {
       statusHistory: employerHistoryByApplication[a.id] || []
     })),
     notifications: await getNotifications(env, user.id),
-    account: await getAccountSafety(env, user)
+    account: await getAccountSafety(env, user),
+    commercial: await getCommercialSnapshot(env, user.id)
   });
 }

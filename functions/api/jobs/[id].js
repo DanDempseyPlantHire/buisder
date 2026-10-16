@@ -1,4 +1,5 @@
 import { json, err, requireUser } from "../../_lib/db.js";
+import { canActivateJob } from "../../_lib/commercial.js";
 
 async function getOwnedJob(env, jobId, employerId) {
   const job = await env.DB.prepare(
@@ -30,6 +31,10 @@ export async function onRequestPatch(context) {
     nextStatus = "paused";
   } else if (action === "reopen") {
     if (!["paused", "closed"].includes(owned.job.status)) return err("This job is already active");
+    const entitlement = await canActivateJob(env, user.id, owned.job.id);
+    if (!entitlement.allowed) {
+      return err(`Your ${entitlement.snapshot.account.planName} plan allows ${entitlement.limit} active job${entitlement.limit===1 ? "" : "s"}.`, 403);
+    }
     nextStatus = "active";
   } else if (action === "close") {
     if (owned.job.status === "closed") return err("This job is already closed");

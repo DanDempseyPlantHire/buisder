@@ -161,6 +161,32 @@ export async function onRequestGet(context) {
       user.id
     );
 
+    exportData.commercialAccount = await env.DB.prepare(
+      `SELECT plan_code AS planCode, status, source, started_at AS startedAt,
+              access_ends_at AS accessEndsAt, updated_at AS updatedAt
+       FROM employer_commercial_accounts WHERE employer_id=?`
+    ).bind(user.id).first();
+
+    exportData.commercialHistory = await all(
+      env,
+      `SELECT event_type AS eventType, plan_code AS planCode, description,
+              created_at AS createdAt
+       FROM commercial_history WHERE employer_id=? ORDER BY created_at DESC`,
+      user.id
+    );
+
+    exportData.planRequests = await all(
+      env,
+      `SELECT requested_plan_code AS requestedPlanCode, message, status,
+              admin_note AS adminNote, created_at AS createdAt, reviewed_at AS reviewedAt
+       FROM commercial_plan_requests WHERE employer_id=? ORDER BY created_at DESC`,
+      user.id
+    );
+
+    exportData.referral = await env.DB.prepare(
+      `SELECT code FROM employer_referral_codes WHERE employer_id=?`
+    ).bind(user.id).first();
+
     exportData.storedFiles = {
       businessLogo: "/api/files/business-logo/" + user.id
     };

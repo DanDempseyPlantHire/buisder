@@ -1,6 +1,7 @@
 import { json, err, newId, hashPassword, sessionCookie } from "../../_lib/db.js";
 import { TERMS_VERSION, PRIVACY_VERSION } from "../../_lib/policy.js";
 import { recordAnalyticsEvent } from "../../_lib/analytics.js";
+import { ensureCommercialAccount } from "../../_lib/commercial.js";
 import {
   appOrigin,
   clientIp,
@@ -70,6 +71,7 @@ export async function onRequestPost({ request, env }) {
     await env.DB.prepare(
       "INSERT INTO employer_profiles (user_id, company_name) VALUES (?, ?)"
     ).bind(id, name || "").run();
+    await ensureCommercialAccount(env, id);
   }
 
   await env.DB.prepare(

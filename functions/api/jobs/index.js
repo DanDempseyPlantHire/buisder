@@ -1,5 +1,6 @@
 import { json, err, newId, requireUser } from "../../_lib/db.js";
 import { recordAnalyticsEvent } from "../../_lib/analytics.js";
+import { canActivateJob } from "../../_lib/commercial.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -17,6 +18,11 @@ export async function onRequestPost(context) {
   const profile = await env.DB.prepare(
     "SELECT company_name FROM employer_profiles WHERE user_id = ?"
   ).bind(user.id).first();
+
+  const entitlement = await canActivateJob(env, user.id);
+  if (!entitlement.allowed) {
+    return err(`Your ${entitlement.snapshot.account.planName} plan allows ${entitlement.limit} active job${entitlement.limit===1 ? "" : "s"}. Close or pause a role, or request a plan upgrade.`, 403);
+  }
   const company = (profile && profile.company_name) || user.name || "Employer";
 
   const id = newId();
