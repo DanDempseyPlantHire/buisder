@@ -86,6 +86,11 @@ export async function onRequestPost({ request, env }) {
      VALUES (?, 1, 1, 1, 1)`
   ).bind(id).run();
 
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO notification_preferences (user_id)
+     VALUES (?)`
+  ).bind(id).run();
+
   await recordAnalyticsEvent(env, {
     userId: id,
     userRole: role,

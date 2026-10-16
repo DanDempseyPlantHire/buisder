@@ -1,5 +1,7 @@
 import { json, getUser, createNotification } from "../_lib/db.js";
 import { getCommercialSnapshot } from "../_lib/commercial.js";
+import { TERMS_VERSION, PRIVACY_VERSION } from "../_lib/policy.js";
+import { maybeSendDueInterviewReminderEmails } from "../_lib/email-notifications.js";
 
 function parseArray(value) {
   if (!value) return [];
@@ -31,16 +33,6 @@ async function ensureInterviewReminders(env, userId) {
   ).bind(userId).all();
 
   for (const row of results) {
-    await createNotification(env, {
-      userId,
-      type: "interview_reminder",
-      title: "Interview reminder",
-      body: `Your interview for ${row.title} with ${row.company || "the employer"} is within 24 hours.`,
-      applicationId: row.applicationId,
-      jobId: row.jobId,
-      eventKey: `interview-reminder-24:${row.applicationId}:${row.interviewAt}`
-    });
-
     const withinHour = await env.DB.prepare(
       `SELECT CASE
          WHEN datetime(?) <= datetime('now', '+1 hour') THEN 1 ELSE 0
@@ -56,6 +48,16 @@ async function ensureInterviewReminders(env, userId) {
         applicationId: row.applicationId,
         jobId: row.jobId,
         eventKey: `interview-reminder-1:${row.applicationId}:${row.interviewAt}`
+      });
+    } else {
+      await createNotification(env, {
+        userId,
+        type: "interview_reminder",
+        title: "Interview reminder",
+        body: `Your interview for ${row.title} with ${row.company || "the employer"} is within 24 hours.`,
+        applicationId: row.applicationId,
+        jobId: row.jobId,
+        eventKey: `interview-reminder-24:${row.applicationId}:${row.interviewAt}`
       });
     }
   }
@@ -96,6 +98,15 @@ async function getAccountSafety(env, user) {
      ORDER BY accepted_at DESC LIMIT 1`
   ).bind(user.id).first();
 
+  const emailPreferences = await env.DB.prepare(
+    `SELECT recruitment_emails AS recruitmentEmails,
+            application_updates AS applicationUpdates,
+            interviews,
+            interview_reminders AS interviewReminders,
+            offers, outcomes, updated_at AS updatedAt
+     FROM notification_preferences WHERE user_id=?`
+  ).bind(user.id).first();
+
   const { results: blocks } = await env.DB.prepare(
     `SELECT b.blocked_user_id AS userId, b.created_at AS createdAt,
             u.name, u.role
@@ -117,16 +128,33 @@ async function getAccountSafety(env, user) {
     privacy: privacy || {
       shareEmail: 1, shareCv: 1, sharePhoto: 1, shareLocation: 1
     },
-    consent: consent || null,
+    consent: consent ? {
+      ...consent,
+      current: consent.termsVersion === TERMS_VERSION && consent.privacyVersion === PRIVACY_VERSION,
+      currentTermsVersion: TERMS_VERSION,
+      currentPrivacyVersion: PRIVACY_VERSION
+    } : {
+      current:false,
+      currentTermsVersion:TERMS_VERSION,
+      currentPrivacyVersion:PRIVACY_VERSION
+    },
+    emailPreferences: emailPreferences || {
+      recruitmentEmails:1, applicationUpdates:1, interviews:1,
+      interviewReminders:1, offers:1, outcomes:1, updatedAt:null
+    },
     blocks: blocks || [],
     reports: reports || []
   };
 }
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { env, request } = context;
   const user = await getUser(context);
   if (!user) return json({ user: null });
+
+  // Best-effort pilot reminder sweep. At most once every 15 minutes and
+  // never allowed to break bootstrap if email delivery has a problem.
+  await maybeSendDueInterviewReminderEmails(env, request);
 
 
   if (user.isAdmin) {

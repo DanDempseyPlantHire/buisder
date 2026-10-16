@@ -73,6 +73,25 @@ export async function onRequestGet(context) {
     user.id
   );
 
+  const notificationPreferences = await env.DB.prepare(
+    `SELECT recruitment_emails AS recruitmentEmails,
+            application_updates AS applicationUpdates, interviews,
+            interview_reminders AS interviewReminders, offers, outcomes,
+            updated_at AS updatedAt
+     FROM notification_preferences WHERE user_id=?`
+  ).bind(user.id).first();
+
+  const recruitmentEmailHistory = await all(
+    env,
+    `SELECT event_type AS eventType, status, attempt_count AS attemptCount,
+            sent_at AS sentAt, last_attempt_at AS lastAttemptAt,
+            created_at AS createdAt
+     FROM email_delivery_log
+     WHERE user_id=?
+     ORDER BY created_at DESC`,
+    user.id
+  );
+
   const exportData = {
     generatedAt: new Date().toISOString(),
     account,
@@ -81,7 +100,9 @@ export async function onRequestGet(context) {
     notifications,
     reportsSubmitted,
     blocks,
-    analyticsEvents
+    analyticsEvents,
+    notificationPreferences: notificationPreferences || null,
+    recruitmentEmailHistory
   };
 
   if (user.role === "jobseeker") {

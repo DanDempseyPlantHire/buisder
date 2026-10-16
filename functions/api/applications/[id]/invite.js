@@ -1,4 +1,5 @@
 import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
+import { sendRecruitmentEmail } from "../../../_lib/email-notifications.js";
 
 export async function onRequestPost(context) {
   const { request, env, params } = context;
@@ -98,6 +99,17 @@ export async function onRequestPost(context) {
     applicationId: params.id,
     jobId: app.job_id,
     eventKey: `interview:${params.id}:${interviewAt}:${interviewLocation || ""}`
+  });
+
+  await sendRecruitmentEmail(env, request, {
+    userId:app.jobseeker_id, category:"interview",
+    eventType:existing ? "interview_updated" : "interview_invitation",
+    eventKey:`email:interview:${params.id}:${interviewAt}:${interviewLocation || ""}`,
+    subject:`${existing ? "Interview updated" : "Interview invitation"}: ${app.job_title}`,
+    heading:existing ? "Your interview was updated" : "Interview invitation",
+    body:`${app.company || "An employer"} ${existing ? "updated your interview" : "invited you to an interview"} for ${app.job_title}.`,
+    applicationId:params.id, jobId:app.job_id,
+    detailLines:[`When: ${interviewAt.replace("T", " ")}`, interviewLocation ? `Where: ${interviewLocation}` : null, interviewMessage ? `Message: ${interviewMessage}` : null]
   });
 
   return json({ ok: true });

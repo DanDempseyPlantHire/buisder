@@ -1,7 +1,8 @@
 import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
+import { sendRecruitmentEmail } from "../../../_lib/email-notifications.js";
 
 export async function onRequestPost(context) {
-  const { env, params } = context;
+  const { request, env, params } = context;
   const { user, error } = await requireUser(context, "jobseeker");
   if (error) return error;
 
@@ -58,6 +59,15 @@ export async function onRequestPost(context) {
     applicationId: params.id,
     jobId: app.job_id,
     eventKey: `application:${params.id}:withdrawn`
+  });
+
+  await sendRecruitmentEmail(env, request, {
+    userId:app.employer_id, category:"application", eventType:"application_withdrawn",
+    eventKey:`email:application:${params.id}:withdrawn`,
+    subject:`Application withdrawn: ${app.job_title}`,
+    heading:"Application withdrawn",
+    body:`${user.name || "A candidate"} withdrew their application for ${app.job_title}.`,
+    applicationId:params.id, jobId:app.job_id
   });
 
   return json({ ok: true, status: "withdrawn" });

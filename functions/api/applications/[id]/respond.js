@@ -1,4 +1,5 @@
 import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
+import { sendRecruitmentEmail } from "../../../_lib/email-notifications.js";
 
 export async function onRequestPost(context) {
   const { request, env, params } = context;
@@ -77,6 +78,15 @@ export async function onRequestPost(context) {
     applicationId: params.id,
     jobId: app.job_id,
     eventKey: `interview-response:${params.id}:${newStatus}`
+  });
+
+  await sendRecruitmentEmail(env, request, {
+    userId:app.employer_id, category:"interview", eventType:"interview_response",
+    eventKey:`email:interview-response:${params.id}:${newStatus}`,
+    subject:`Interview ${response}: ${app.job_title}`,
+    heading:response === "accepted" ? "Interview accepted" : "Interview declined",
+    body:`${user.name || "The candidate"} ${response} the interview for ${app.job_title}.`,
+    applicationId:params.id, jobId:app.job_id
   });
 
   return json({ ok: true, status: newStatus });

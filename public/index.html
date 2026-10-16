@@ -477,7 +477,7 @@ let state = {
   postedJobs:[],
   applicants:[],
   notifications:[],
-  account:{privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},consent:null,blocks:[],reports:[]},
+  account:{privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},emailPreferences:{recruitmentEmails:1,applicationUpdates:1,interviews:1,interviewReminders:1,offers:1,outcomes:1},consent:null,blocks:[],reports:[]},
   applicantFilters:{jobId:"all", status:"all"},
   admin:{overview:{}, verifications:[], users:[], jobs:[], reports:[], auditLog:[]},
   analyticsDays:30,
@@ -953,7 +953,7 @@ async function loadBootstrap(){
 
   state.profile = data.profile || {};
   state.notifications = data.notifications || [];
-  state.account = data.account || {privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},consent:null,blocks:[],reports:[]};
+  state.account = data.account || {privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},emailPreferences:{recruitmentEmails:1,applicationUpdates:1,interviews:1,interviewReminders:1,offers:1,outcomes:1},consent:null,blocks:[],reports:[]};
   state.commercial = data.commercial || null;
   if(state.mode==="jobseeker"){
     state.jobs = data.jobs || [];
@@ -1976,11 +1976,12 @@ function renderPrivacySafetyCard(){
     <div class="safety-card">
       <div class="title-row" style="margin-top:0"><h2>Account & privacy</h2><span>${openReports ? `${openReports} report${openReports===1?"":"s"} open` : "Controls"}</span></div>
       <div class="small">
-        Control what is shared, review blocked accounts, export your Buisder data or permanently delete your account.
+        Control what is shared, choose recruitment emails, review blocked accounts, export your Buisder data or permanently delete your account.
       </div>
-      ${!a.consent ? `<div class="notice" style="margin-top:10px"><strong>Review required:</strong> this account predates the current Pilot Terms and Privacy Summary.</div>` : ""}
+      ${!a.consent?.current ? `<div class="notice" style="margin-top:10px"><strong>Review required:</strong> the Buisder Privacy Summary has been updated for recruitment email notifications.</div>` : ""}
       <div class="safety-actions">
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openPrivacySettings()">Privacy settings</button>
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openEmailPreferences()">Email notifications</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openSafetyCentre()">Safety centre</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="downloadMyData()">Export my data</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openAccountLegal()">Terms & privacy</button>
@@ -1988,6 +1989,72 @@ function renderPrivacySafetyCard(){
       <button class="btn btn-bad btn-block" style="margin-top:10px" onclick="openDeleteAccount()">Delete account</button>
     </div>
   `;
+}
+
+function openEmailPreferences(){
+  const p = state.account?.emailPreferences || {};
+  const master = privacyBool(p.recruitmentEmails);
+  openModal(`
+    <h3>Email notifications</h3>
+    <p class="small">Choose which recruitment updates Buisder sends by email. In-app notifications are not affected.</p>
+    <div class="privacy-toggle">
+      <input id="emailRecruitment" type="checkbox" ${master?"checked":""} onchange="syncEmailPreferenceControls()">
+      <label for="emailRecruitment" style="margin:0"><strong>Recruitment emails</strong><br><span class="small">Master switch for the recruitment categories below.</span></label>
+    </div>
+    <div id="emailPreferenceChildren">
+      <div class="privacy-toggle">
+        <input id="emailApplications" type="checkbox" ${privacyBool(p.applicationUpdates)?"checked":""}>
+        <label for="emailApplications" style="margin:0"><strong>Applications</strong><br><span class="small">New applications, shortlisting, application updates and withdrawals.</span></label>
+      </div>
+      <div class="privacy-toggle">
+        <input id="emailInterviews" type="checkbox" ${privacyBool(p.interviews)?"checked":""}>
+        <label for="emailInterviews" style="margin:0"><strong>Interviews</strong><br><span class="small">Invitations, reschedules, responses and completed interviews.</span></label>
+      </div>
+      <div class="privacy-toggle">
+        <input id="emailInterviewReminders" type="checkbox" ${privacyBool(p.interviewReminders)?"checked":""}>
+        <label for="emailInterviewReminders" style="margin:0"><strong>Interview reminders</strong><br><span class="small">Reminder emails when an accepted interview is approaching.</span></label>
+      </div>
+      <div class="privacy-toggle">
+        <input id="emailOffers" type="checkbox" ${privacyBool(p.offers)?"checked":""}>
+        <label for="emailOffers" style="margin:0"><strong>Offers</strong><br><span class="small">Job offers, revisions and offer responses.</span></label>
+      </div>
+      <div class="privacy-toggle">
+        <input id="emailOutcomes" type="checkbox" ${privacyBool(p.outcomes)?"checked":""}>
+        <label for="emailOutcomes" style="margin:0"><strong>Final outcomes</strong><br><span class="small">Hired and unsuccessful application outcomes.</span></label>
+      </div>
+    </div>
+    <div class="notice" style="margin-top:10px"><strong>Security emails stay on.</strong> Email verification, password reset and other essential account-security messages cannot be disabled here.</div>
+    <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="saveEmailPreferences()">Save email preferences</button>
+  `);
+  setTimeout(syncEmailPreferenceControls,0);
+}
+
+function syncEmailPreferenceControls(){
+  const enabled = Boolean(document.getElementById("emailRecruitment")?.checked);
+  ["emailApplications","emailInterviews","emailInterviewReminders","emailOffers","emailOutcomes"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.disabled=!enabled;
+  });
+}
+
+async function saveEmailPreferences(){
+  try{
+    await api("/api/account/notification-preferences", {
+      method:"PUT",
+      body:{
+        recruitmentEmails:Boolean(document.getElementById("emailRecruitment")?.checked),
+        applicationUpdates:Boolean(document.getElementById("emailApplications")?.checked),
+        interviews:Boolean(document.getElementById("emailInterviews")?.checked),
+        interviewReminders:Boolean(document.getElementById("emailInterviewReminders")?.checked),
+        offers:Boolean(document.getElementById("emailOffers")?.checked),
+        outcomes:Boolean(document.getElementById("emailOutcomes")?.checked)
+      }
+    });
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Email preferences saved");
+  }catch(e){ toast(e.message); }
 }
 
 function openPrivacySettings(){
@@ -2081,12 +2148,12 @@ function openAccountLegal(){
   const c = state.account?.consent;
   openModal(`
     <h3>Terms & privacy</h3>
-    ${c
-      ? `<div class="auth-success">Accepted Pilot Terms ${c.termsVersion} and Privacy Summary ${c.privacyVersion} on ${formatTimelineDate(c.acceptedAt)}.</div>`
-      : `<div class="notice">This account has not yet recorded acceptance of the current pilot terms and privacy summary.</div>`}
+    ${c?.current
+      ? `<div class="auth-success">Accepted current Pilot Terms ${c.termsVersion} and Privacy Summary ${c.privacyVersion} on ${formatTimelineDate(c.acceptedAt)}.</div>`
+      : `<div class="notice">The current Privacy Summary is version ${c?.currentPrivacyVersion || "2026-10-16"}. Please review and accept the current pilot documents.</div>`}
     <a class="btn btn-outline btn-block" href="/terms.html" target="_blank" rel="noopener">Read Pilot Terms</a>
     <a class="btn btn-outline btn-block" style="margin-top:8px" href="/privacy.html" target="_blank" rel="noopener">Read Privacy Summary</a>
-    ${!c ? `<button class="btn btn-dark btn-block" style="margin-top:12px" onclick="acceptCurrentPolicies()">Accept current terms & privacy</button>` : ""}
+    ${!c?.current ? `<button class="btn btn-dark btn-block" style="margin-top:12px" onclick="acceptCurrentPolicies()">Accept current terms & privacy</button>` : ""}
   `);
 }
 
@@ -2140,7 +2207,7 @@ async function deleteMyAccount(){
     state.applications = [];
     state.postedJobs = [];
     state.applicants = [];
-    state.account = {privacy:{},consent:null,blocks:[],reports:[]};
+    state.account = {privacy:{},emailPreferences:{},consent:null,blocks:[],reports:[]};
     render();
     toast("Account deleted");
   }catch(e){ toast(e.message); }

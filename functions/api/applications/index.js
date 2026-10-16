@@ -1,5 +1,6 @@
 import { json, err, newId, requireUser, createNotification } from "../../_lib/db.js";
 import { recordAnalyticsEvent } from "../../_lib/analytics.js";
+import { sendRecruitmentEmail } from "../../_lib/email-notifications.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -44,6 +45,18 @@ export async function onRequestPost(context) {
       applicationId: id,
       jobId,
       eventKey: `application:${id}:created`
+    });
+
+    await sendRecruitmentEmail(env, request, {
+      userId:job.employer_id,
+      category:"application",
+      eventType:"new_application",
+      eventKey:`email:application:${id}:created`,
+      subject:`New application: ${job.title}`,
+      heading:"You have a new application",
+      body:`${user.name || "A candidate"} applied for ${job.title}.`,
+      applicationId:id,
+      jobId
     });
 
     await recordAnalyticsEvent(env, {

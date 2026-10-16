@@ -13,8 +13,9 @@ export async function onRequestPost(context){
   }
   if(action==="repair_defaults"){
     const a=await env.DB.prepare(`INSERT OR IGNORE INTO privacy_preferences (user_id) SELECT id FROM users`).run();
-    const b=await env.DB.prepare(`INSERT OR IGNORE INTO employer_commercial_accounts (employer_id,plan_code,status,source) SELECT id,'free','active','v18_repair' FROM users WHERE role='employer'`).run();
-    details={privacyPreferences:changes(a),employerCommercialAccounts:changes(b)}; affected=details.privacyPreferences+details.employerCommercialAccounts;
+    const b=await env.DB.prepare(`INSERT OR IGNORE INTO employer_commercial_accounts (employer_id,plan_code,status,source) SELECT id,'free','active','v19_repair' FROM users WHERE role='employer'`).run();
+    const c=await env.DB.prepare(`INSERT OR IGNORE INTO notification_preferences (user_id) SELECT id FROM users`).run();
+    details={privacyPreferences:changes(a),employerCommercialAccounts:changes(b),notificationPreferences:changes(c)}; affected=details.privacyPreferences+details.employerCommercialAccounts+details.notificationPreferences;
   }
   if(action==="close_suspended_jobs"){
     const a=await env.DB.prepare(`UPDATE jobs SET status='closed' WHERE status IN ('active','paused') AND employer_id IN (SELECT id FROM users WHERE is_suspended=1)`).run();

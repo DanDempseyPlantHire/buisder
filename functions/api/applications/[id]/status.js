@@ -1,4 +1,5 @@
 import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
+import { sendRecruitmentEmail } from "../../../_lib/email-notifications.js";
 
 const ALLOWED = new Set([
   "shortlist",
@@ -70,6 +71,14 @@ export async function onRequestPost(context) {
         jobId: app.job_id,
         eventKey: `application:${params.id}:shortlisted`
       });
+      await sendRecruitmentEmail(env, request, {
+        userId:app.jobseeker_id, category:"application", eventType:"shortlisted",
+        eventKey:`email:application:${params.id}:shortlisted`,
+        subject:`You were shortlisted: ${app.job_title}`,
+        heading:"You were shortlisted",
+        body:`${app.company || "An employer"} shortlisted you for ${app.job_title}.`,
+        applicationId:params.id, jobId:app.job_id
+      });
     }
 
     return json({ ok: true, status: "shortlisted" });
@@ -98,6 +107,14 @@ export async function onRequestPost(context) {
       jobId: app.job_id,
       eventKey: `application:${params.id}:back_to_applied`
     });
+    await sendRecruitmentEmail(env, request, {
+      userId:app.jobseeker_id, category:"application", eventType:"application_update",
+      eventKey:`email:application:${params.id}:back_to_applied`,
+      subject:`Application update: ${app.job_title}`,
+      heading:"Your application was updated",
+      body:`Your application for ${app.job_title} has moved back to Applied.`,
+      applicationId:params.id, jobId:app.job_id
+    });
     return json({ ok: true, status: "applied" });
   }
 
@@ -123,6 +140,14 @@ export async function onRequestPost(context) {
       applicationId: params.id,
       jobId: app.job_id,
       eventKey: `application:${params.id}:interview_completed`
+    });
+    await sendRecruitmentEmail(env, request, {
+      userId:app.jobseeker_id, category:"interview", eventType:"interview_completed",
+      eventKey:`email:application:${params.id}:interview_completed`,
+      subject:`Interview completed: ${app.job_title}`,
+      heading:"Interview completed",
+      body:`${app.company || "The employer"} marked your ${app.job_title} interview as completed.`,
+      applicationId:params.id, jobId:app.job_id
     });
     return json({ ok: true, status: "interview_completed" });
   }
@@ -177,6 +202,15 @@ export async function onRequestPost(context) {
       eventKey: `application:${params.id}:unsuccessful`
     });
 
+    await sendRecruitmentEmail(env, request, {
+      userId:app.jobseeker_id, category:"outcome", eventType:"unsuccessful",
+      eventKey:`email:application:${params.id}:unsuccessful`,
+      subject:`Application update: ${app.job_title}`,
+      heading:"Application outcome",
+      body:`${app.company || "The employer"} has closed your application for ${app.job_title}.`,
+      applicationId:params.id, jobId:app.job_id
+    });
+
     return json({ ok: true, status: "unsuccessful" });
   }
 
@@ -201,6 +235,14 @@ export async function onRequestPost(context) {
       applicationId: params.id,
       jobId: app.job_id,
       eventKey: `application:${params.id}:hired`
+    });
+    await sendRecruitmentEmail(env, request, {
+      userId:app.jobseeker_id, category:"outcome", eventType:"hired",
+      eventKey:`email:application:${params.id}:hired`,
+      subject:`You’re hired: ${app.job_title}`,
+      heading:"You’re hired",
+      body:`${app.company || "The employer"} marked you as hired for ${app.job_title}.`,
+      applicationId:params.id, jobId:app.job_id
     });
     return json({ ok: true, status: "hired" });
   }

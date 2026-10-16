@@ -37,6 +37,19 @@ export async function onRequestGet(context){
   const emailOk=Boolean(String(env.RESEND_API_KEY||"").trim())&&Boolean(String(env.EMAIL_FROM||"").trim());
   checks.push(item("email","Transactional email",emailOk?"pass":"critical",emailOk?"Resend API key and sender are configured.":"Email delivery configuration is incomplete."));
 
+  if(tables.has("email_delivery_log")){
+    const failedEmails=await count(env,`SELECT COUNT(*) AS count FROM email_delivery_log WHERE status='failed' AND datetime(last_attempt_at)>=datetime('now','-24 hours')`);
+    const sentEmails=await count(env,`SELECT COUNT(*) AS count FROM email_delivery_log WHERE status='sent' AND datetime(sent_at)>=datetime('now','-24 hours')`);
+    checks.push(item(
+      "recruitment_email_delivery",
+      "Recruitment email delivery",
+      failedEmails?"warning":"pass",
+      failedEmails
+        ? `${failedEmails} recruitment email delivery attempt(s) failed in the last 24 hours; ${sentEmails} were sent.`
+        : `${sentEmails} recruitment email(s) sent in the last 24 hours with no logged failures.`
+    ));
+  }
+
   const appUrlOk=Boolean(String(env.APP_URL||"").trim());
   checks.push(item("app_url","Production app URL",appUrlOk?"pass":"warning",appUrlOk?"APP_URL is configured.":"APP_URL is not configured."));
 
@@ -61,8 +74,10 @@ export async function onRequestGet(context){
     const missingPrivacy=await count(env,`SELECT COUNT(*) AS count FROM users u LEFT JOIN privacy_preferences p ON p.user_id=u.id WHERE p.user_id IS NULL`);
     let missingCommercial=0;
     if(tables.has("employer_commercial_accounts")) missingCommercial=await count(env,`SELECT COUNT(*) AS count FROM users u LEFT JOIN employer_commercial_accounts eca ON eca.employer_id=u.id WHERE u.role='employer' AND eca.employer_id IS NULL`);
-    const total=missingPrivacy+missingCommercial;
-    checks.push(item("account_defaults","Account defaults",total?"warning":"pass",total?`${missingPrivacy} account(s) lack privacy defaults and ${missingCommercial} employer account(s) lack commercial defaults.`:"Account default records are complete.",total?"repair_defaults":null));
+    let missingNotifications=0;
+    if(tables.has("notification_preferences")) missingNotifications=await count(env,`SELECT COUNT(*) AS count FROM users u LEFT JOIN notification_preferences np ON np.user_id=u.id WHERE np.user_id IS NULL`);
+    const total=missingPrivacy+missingCommercial+missingNotifications;
+    checks.push(item("account_defaults","Account defaults",total?"warning":"pass",total?`${missingPrivacy} account(s) lack privacy defaults, ${missingNotifications} lack email preferences, and ${missingCommercial} employer account(s) lack commercial defaults.`:"Account default records are complete.",total?"repair_defaults":null));
   }
 
   if(tables.has("verified_emails")&&tables.has("users")){

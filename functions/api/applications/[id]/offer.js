@@ -1,4 +1,5 @@
 import { json, err, newId, requireUser, createNotification } from "../../../_lib/db.js";
+import { sendRecruitmentEmail } from "../../../_lib/email-notifications.js";
 
 async function addHistory(env, applicationId, status, actorUserId, note = null) {
   await env.DB.prepare(
@@ -89,6 +90,16 @@ export async function onRequestPost(context) {
     jobId: app.job_id
   });
 
+  await sendRecruitmentEmail(env, request, {
+    userId:app.jobseeker_id, category:"offer", eventType:existing ? "offer_updated" : "offer_made",
+    eventKey:`email:offer:${params.id}:${roleTitle}:${pay}:${startDate}`,
+    subject:`${existing ? "Updated job offer" : "Job offer"}: ${roleTitle}`,
+    heading:existing ? "Your job offer was updated" : "You have a job offer",
+    body:`${app.company || "An employer"} sent you an offer for ${roleTitle}.`,
+    applicationId:params.id, jobId:app.job_id,
+    detailLines:[`Pay: ${pay}`, `Start date: ${startDate}`, message ? `Message: ${message}` : null]
+  });
+
   return json({ ok: true, status: "offer_made" });
 }
 
@@ -150,6 +161,15 @@ export async function onRequestPatch(context) {
     applicationId: params.id,
     jobId: offer.job_id,
     eventKey: `offer-response:${params.id}:${applicationStatus}`
+  });
+
+  await sendRecruitmentEmail(env, request, {
+    userId:offer.employer_id, category:"offer", eventType:"offer_response",
+    eventKey:`email:offer-response:${params.id}:${applicationStatus}`,
+    subject:`Offer ${response}: ${offer.job_title}`,
+    heading:response === "accepted" ? "Offer accepted" : "Offer declined",
+    body:`${user.name || "The candidate"} ${response} the offer for ${offer.job_title}.`,
+    applicationId:params.id, jobId:offer.job_id
   });
 
   return json({ ok: true, status: applicationStatus });

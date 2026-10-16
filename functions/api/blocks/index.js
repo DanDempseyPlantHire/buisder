@@ -1,6 +1,7 @@
 import {
   json, err, newId, requireUser, createNotification
 } from "../../_lib/db.js";
+import { sendRecruitmentEmail } from "../../_lib/email-notifications.js";
 
 const FINAL = new Set(["hired","unsuccessful","withdrawn"]);
 
@@ -110,6 +111,15 @@ export async function onRequestPost(context) {
         jobId: app.jobId,
         eventKey: `block-withdraw:${app.id}`
       });
+
+      await sendRecruitmentEmail(env, request, {
+        userId:app.employerId, category:"application", eventType:"application_withdrawn",
+        eventKey:`email:block-withdraw:${app.id}`,
+        subject:`Application withdrawn: ${app.title}`,
+        heading:"Application withdrawn",
+        body:`${user.name || "A candidate"} withdrew their application for ${app.title}.`,
+        applicationId:app.id, jobId:app.jobId
+      });
     }
   } else {
     const { results: apps } = await env.DB.prepare(
@@ -154,6 +164,15 @@ export async function onRequestPost(context) {
         applicationId: app.id,
         jobId: app.jobId,
         eventKey: `block-close:${app.id}`
+      });
+
+      await sendRecruitmentEmail(env, request, {
+        userId:blockedUserId, category:"outcome", eventType:"unsuccessful",
+        eventKey:`email:block-close:${app.id}`,
+        subject:`Application update: ${app.title}`,
+        heading:"Application outcome",
+        body:`Your application for ${app.title} has been closed.`,
+        applicationId:app.id, jobId:app.jobId
       });
     }
   }
