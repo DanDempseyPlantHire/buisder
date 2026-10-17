@@ -90,3 +90,15 @@ There are no ALTER TABLE statements.
 10. Pause an active job and confirm it disappears from the job-seeker feed.
 11. Reopen it and confirm it returns.
 12. Filter employer applicants by job and stage.
+
+## Roadmap status update after v21
+- v15 Public Jobs + SEO: implemented in the post-v21 build.
+- v22 Payments: intentionally parked by product decision; retain for later.
+- v23 Growth: retain for later after payments/public launch priorities are revisited.
+
+
+## Current roadmap status after v23
+- v15 Public Jobs + SEO: complete
+- v23 Growth: complete
+- v22 Payments: parked for later at user request
+- Post-launch enhancements: later
