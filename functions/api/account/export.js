@@ -63,6 +63,22 @@ export async function onRequestGet(context) {
     user.id
   );
 
+  const dataRightsRequests = await all(
+    env,
+    `SELECT request_type AS requestType, details, status, due_at AS dueAt,
+            admin_response AS adminResponse, created_at AS createdAt, completed_at AS completedAt
+     FROM data_rights_requests WHERE user_id=? ORDER BY created_at DESC`,
+    user.id
+  );
+
+  const complianceComplaints = await all(
+    env,
+    `SELECT category, details, status, due_at AS dueAt, admin_response AS adminResponse,
+            created_at AS createdAt, resolved_at AS resolvedAt
+     FROM compliance_complaints WHERE user_id=? ORDER BY created_at DESC`,
+    user.id
+  );
+
   const analyticsEvents = await all(
     env,
     `SELECT event_type AS eventType, job_id AS jobId,
@@ -125,6 +141,8 @@ export async function onRequestGet(context) {
     notifications,
     reportsSubmitted,
     blocks,
+    dataRightsRequests,
+    complianceComplaints,
     analyticsEvents,
     pilot: { membership: pilotMembership || null, feedback: pilotFeedback, issues: pilotIssues },
     notificationPreferences: notificationPreferences || null,
