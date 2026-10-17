@@ -73,6 +73,31 @@ export async function onRequestGet(context) {
     user.id
   );
 
+  const pilotMembership = await env.DB.prepare(
+    `SELECT pm.status, pm.source, pm.joined_at AS joinedAt,
+            pc.name AS cohortName, po.name AS organizationName
+     FROM pilot_memberships pm
+     LEFT JOIN pilot_cohorts pc ON pc.id=pm.cohort_id
+     LEFT JOIN pilot_organizations po ON po.id=pm.organization_id
+     WHERE pm.user_id=?`
+  ).bind(user.id).first().catch(() => null);
+
+  const pilotFeedback = await all(
+    env,
+    `SELECT feedback_type AS feedbackType, rating, ease_score AS easeScore,
+            recommend_score AS recommendScore, comments, created_at AS createdAt
+     FROM pilot_feedback WHERE user_id=? ORDER BY created_at DESC`,
+    user.id
+  ).catch(() => []);
+
+  const pilotIssues = await all(
+    env,
+    `SELECT category, severity, title, details, status, admin_note AS adminNote,
+            created_at AS createdAt, updated_at AS updatedAt
+     FROM pilot_issues WHERE reporter_user_id=? ORDER BY created_at DESC`,
+    user.id
+  ).catch(() => []);
+
   const notificationPreferences = await env.DB.prepare(
     `SELECT recruitment_emails AS recruitmentEmails,
             application_updates AS applicationUpdates, interviews,
@@ -101,6 +126,7 @@ export async function onRequestGet(context) {
     reportsSubmitted,
     blocks,
     analyticsEvents,
+    pilot: { membership: pilotMembership || null, feedback: pilotFeedback, issues: pilotIssues },
     notificationPreferences: notificationPreferences || null,
     recruitmentEmailHistory
   };

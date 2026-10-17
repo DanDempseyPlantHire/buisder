@@ -114,6 +114,11 @@ export async function onRequestGet(context){
     const n=await count(env,"SELECT COUNT(*) AS count FROM employer_profiles WHERE verification_status='pending'");
     checks.push(item("verification_queue","Employer verification queue",n?"info":"pass",n?`${n} employer verification request(s) are pending.`:"No employer verification requests are pending."));
   }
+  if(tables.has("pilot_issues")) {
+    const n=await count(env,"SELECT COUNT(*) AS count FROM pilot_issues WHERE status IN ('open','reviewing')");
+    checks.push(item("pilot_issue_queue","Pilot issue queue",n?"info":"pass",n?`${n} pilot issue(s) are awaiting or undergoing review.`:"No pilot issues are waiting for review."));
+  }
+
   if(tables.has("commercial_plan_requests")){
     const n=await count(env,"SELECT COUNT(*) AS count FROM commercial_plan_requests WHERE status='pending'");
     checks.push(item("commercial_queue","Commercial request queue",n?"info":"pass",n?`${n} employer plan request(s) are pending.`:"No employer plan requests are pending."));

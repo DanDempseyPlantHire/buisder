@@ -2,6 +2,7 @@ import { json, err, newId, hashPassword, sessionCookie } from "../../_lib/db.js"
 import { TERMS_VERSION, PRIVACY_VERSION } from "../../_lib/policy.js";
 import { recordAnalyticsEvent } from "../../_lib/analytics.js";
 import { ensureCommercialAccount } from "../../_lib/commercial.js";
+import { getPilotSettings, validatePilotInvite, joinPilotByInvite } from "../../_lib/pilot.js";
 import {
   appOrigin,
   clientIp,
@@ -22,7 +23,7 @@ export async function onRequestPost({ request, env }) {
 
   const {
     email, password, role, name, turnstileToken,
-    acceptedTerms, acceptedPrivacy, eligibilityConfirmed
+    acceptedTerms, acceptedPrivacy, eligibilityConfirmed, pilotInviteCode
   } = body;
   if (!email || !password || !role) return err("Email, password and role are required");
   if (!["jobseeker", "employer"].includes(role)) return err("Role must be jobseeker or employer");
@@ -49,6 +50,23 @@ export async function onRequestPost({ request, env }) {
 
   const turnstile = await verifyTurnstile(env, request, turnstileToken);
   if (!turnstile.ok) return err(turnstile.error, 403);
+
+  let validatedPilotInvite = null;
+  try {
+    const pilotSettings = await getPilotSettings(env);
+    const suppliedInvite = String(pilotInviteCode || "").trim();
+    if (Number(pilotSettings.inviteRequired) && !suppliedInvite) {
+      return err("A pilot invite code is required to create an account during this pilot.", 403);
+    }
+    if (suppliedInvite) {
+      const checked = await validatePilotInvite(env, suppliedInvite, role);
+      if (!checked.ok) return err(checked.error || "Pilot invite code is not valid.", 403);
+      validatedPilotInvite = checked.invite;
+    }
+  } catch (e) {
+    // Before v20 migration, do not lock legitimate users out merely because pilot tables are absent.
+    if (!/no such table: pilot_/i.test(String(e?.message || e))) throw e;
+  }
 
   const requireVerification = emailVerificationRequired(env);
   if (requireVerification && !emailDeliveryConfigured(env)) {
@@ -97,6 +115,10 @@ export async function onRequestPost({ request, env }) {
     eventType: "user_signup",
     eventKey: `user_signup:${id}`
   });
+
+  if (validatedPilotInvite) {
+    await joinPilotByInvite(env, { id, role }, validatedPilotInvite.code);
+  }
 
   if (requireVerification) {
     const token = await createAuthToken(env, id, "verify_email", 24 * 3600);
