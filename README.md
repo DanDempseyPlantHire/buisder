@@ -1,17 +1,13 @@
-# Buisder interview scheduling v2
+# Buisder
 
-Employer flow now shows interview scheduling directly on each applicant card:
-- date
-- time
-- place / meeting method
-- optional message
-- Send interview invitation
+Current build: **v24 Production Expansion**.
 
-Job seeker receives:
-- prominent in-app new interview alert
-- interview card under Applications
-- Accept interview / Decline buttons
-- optional browser notification permission and notification while the web app is open/backgrounded
-- 20-second polling for new invitations while signed in
+This package includes the full Buisder application through Public Jobs/SEO, Legal & Compliance, Growth, Stripe Payments, installable PWA, Web Push, transparent advanced job matching, application messaging, behavioural risk controls and generic employer integrations.
 
-Before deployment to an existing Cloudflare D1 database, run migration-interviews.sql once in the D1 console.
+Start with:
+- `README-V24-PRODUCTION-EXPANSION.md`
+- `V24-D1-CONSOLE-STEPS.md`
+- `V24-STRIPE-PUSH-SETUP.md`
+- `V24-TEST-PLAN.md`
+
+The existing Cloudflare architecture remains unchanged: Pages + Pages Functions + D1 + private R2. Deploy through the connected GitHub repository.

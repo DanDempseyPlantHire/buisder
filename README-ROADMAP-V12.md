@@ -102,3 +102,15 @@ There are no ALTER TABLE statements.
 - v23 Growth: complete
 - v22 Payments: parked for later at user request
 - Post-launch enhancements: later
+
+## Current roadmap status after v24
+- v15 Public Jobs + SEO: complete
+- v23 Growth: complete
+- v22 Payments: complete as part of v24 Production Expansion
+- Web Push notifications: complete in v24
+- Advanced transparent job matching: complete in v24
+- Fraud/abuse risk controls: complete in v24
+- Application-only messaging: complete in v24
+- Installable PWA/mobile improvements: complete in v24
+- Generic employer integration API and interview calendar export: complete in v24
+- Provider-specific ATS/HR connectors remain future integrations requiring provider credentials/specifications.
