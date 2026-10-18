@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#171510" />
+  <meta name="theme-color" content="#05070F" />
   <meta name="description" content="Buisder - swipe-friendly job matching for young people. Apply to local jobs in seconds." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Buisder" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2210%22 fill=%22%237c3aed%22/><text x=%2250%25%22 y=%2262%25%22 font-size=%2258%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22900%22 text-anchor=%22middle%22>B</text></svg>" />
+  <link rel="icon" type="image/png" href="/icons/icon-192.png" /><rect width=%22100%22 height=%22100%22 rx=%2210%22 fill=%22%237c3aed%22/><text x=%2250%25%22 y=%2262%25%22 font-size=%2258%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22900%22 text-anchor=%22middle%22>B</text></svg>" />
   <title>Buisder - Jobs for young people</title>
   <style>
     :root{
@@ -602,6 +602,143 @@
     .legal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
     .legal-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 
+
+    /* v24.5 Buisder brand refresh */
+    :root{
+      --ink:#05070F;
+      --panel:#0B1020;
+      --paper:#F7FAFF;
+      --paper-dim:#EDF4FF;
+      --text:#08111F;
+      --muted:#687891;
+      --muted-on-dark:#A8B3C7;
+      --line-dark:rgba(45,123,255,.28);
+      --line-light:#CCD9EF;
+      --accent:#00E5FF;
+      --accent-2:#2D7BFF;
+      --accent-3:#8B5CFF;
+      --accent-ink:#1857C8;
+      --accent-tint:#E7FAFF;
+      --good:#16864B;
+      --good-tint:#EAF9F0;
+      --bad:#C93745;
+      --bad-tint:#FDECEF;
+    }
+    html,body{
+      background:
+        radial-gradient(circle at 15% -10%,rgba(0,229,255,.13),transparent 30%),
+        radial-gradient(circle at 90% 12%,rgba(139,92,255,.12),transparent 28%),
+        var(--ink);
+    }
+    body{color:#fff}
+    .app{
+      background:linear-gradient(180deg,#05070F 0%,#070B15 45%,#05070F 100%);
+      box-shadow:0 0 42px rgba(45,123,255,.08);
+    }
+    .topbar{
+      background:rgba(5,7,15,.92);
+      border-bottom:1px solid rgba(0,229,255,.18);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+    }
+    .brand{gap:9px}
+    .logo{
+      width:38px;height:38px;border-radius:50%;background:#05070F;overflow:hidden;
+      border:1px solid rgba(45,123,255,.45);
+      box-shadow:0 0 16px rgba(0,229,255,.16),0 0 22px rgba(139,92,255,.08);
+    }
+    .logo img{display:block;width:100%;height:100%;object-fit:cover}
+    .brand-name{color:#fff;font-weight:800;letter-spacing:.01em}
+    .subtle{color:#A8B3C7}
+    .modepill{border-color:rgba(45,123,255,.24);background:rgba(11,16,32,.48)}
+    .modepill button{color:#A8B3C7}
+    .modepill button.active{
+      background:linear-gradient(135deg,#00E5FF,#2D7BFF);
+      color:#04101A;
+      box-shadow:0 4px 14px rgba(45,123,255,.25);
+    }
+    .hero{
+      background:
+        radial-gradient(circle at 90% 0%,rgba(139,92,255,.25),transparent 38%),
+        linear-gradient(135deg,rgba(0,229,255,.14),rgba(45,123,255,.13) 50%,rgba(139,92,255,.12)),
+        #0B1020;
+      border:1px solid rgba(45,123,255,.32);
+      box-shadow:0 16px 38px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    .hero h1{color:#fff}
+    .hero p{color:#C8D4E8}
+    .btn-dark{
+      background:linear-gradient(135deg,#00E5FF,#2D7BFF);
+      color:#04101A;
+      border:1px solid rgba(0,229,255,.35);
+      box-shadow:0 7px 18px rgba(45,123,255,.22);
+    }
+    .btn-dark:hover{filter:brightness(1.05)}
+    .btn-light{background:#F7FAFF;color:#05070F;border:1px solid #D7E2F4}
+    .btn-soft{background:rgba(45,123,255,.12);color:#EAF3FF;border:1px solid rgba(45,123,255,.22)}
+    .btn-outline{background:transparent;border:1px solid rgba(45,123,255,.42);color:#DCE8FF}
+    .notify-bell{border-color:rgba(45,123,255,.35);background:rgba(45,123,255,.08);color:#fff}
+    .notify-count{background:linear-gradient(135deg,#00E5FF,#8B5CFF);color:#05070F;border-color:#05070F}
+    .card,.form-card,.sheet,.safety-card,.metric-card,.plan-card,.commercial-stat,.admin-stat,.admin-row,.readiness-check,.launch-kpi,.pilot-card,.v24-panel,.growth-section,.growth-kpi,.compliance-section,.compliance-kpi,.analytics-panel,.analytics-kpi{
+      border-color:#CCD9EF;
+      box-shadow:0 9px 24px rgba(2,10,28,.08);
+    }
+    .card.dark{background:#0B1020;border-color:rgba(45,123,255,.28);color:#fff}
+    .job-card{border-color:#C7D8F2;box-shadow:0 18px 38px rgba(0,0,0,.28)}
+    .job-image{
+      background:
+        radial-gradient(circle at 80% 15%,rgba(139,92,255,.24),transparent 40%),
+        radial-gradient(circle at 12% 85%,rgba(0,229,255,.16),transparent 38%),
+        linear-gradient(145deg,#09111F,#05070F);
+      border-bottom-color:rgba(45,123,255,.25);
+    }
+    .job-badge{border-color:rgba(0,229,255,.38);color:#EAFBFF;background:rgba(0,229,255,.06)}
+    .why{background:linear-gradient(135deg,#E8FBFF,#EDF3FF);color:#174A75;border:1px solid #C8EAF4}
+    .feed-progress span{background:rgba(45,123,255,.20)}
+    .feed-progress span.active{background:linear-gradient(90deg,#00E5FF,#2D7BFF,#8B5CFF)}
+    .bottomnav{background:rgba(5,7,15,.96);border-top-color:rgba(45,123,255,.25);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .bottomnav button{color:#8491A8}
+    .bottomnav button.active{color:#00E5FF;border-top-color:#00E5FF;text-shadow:0 0 14px rgba(0,229,255,.22)}
+    input,select,textarea{border-color:#C7D5EA;background:#fff;color:#08111F}
+    input:focus,select:focus,textarea:focus{border-color:#2D7BFF;box-shadow:0 0 0 3px rgba(45,123,255,.12)}
+    a{accent-color:#2D7BFF}
+    .chip{background:#EDF4FF;color:#24436B}
+    .chip.dark{background:rgba(45,123,255,.10);border-color:rgba(45,123,255,.26);color:#DCE8FF}
+    .pill.soft{background:#E8F8FF;color:#1857C8}
+    .interview-alert,.launch-not-ready{background:#EDF7FF;color:#174A75;border-color:#BFD8F5}
+    .match-reason{background:#E7FAFF!important;color:#1857C8!important;border-color:#B9ECF6!important}
+    .analytics-page,.growth-page{color:#08111F}
+    .analytics-kpi,.analytics-panel,.growth-kpi,.growth-section,.v24-panel,.v24-kpi,.compliance-kpi,.compliance-section,.pilot-card,.pilot-metric,.admin-stat,.admin-row{background:#F8FBFF!important;border-color:#D4E0F2!important}
+    .analytics-kpi strong,.analytics-panel h2,.growth-kpi strong,.growth-section h2,.v24-kpi strong,.compliance-kpi strong,.compliance-section h2{color:#08111F!important}
+    .analytics-panel .panel-sub,.growth-section .small,.growth-section .admin-meta,.v24-panel .small,.v24-panel .admin-meta,.compliance-section .small,.compliance-section .admin-meta{color:#53657F!important}
+    .funnel-bar,.growth-stage-bar{background:#E7EEF9}
+    .funnel-bar>span,.growth-stage-bar span{background:linear-gradient(90deg,#00E5FF,#2D7BFF,#8B5CFF)}
+    .conversion-item,.activity-value,.rank-stat,.growth-code{background:#EEF5FF;border-color:#D8E4F4;color:#08111F}
+    .analytics-footnote{background:#EFF8FF;border-color:#C9E6F4;color:#36536F}
+    .analytics-period button{color:#18314F!important;background:#F8FBFF!important;border-color:#C9D7EB!important}
+    .analytics-period button.active{background:linear-gradient(135deg,#00E5FF,#2D7BFF)!important;color:#04101A!important;border-color:#2D7BFF!important}
+    .analytics-page .btn-outline{color:#1857C8!important;border-color:#8CB4F2!important;background:#F8FBFF!important}
+    .growth-code{color:#173F70!important}
+    .message-bubble{background:#EEF4FB;color:#10213B}
+    .message-bubble.mine{background:linear-gradient(135deg,#135FD0,#6F4FE8);color:#fff}
+    .timeline-item{border-left-color:#C8D8EE}
+    .workflow-step.current{background:#E7FAFF;color:#16608E;border-color:#BDEBF5}
+    .shortlist-badge,.offer-box{background:#EEF3FF;color:#3A4FC6;border-color:#C8D4FF}
+    .featured-job{border-color:#2D7BFF}
+    .commercial-badge.featured{background:#E7FAFF;color:#17638F}
+    .commercial-badge.pilot,.pilot-badge{background:#EEF3FF;color:#4654C7;border-color:#C9D4FF}
+    .auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .auth-brand img{width:64px;height:64px;border-radius:50%;border:1px solid rgba(45,123,255,.42);box-shadow:0 0 22px rgba(0,229,255,.14)}
+    .auth-brand span{font-size:22px;font-weight:850;color:#fff;letter-spacing:.01em}
+    @media(max-width:420px){.auth-brand img{width:58px;height:58px}.auth-brand span{font-size:20px}}
+
+    /* v24.5 cool-neutral text alignment */
+    label{color:#29415F}
+    .sheet p,.notice{color:#52647D}
+    .notice{background:#EEF5FF}
+    .card .small,.form-card .small,.sheet .small,.safety-card .small,.metric-card span,.commercial-stat span,.launch-kpi span,.readiness-detail,.timeline-meta,.notification-time,.security-note,.turnstile-status,.admin-meta,.metric small,.geo-status,.photo-help,.admin-stat span{color:#60728C}
+    .card .title-row span,.form-card .title-row span,.sheet .title-row span,.safety-card .title-row span,.admin-row .title-row span{color:#60728C}
+
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -610,7 +747,7 @@
   <header class="topbar hidden" id="topbar">
     <div class="row">
       <div>
-        <div class="brand"><div class="logo">B</div><div>Buisder</div></div>
+        <div class="brand"><div class="logo"><img src="/brand/buisder-logo.png" alt="Buisder logo"></div><div class="brand-name">Buisder</div></div>
         <div class="subtle" id="modeLabel">Swipe-friendly jobs for young people</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
@@ -1359,6 +1496,7 @@ function renderAuth(){
   if(state.authMode === "verify-pending"){
     return `
       <div class="hero">
+        <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
         <h1>Check your email</h1>
         <p>Verify your email address before logging in to Buisder.</p>
       </div>
@@ -1381,6 +1519,7 @@ function renderAuth(){
   if(state.authMode === "forgot"){
     return `
       <div class="hero">
+        <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
         <h1>Reset your password</h1>
         <p>Enter your email and we’ll send a password-reset link.</p>
       </div>
@@ -1401,6 +1540,7 @@ function renderAuth(){
   if(state.authMode === "reset"){
     return `
       <div class="hero">
+        <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
         <h1>Choose a new password</h1>
         <p>Use a new password for your Buisder account.</p>
       </div>
@@ -1421,6 +1561,7 @@ function renderAuth(){
   if(state.authMode === "signup"){
     return `
       <div class="hero">
+        <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
         <h1>Create your account</h1>
         <p>Set up Buisder as a job seeker or an employer.</p>
       </div>
@@ -1471,6 +1612,7 @@ function renderAuth(){
 
   return `
     <div class="hero">
+      <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
       <h1>Welcome back</h1>
       <p>Log in to your Buisder account.</p>
     </div>
