@@ -1,5 +1,13 @@
-# Buisder v24.1 Free Launch
+# Buisder v24.3 Launch Fix
 
-This package contains Buisder through Growth/Public Jobs/SEO/Legal & Compliance plus the post-launch PWA, Web Push, matching, messaging, risk and employer integration upgrades.
+Current production package for the free Buisder launch.
 
-Payment functionality has been deliberately removed for the initial launch. See `README-V24.1-FREE-LAUNCH.md` and `V24.1-DEPLOY.md`.
+This release is based on v24.1 Free Launch and includes the first live post-launch fixes: 8-character passwords, hidden employer plans, admin permanent account deletion, production wording cleanup, safe Reload jobs behavior, candidate application removal, immediate swiping, employer job editing and Work experience posting/filtering.
+
+No D1 migration is required for v24.3.
+
+Start with:
+- `README-V24.3-LAUNCH-FIX.md`
+- `V24.3-DEPLOY.md`
+- `V24.3-TEST-PLAN.md`
+- `V24.3-VALIDATION.md`
