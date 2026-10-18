@@ -37,6 +37,12 @@ export async function onRequestGet(context){
   const emailOk=Boolean(String(env.RESEND_API_KEY||"").trim())&&Boolean(String(env.EMAIL_FROM||"").trim());
   checks.push(item("email","Transactional email",emailOk?"pass":"critical",emailOk?"Resend API key and sender are configured.":"Email delivery configuration is incomplete."));
 
+
+  if(tables.has('push_subscriptions')){
+    const pushOk=Boolean(String(env.VAPID_PUBLIC_KEY||'').trim())&&Boolean(String(env.VAPID_PRIVATE_KEY||'').trim());
+    checks.push(item('web_push','Web Push',pushOk?'pass':'warning',pushOk?'VAPID public/private keys are configured.':'VAPID keys are not configured; installed-app background push will remain unavailable.'));
+  }
+
   if(tables.has("email_delivery_log")){
     const failedEmails=await count(env,`SELECT COUNT(*) AS count FROM email_delivery_log WHERE status='failed' AND datetime(last_attempt_at)>=datetime('now','-24 hours')`);
     const sentEmails=await count(env,`SELECT COUNT(*) AS count FROM email_delivery_log WHERE status='sent' AND datetime(sent_at)>=datetime('now','-24 hours')`);
@@ -122,6 +128,11 @@ export async function onRequestGet(context){
   if(tables.has("commercial_plan_requests")){
     const n=await count(env,"SELECT COUNT(*) AS count FROM commercial_plan_requests WHERE status='pending'");
     checks.push(item("commercial_queue","Commercial request queue",n?"info":"pass",n?`${n} employer plan request(s) are pending.`:"No employer plan requests are pending."));
+  }
+
+  if(tables.has('risk_flags')){
+    const n=await count(env,"SELECT COUNT(*) AS count FROM risk_flags WHERE status IN ('open','reviewing')");
+    checks.push(item('risk_queue','Risk review queue',n?'info':'pass',n?`${n} behavioural risk flag(s) await or are undergoing human review.`:'No behavioural risk flags are waiting for review.'));
   }
 
   let checklist=[];

@@ -40,6 +40,18 @@ export async function ensureCommercialAccount(env, employerId) {
     }
   }
 
+  if (ref?.code) {
+    try {
+      await env.DB.prepare(
+        `INSERT OR IGNORE INTO growth_referral_codes
+         (id, code, referral_type, target_role, owner_user_id, label, status, created_by)
+         VALUES (?, ?, 'employer', 'employer', ?, 'Employer referral link', 'active', ?)`
+      ).bind(newId(), ref.code, employerId, employerId).run();
+    } catch (e) {
+      // v17 remains deployable before the optional v23 growth migration.
+    }
+  }
+
   await refreshCommercialAccess(env, employerId);
 }
 

@@ -1,6 +1,7 @@
 import { json, err, newId, requireUser, createNotification } from "../../_lib/db.js";
 import { recordAnalyticsEvent } from "../../_lib/analytics.js";
 import { sendRecruitmentEmail } from "../../_lib/email-notifications.js";
+import { assessApplicationRisk } from "../../_lib/risk.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -67,6 +68,8 @@ export async function onRequestPost(context) {
       applicationId: id,
       eventKey: `application:${id}:submitted`
     });
+
+    await assessApplicationRisk(env, user.id, id);
   }
 
   await env.DB.prepare("DELETE FROM skips WHERE job_id = ? AND jobseeker_id = ?").bind(jobId, user.id).run();

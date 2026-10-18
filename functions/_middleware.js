@@ -10,8 +10,12 @@ export async function onRequest(context) {
     "camera=(), microphone=(), geolocation=(self)"
   );
 
-  if (new URL(context.request.url).pathname.startsWith("/api/auth/")) {
+  const pathname = new URL(context.request.url).pathname;
+  if (pathname.startsWith("/api/")) {
     secured.headers.set("Cache-Control", "no-store");
+  }
+  if (pathname === "/") {
+    secured.headers.set("Cache-Control", "no-cache");
   }
 
   return secured;

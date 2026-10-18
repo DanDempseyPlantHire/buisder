@@ -196,7 +196,8 @@ export async function sendEmail(env, { to, subject, html, text }) {
     };
   }
 
-  return { ok: true, configured: true };
+  const data = await response.json().catch(() => null);
+  return { ok: true, configured: true, id: data?.id || null };
 }
 
 export async function createAuthToken(env, userId, purpose, lifetimeSeconds) {
@@ -249,7 +250,7 @@ export function appOrigin(env, request) {
 
 export function passwordProblem(password, email = "") {
   const value = String(password || "");
-  if (value.length < 10) return "Password must be at least 10 characters";
+  if (value.length < 8) return "Password must be at least 8 characters";
   if (value.length > 128) return "Password is too long";
   if (/^(password|password123|1234567890|qwerty12345|letmein123)$/i.test(value)) {
     return "Choose a less common password";

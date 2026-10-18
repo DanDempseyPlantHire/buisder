@@ -1,6 +1,6 @@
 import { json, err, newId, requireUser } from "../../_lib/db.js";
 import { recordAnalyticsEvent } from "../../_lib/analytics.js";
-import { canActivateJob } from "../../_lib/commercial.js";
+import { assessJobRisk } from "../../_lib/risk.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -19,10 +19,6 @@ export async function onRequestPost(context) {
     "SELECT company_name FROM employer_profiles WHERE user_id = ?"
   ).bind(user.id).first();
 
-  const entitlement = await canActivateJob(env, user.id);
-  if (!entitlement.allowed) {
-    return err(`Your ${entitlement.snapshot.account.planName} plan allows ${entitlement.limit} active job${entitlement.limit===1 ? "" : "s"}. Close or pause a role, or request a plan upgrade.`, 403);
-  }
   const company = (profile && profile.company_name) || user.name || "Employer";
 
   const id = newId();
@@ -50,6 +46,7 @@ export async function onRequestPost(context) {
     eventKey: `job_posted:${id}`,
     metadata: { employmentType: employmentType || "Part-time", minAge: Number(minAge) || 16 }
   });
+  await assessJobRisk(env, user.id, id);
 
   return json({ id }, { status: 201 });
 }

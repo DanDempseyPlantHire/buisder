@@ -1,3 +1,4 @@
+import { sendPushToUser } from "./push.js";
 // Shared helpers for the Buisder API (Cloudflare Pages Functions + D1)
 
 export function json(data, init = {}) {
@@ -112,7 +113,7 @@ export async function createNotification(env, {
 }) {
   if (!userId) return;
 
-  await env.DB.prepare(
+  const inserted = await env.DB.prepare(
     `INSERT OR IGNORE INTO notifications
      (id, user_id, type, title, body, application_id, job_id, event_key)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
@@ -126,4 +127,20 @@ export async function createNotification(env, {
     jobId,
     eventKey
   ).run();
+
+  // A unique event_key de-duplicates both the in-app item and background push.
+  if (eventKey && Number(inserted?.meta?.changes || 0) === 0) return;
+
+  try {
+    await sendPushToUser(env, userId, {
+      title: title || "Buisder update",
+      body: body || "",
+      type: type || "general",
+      applicationId,
+      jobId,
+      url: applicationId ? "/?tab=applications" : "/"
+    });
+  } catch (e) {
+    // Push delivery is best-effort and must never block the underlying action.
+  }
 }

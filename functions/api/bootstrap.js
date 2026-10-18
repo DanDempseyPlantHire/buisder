@@ -2,6 +2,7 @@ import { json, getUser, createNotification } from "../_lib/db.js";
 import { getCommercialSnapshot } from "../_lib/commercial.js";
 import { TERMS_VERSION, PRIVACY_VERSION } from "../_lib/policy.js";
 import { maybeSendDueInterviewReminderEmails } from "../_lib/email-notifications.js";
+import { scoreJobForProfile } from "../_lib/matching.js";
 
 function parseArray(value) {
   if (!value) return [];
@@ -357,7 +358,7 @@ export async function onRequestGet(context) {
     return json({
       user,
       profile: profileOut,
-      jobs: jobs.map(formatJob),
+      jobs: jobs.map(j => ({...formatJob(j), match: scoreJobForProfile(j, profile || {})})),
       applications: applications.map(a => ({
         ...a,
         statusHistory: historyByApplication[a.id] || []

@@ -8,9 +8,13 @@ export const EXPECTED_TABLES = [
   "employer_referral_codes","employer_referrals","job_promotions",
   "commercial_history","analytics_events","notifications","job_offers",
   "notification_preferences","email_delivery_log","email_scheduler_state",
-  "skips","interview_invites","pilot_launch_checklist",
+  "skips","interview_invites","pilot_launch_checklist","legal_settings","data_rights_requests","compliance_complaints","processor_register","lawful_basis_register","retention_register","compliance_checklist","compliance_incidents",
   "pilot_settings","pilot_cohorts","pilot_organizations","pilot_invite_codes",
-  "pilot_memberships","pilot_invite_redemptions","pilot_feedback","pilot_issues"
+  "pilot_memberships","pilot_invite_redemptions","pilot_feedback","pilot_issues",
+  "growth_partners","growth_campaigns","growth_referral_codes","growth_attribution",
+  "growth_referrals","growth_employer_leads",
+  "push_subscriptions","push_preferences","application_messages","message_reports","risk_flags",
+  "integration_api_keys","integration_job_links","integration_events","matching_model_versions"
 ];
 
 export const LAUNCH_CHECKLIST = [
@@ -27,5 +31,10 @@ export const LAUNCH_CHECKLIST = [
   { key:"desktop_tested", label:"Pilot tested on desktop Chrome or Edge" },
   { key:"support_process_ready", label:"Pilot support contact and issue escalation process ready" },
   { key:"pilot_docs_reviewed", label:"Pilot Terms and Privacy Summary reviewed for pilot use" },
-  { key:"pilot_management_tested", label:"Pilot invite, cohort, feedback and issue-management flow tested" }
+  { key:"pilot_management_tested", label:"Pilot invite, cohort, feedback and issue-management flow tested" },
+  { key:"push_tested", label:"Installed-app Web Push tested with the app closed on supported devices" },
+  { key:"messaging_tested", label:"Application messaging, reporting and blocking tested" },
+  { key:"risk_controls_tested", label:"Risk flags and admin review workflow tested" },
+  { key:"integrations_tested", label:"Employer API key, job import and interview calendar export tested" },
+  { key:"pwa_install_tested", label:"PWA install and offline fallback tested on target devices" }
 ];
