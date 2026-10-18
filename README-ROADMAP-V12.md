@@ -114,3 +114,7 @@ There are no ALTER TABLE statements.
 - Installable PWA/mobile improvements: complete in v24
 - Generic employer integration API and interview calendar export: complete in v24
 - Provider-specific ATS/HR connectors remain future integrations requiring provider credentials/specifications.
+
+
+## Current launch decision
+Payment processing is deferred. v24.1 launches free while retaining PWA, Web Push, matching, messaging, risk controls and integrations. Stripe/payment work is parked for a later release.

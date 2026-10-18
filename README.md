@@ -1,13 +1,5 @@
-# Buisder
+# Buisder v24.1 Free Launch
 
-Current build: **v24 Production Expansion**.
+This package contains Buisder through Growth/Public Jobs/SEO/Legal & Compliance plus the post-launch PWA, Web Push, matching, messaging, risk and employer integration upgrades.
 
-This package includes the full Buisder application through Public Jobs/SEO, Legal & Compliance, Growth, Stripe Payments, installable PWA, Web Push, transparent advanced job matching, application messaging, behavioural risk controls and generic employer integrations.
-
-Start with:
-- `README-V24-PRODUCTION-EXPANSION.md`
-- `V24-D1-CONSOLE-STEPS.md`
-- `V24-STRIPE-PUSH-SETUP.md`
-- `V24-TEST-PLAN.md`
-
-The existing Cloudflare architecture remains unchanged: Pages + Pages Functions + D1 + private R2. Deploy through the connected GitHub repository.
+Payment functionality has been deliberately removed for the initial launch. See `README-V24.1-FREE-LAUNCH.md` and `V24.1-DEPLOY.md`.
