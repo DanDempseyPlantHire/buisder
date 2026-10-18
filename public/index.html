@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1220" />
+  <meta name="theme-color" content="#171510" />
   <meta name="description" content="Buisder - swipe-friendly job matching for young people. Apply to local jobs in seconds." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Buisder" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2210%22 fill=%22%237c3aed%22/><text x=%2250%25%22 y=%2262%25%22 font-size=%2258%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22900%22 text-anchor=%22middle%22>B</text></svg>" />
-  <title>Buisder - Swipe Prototype</title>
+  <title>Buisder - Jobs for young people</title>
   <style>
     :root{
       --ink:#181814;
@@ -467,6 +472,10 @@
     .bottomnav{display:flex;grid-template-columns:none!important;overflow-x:auto;overflow-y:hidden;justify-content:flex-start;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-left:8px;padding-right:8px}
     .bottomnav::-webkit-scrollbar{display:none}
     .bottomnav button{flex:0 0 76px;min-width:76px;max-width:92px;white-space:normal;overflow-wrap:anywhere;line-height:1.15;padding:10px 5px 7px}
+    /* v23 admin nav: three compact rows so every admin section remains visible on mobile */
+    .bottomnav.admin-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;overflow:visible!important;gap:0;width:min(calc(100% - 12px),418px);padding:6px 6px max(8px,env(safe-area-inset-bottom));border-radius:12px 12px 0 0}
+    .bottomnav.admin-nav button{min-width:0!important;max-width:none!important;width:100%;padding:7px 2px 5px;font-size:9.5px;line-height:1.08;overflow-wrap:normal;word-break:normal}
+    #content.admin-nav-space{padding-bottom:174px}
     .pilot-card{background:#fff;color:var(--ink);border:1px solid var(--line-light);border-radius:14px;padding:14px;margin-top:14px}
     .pilot-badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:900;background:#eef4ff;color:#3538cd;border:1px solid #c7d7fe}
     .pilot-badge.active{background:var(--good-tint);color:var(--good);border-color:#b8ccb9}
@@ -534,6 +543,48 @@
       .rank-stats{justify-content:flex-start}
     }
 
+    /* v23 growth */
+    .growth-page{color:#211f1b}
+    .growth-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;margin:12px 0 16px}
+    .growth-kpi{background:#fff;color:#171510;border:1px solid #d9d4c8;border-radius:13px;padding:13px;min-width:0}
+    .growth-kpi strong{display:block;font-size:23px;line-height:1.05;color:#171510}
+    .growth-kpi span{display:block;font-size:10px;font-weight:800;line-height:1.35;color:#3f3b33;margin-top:5px}
+    .growth-section{background:#fff;color:#211f1b;border:1px solid #d9d4c8;border-radius:14px;padding:14px;margin-bottom:14px;min-width:0;overflow:hidden}
+    .growth-section h2{margin:0;color:#171510;font-size:17px}
+    .growth-section .small,.growth-section .admin-meta{color:#3f3b33!important}
+    .growth-row{border-top:1px solid #eee9df;padding:10px 0;min-width:0}
+    .growth-row:first-of-type{border-top:0}
+    .growth-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:9px}
+    .growth-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:900;letter-spacing:.03em;background:#f8f5ee;color:#171510;border:1px solid #e4ded2;padding:6px 8px;border-radius:7px;display:inline-block;max-width:100%;overflow-wrap:anywhere}
+    .growth-funnel{display:grid;gap:9px;margin-top:10px}
+    .growth-stage{display:grid;grid-template-columns:minmax(110px,1fr) 2fr auto;gap:8px;align-items:center;min-width:0;font-size:11px;font-weight:800;color:#312e28}
+    .growth-stage-bar{height:9px;background:#eee9df;border-radius:999px;overflow:hidden}
+    .growth-stage-bar span{display:block;height:100%;background:#b45f33;border-radius:999px;min-width:2px}
+    .growth-status{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900;background:#f2f4f7;color:#344054}
+    .growth-status.active,.growth-status.verified,.growth-status.first_job{background:#ecfdf3;color:#067647}
+    .growth-status.paused,.growth-status.interested,.growth-status.invited{background:#fff4d6;color:#8a5b00}
+    .growth-status.ended,.growth-status.closed{background:#f2f4f7;color:#475467}
+    .growth-location-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}
+    .referral-card{background:#fff;color:#211f1b;border:1px solid #d9d4c8;border-radius:14px;padding:14px;margin-top:14px}
+    @media(max-width:380px){.growth-stage{grid-template-columns:1fr auto}.growth-stage-bar{grid-column:1/-1}}
+
+    /* v24 production expansion */
+    .bottomnav.admin-nav{grid-template-columns:repeat(5,minmax(0,1fr))!important;max-height:44vh;overflow-y:auto!important;overflow-x:hidden!important;align-content:start}
+    .bottomnav.admin-nav button{font-size:9px;padding:7px 1px 5px}
+    #content.admin-nav-space{padding-bottom:192px}
+    .billing-grid,.risk-grid,.integration-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}
+    .v24-panel{background:#fff;color:#211f1b;border:1px solid #d9d4c8;border-radius:14px;padding:14px;margin-bottom:14px;min-width:0;overflow:hidden}
+    .v24-panel .small,.v24-panel .admin-meta{color:#3f3b33!important}
+    .v24-kpi{background:#fff;color:#171510;border:1px solid #d9d4c8;border-radius:12px;padding:12px}
+    .v24-kpi strong{display:block;font-size:22px;color:#171510}.v24-kpi span{display:block;font-size:10px;font-weight:800;color:#3f3b33;margin-top:4px}
+    .message-list{display:grid;gap:8px;max-height:48vh;overflow:auto;padding:4px 0}
+    .message-bubble{max-width:86%;padding:10px 12px;border-radius:12px;background:#f1ede4;color:#211f1b;overflow-wrap:anywhere}
+    .message-bubble.mine{margin-left:auto;background:#211f1b;color:#fff}.message-bubble .message-meta{font-size:9px;opacity:.72;margin-top:4px}
+    .risk-badge{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900;background:#f2f4f7;color:#344054}.risk-badge.high,.risk-badge.critical{background:#fef3f2;color:#b42318}.risk-badge.medium{background:#fff4e5;color:#9a4e00}.risk-badge.low{background:#ecfdf3;color:#067647}
+    .install-top{padding:8px 9px;font-size:11px;white-space:nowrap}
+    .match-reasons{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.match-reason{font-size:10px;background:#fff7ed;color:#7a3512;border:1px solid #efd1bd;padding:5px 7px;border-radius:999px}
+    @media(max-width:380px){.bottomnav.admin-nav{grid-template-columns:repeat(4,minmax(0,1fr))!important}#content.admin-nav-space{padding-bottom:236px}}
+
     /* v21 compliance */
     .compliance-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin:12px 0 16px}
     .compliance-kpi{background:#fff;border:1px solid #d9d4c8;border-radius:12px;padding:12px;color:#211f1b}
@@ -563,6 +614,7 @@
         <div class="subtle" id="modeLabel">Swipe-friendly jobs for young people</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn btn-soft install-top hidden" id="installTop" onclick="installBuisder()">Install</button>
         <button class="notify-bell" id="notifyBell" onclick="openNotifications()" aria-label="Notifications">
           🔔<span class="notify-count hidden" id="notifyCount">0</span>
         </button>
@@ -593,6 +645,8 @@ let state = {
   jobs:[],
   applications:[],
   skipped:[],
+  optimisticApplied:new Set(),
+  optimisticSkipped:new Set(),
   lastAction:null,
   postedJobs:[],
   applicants:[],
@@ -615,6 +669,15 @@ let state = {
   adminPilotLoading:false,
   compliance:null,
   complianceLoading:false,
+  growth:null,
+  growthLoading:false,
+  growthMe:null,
+  growthMeLoading:false,
+  risk:null,
+  riskLoading:false,
+  integrations:null,
+  integrationsLoading:false,
+  pushConfig:{configured:false,publicKey:"",enabled:true,subscribed:false},
   serviceError:"",
   authMode:"login",
   authRole:"jobseeker",
@@ -810,20 +873,6 @@ function unreadNotificationCount(){
 
 const shownBrowserNotificationIds = new Set();
 
-async function enableBrowserNotifications(){
-  if (!("Notification" in window)) {
-    toast("Browser notifications are not supported on this device");
-    return;
-  }
-  const permission = await Notification.requestPermission();
-  if(permission === "granted"){
-    toast("Browser notifications enabled");
-    notifyUnreadNotifications();
-  } else {
-    toast("Notifications were not enabled");
-  }
-}
-
 function notifyUnreadNotifications(){
   if(!("Notification" in window) || Notification.permission !== "granted") return;
   for(const n of (state.notifications || [])){
@@ -889,6 +938,92 @@ async function markAllNotificationsRead(){
     openNotifications();
   }catch(e){ toast(e.message); }
 }
+
+let deferredInstallPrompt = null;
+
+function isStandalone(){
+  return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function isIos(){ return /iphone|ipad|ipod/i.test(navigator.userAgent || ''); }
+function refreshInstallUi(){
+  const b=document.getElementById('installTop');
+  if(!b) return;
+  b.classList.toggle('hidden', isStandalone() || (!deferredInstallPrompt && !isIos()));
+}
+async function initPwa(){
+  if('serviceWorker' in navigator){
+    try{ await navigator.serviceWorker.register('/sw.js'); }catch(e){}
+  }
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;refreshInstallUi();});
+  window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;refreshInstallUi();toast('Buisder installed');});
+  setTimeout(refreshInstallUi,500);
+}
+async function installBuisder(){
+  if(isStandalone()){ toast('Buisder is already installed'); return; }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    try{ await deferredInstallPrompt.userChoice; }catch(e){}
+    deferredInstallPrompt=null; refreshInstallUi(); return;
+  }
+  if(isIos()){
+    openModal(`<h3>Install Buisder on iPhone</h3><p>In Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>, then confirm <strong>Add</strong>.</p><div class="notice">Buisder will open from your Home Screen like an app.</div>`);
+    return;
+  }
+  toast('Use your browser menu and choose Install app or Add to Home screen');
+}
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base64); return Uint8Array.from(raw,c=>c.charCodeAt(0));
+}
+async function loadPushConfig(){
+  try{
+    const r=await fetch('/api/push/config',{credentials:'include',cache:'no-store'});
+    if(r.ok) state.pushConfig=await r.json();
+  }catch(e){}
+}
+async function enablePushNotifications(){
+  if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)){
+    toast('Background push is not supported on this browser'); return;
+  }
+  await loadPushConfig();
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted'){toast('Notifications were not enabled');return;}
+  if(!state.pushConfig.configured||!state.pushConfig.publicKey){
+    toast('Browser alerts are allowed, but server push keys are not configured yet'); return;
+  }
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(state.pushConfig.publicKey)});
+    await api('/api/push/subscriptions',{method:'POST',body:{subscription:sub.toJSON()}});
+    state.pushConfig.subscribed=true; state.pushConfig.enabled=true;
+    toast('Background notifications enabled');
+    try{await api('/api/push/test',{method:'POST',body:{}});}catch(e){}
+  }catch(e){toast(e.message||'Could not enable push notifications');}
+}
+async function disablePushNotifications(){
+  try{
+    const reg=await navigator.serviceWorker.ready, sub=await reg.pushManager.getSubscription();
+    await api('/api/push/subscriptions',{method:'DELETE',body:{endpoint:sub?.endpoint||null}});
+    if(sub) await sub.unsubscribe();
+    state.pushConfig.subscribed=false; state.pushConfig.enabled=false;
+    toast('Background notifications disabled');
+  }catch(e){toast(e.message);}
+}
+async function openPushSettings(){
+  await loadPushConfig();
+  openModal(`<h3>App notifications</h3>
+    <p>Receive interview, offer, application and message alerts even when Buisder is closed.</p>
+    <div class="notice"><strong>Status:</strong> ${state.pushConfig.subscribed&&state.pushConfig.enabled?'Enabled':state.pushConfig.configured?'Available but not enabled':'Server push keys still need configuration'}</div>
+    ${state.pushConfig.subscribed&&state.pushConfig.enabled
+      ? `<button class="btn btn-bad btn-block" onclick="disablePushNotifications();closeModal()">Disable background notifications</button>`
+      : `<button class="btn btn-dark btn-block" onclick="enablePushNotifications()">Enable background notifications</button>`}
+  `);
+}
+
+// Keep the old function name used throughout the UI, but upgrade it to true Web Push when configured.
+async function enableBrowserNotifications(){ return enablePushNotifications(); }
 
 
 async function loadSecurityConfig(){
@@ -1030,6 +1165,35 @@ async function processAuthLink(){
 }
 
 
+function captureGrowthAttribution(){
+  try{
+    const q=new URLSearchParams(window.location.search);
+    const incoming={
+      referralCode:(q.get("ref")||"").trim(),
+      utmSource:(q.get("utm_source")||"").trim(),
+      utmMedium:(q.get("utm_medium")||"").trim(),
+      utmCampaign:(q.get("utm_campaign")||"").trim(),
+      utmContent:(q.get("utm_content")||"").trim(),
+      utmTerm:(q.get("utm_term")||"").trim(),
+      landingPath:window.location.pathname + window.location.search
+    };
+    if(q.get("signup")==="1") state.authMode="signup";
+    if(Object.values(incoming).some((v,i)=>i<6 && v)){
+      const current=localStorage.getItem("buisder_growth_attribution");
+      if(!current) localStorage.setItem("buisder_growth_attribution",JSON.stringify(incoming));
+      else if(incoming.referralCode){
+        const parsed=JSON.parse(current||"{}");
+        if(!parsed.referralCode){ parsed.referralCode=incoming.referralCode; localStorage.setItem("buisder_growth_attribution",JSON.stringify(parsed)); }
+      }
+    }
+  }catch(e){}
+}
+
+function getGrowthAttribution(){
+  try{return JSON.parse(localStorage.getItem("buisder_growth_attribution")||"{}");}catch(e){return {};}
+}
+function clearGrowthAttribution(){ try{localStorage.removeItem("buisder_growth_attribution");}catch(e){} }
+
 async function trackAnalytics(eventType, data={}){
   if(!state.user) return;
   try{
@@ -1076,8 +1240,8 @@ async function loadBootstrap(){
   const validTab = state.mode==="jobseeker"
     ? ["feed","applications","profile"].includes(state.tab)
     : state.mode==="employer"
-      ? ["home","employer-analytics","commercial","post","applicants","profile"].includes(state.tab)
-      : ["admin-home","admin-pilot","admin-launch","admin-analytics","admin-commercial","admin-compliance","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
+      ? ["home","employer-analytics","post","applicants","integrations","profile"].includes(state.tab)
+      : ["admin-home","admin-growth","admin-pilot","admin-launch","admin-analytics","admin-commercial","admin-risk","admin-compliance","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
 
   if(!validTab){
     state.tab = state.mode==="jobseeker" ? "feed" : (state.mode==="employer" ? "home" : "admin-home");
@@ -1111,6 +1275,8 @@ async function loadBootstrap(){
 }
 
 async function boot(){
+  initPwa();
+  captureGrowthAttribution();
   await Promise.all([loadSecurityConfig(),loadPilotConfig()]);
   const authLink = await processAuthLink();
 
@@ -1123,7 +1289,9 @@ async function boot(){
     }
   }
 
+  if(state.user) await loadPushConfig();
   render();
+  refreshInstallUi();
   if(state.user) trackAnalytics("app_open");
 
   setInterval(async ()=>{
@@ -1142,6 +1310,9 @@ async function setTab(tab){
   state.tab = tab;
   render();
 
+  if(tab==="admin-growth" && state.mode==="admin"){
+    await loadGrowth();
+  }
   if(tab==="admin-pilot" && state.mode==="admin"){
     await loadAdminPilot();
   }
@@ -1154,11 +1325,20 @@ async function setTab(tab){
   if(tab==="admin-commercial" && state.mode==="admin"){
     await loadAdminCommercial();
   }
+  if(tab==="admin-risk" && state.mode==="admin"){
+    await loadRisk();
+  }
   if(tab==="admin-compliance" && state.mode==="admin"){
     await loadCompliance();
   }
   if(tab==="employer-analytics" && state.mode==="employer"){
     await loadEmployerAnalytics();
+  }
+  if(tab==="integrations" && state.mode==="employer"){
+    await loadIntegrations();
+  }
+  if(tab==="profile" && (state.mode==="jobseeker" || state.mode==="employer")){
+    await loadGrowthMe();
   }
 
   if(tab==="applications" && state.mode==="jobseeker"){
@@ -1227,10 +1407,10 @@ function renderAuth(){
       <div class="section-pad">
         <div class="form-card">
           <label>New password</label>
-          <input id="resetPassword" type="password" placeholder="At least 10 characters">
+          <input id="resetPassword" type="password" placeholder="At least 8 characters">
           <label>Confirm password</label>
           <input id="resetPassword2" type="password" placeholder="Enter it again">
-          <div class="security-note">Use at least 10 characters. Avoid passwords based on your email address.</div>
+          <div class="security-note">Use at least 8 characters. Avoid passwords based on your email address.</div>
           ${errBox}
           <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doResetPassword()">Reset password</button>
         </div>
@@ -1256,9 +1436,11 @@ function renderAuth(){
           <label>Email</label>
           <input id="authEmail" type="email" placeholder="you@example.com">
           <label>Password</label>
-          <input id="authPassword" type="password" placeholder="At least 10 characters">
+          <input id="authPassword" type="password" placeholder="At least 8 characters">
           <label>Pilot invite code <span class="small">${state.pilotConfig?.inviteRequired ? "(required)" : "(if supplied)"}</span></label>
           <input id="authPilotCode" autocomplete="off" placeholder="e.g. BUI-AB12CD34">
+          <label>Referral / partner code <span class="small">(optional)</span></label>
+          <input id="authGrowthCode" autocomplete="off" value="${safeText(getGrowthAttribution().referralCode||"")}" placeholder="Referral or partner code">
           <div class="security-note">${state.pilotConfig?.inviteRequired ? `${state.pilotConfig?.pilotName || "This pilot"} currently requires an invite code.` : "If you were given a pilot invite code, enter it here."} New accounts can also be required to verify their email before login.</div>
           <div class="privacy-toggle" style="margin-top:10px">
             <input id="authEligibility" type="checkbox">
@@ -1279,6 +1461,8 @@ function renderAuth(){
           ${turnstileMarkup()}
           ${errBox}
           <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doSignup()">Create account</button>
+          <a class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" href="/jobs">Browse public jobs</a>
+          <button class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" onclick="installBuisder()">Install Buisder app</button>
           <div class="small" style="margin-top:12px;text-align:center">Already have an account? <a href="#" onclick="state.authMode='login';state.authError='';render();return false" style="color:var(--accent-ink)">Log in</a></div>
         </div>
       </div>
@@ -1299,6 +1483,8 @@ function renderAuth(){
         ${turnstileMarkup()}
         ${errBox}
         <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doLogin()">Log in</button>
+        <a class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" href="/jobs">Browse public jobs</a>
+        <button class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" onclick="installBuisder()">Install Buisder app</button>
         <div class="small" style="margin-top:12px;text-align:center">
           <a href="#" onclick="state.authMode='forgot';state.authError='';render();return false" style="color:var(--accent-ink)">Forgot password?</a>
         </div>
@@ -1322,12 +1508,15 @@ async function doSignup(){
         acceptedTerms:Boolean(document.getElementById("authTerms")?.checked),
         acceptedPrivacy:Boolean(document.getElementById("authPrivacy")?.checked),
         eligibilityConfirmed:Boolean(document.getElementById("authEligibility")?.checked),
-        pilotInviteCode:document.getElementById("authPilotCode")?.value.trim() || ""
+        pilotInviteCode:document.getElementById("authPilotCode")?.value.trim() || "",
+        referralCode:document.getElementById("authGrowthCode")?.value.trim() || getGrowthAttribution().referralCode || "",
+        attribution:getGrowthAttribution()
       }
     });
 
     state.authError = "";
     state.pendingEmail = email;
+    clearGrowthAttribution();
 
     if(result.verificationRequired){
       state.authMode = "verify-pending";
@@ -1455,9 +1644,11 @@ function renderNav(){
   const items = state.mode==="jobseeker"
     ? [["feed","Jobs"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
     : state.mode==="employer"
-      ? [["home","Dashboard"],["employer-analytics","Analytics"],["commercial","Plan"],["post","Post job"],["applicants","Applicants"],["profile","Business"]]
-      : [["admin-home","Admin"],["admin-pilot","Pilot"],["admin-launch","Launch"],["admin-analytics","Analytics"],["admin-commercial","Commercial"],["admin-compliance","Compliance"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
+      ? [["home","Dashboard"],["employer-analytics","Analytics"],["post","Post job"],["applicants","Applicants"],["integrations","Integrations"],["profile","Business"]]
+      : [["admin-home","Admin"],["admin-growth","Growth"],["admin-pilot","Pilot"],["admin-launch","Launch"],["admin-analytics","Analytics"],["admin-commercial","Plans"],["admin-risk","Risk"],["admin-compliance","Compliance"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
   nav.style.gridTemplateColumns = "";
+  nav.classList.toggle("admin-nav", state.mode==="admin");
+  document.getElementById("content").classList.toggle("admin-nav-space", state.mode==="admin");
   nav.innerHTML = items.map(([key,label]) => `
     <button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>
   `).join("");
@@ -1468,6 +1659,7 @@ function render(){
   const nav = document.getElementById("bottomnav");
   if(state.serviceError){
     topbar.classList.add("hidden"); nav.classList.add("hidden");
+    nav.classList.remove("admin-nav"); document.getElementById("content").classList.remove("admin-nav-space");
     document.getElementById("content").innerHTML = `
       <div class="hero"><h1>Service unavailable</h1><p>${state.serviceError}</p></div>
       <div class="section-pad"><div class="card"><strong>Your account data has not been changed.</strong><p class="small">Retry the connection. If the problem continues, check Cloudflare Pages and D1 before making database changes.</p><button class="btn btn-dark btn-block" onclick="retryService()">Retry</button></div></div>`;
@@ -1476,6 +1668,7 @@ function render(){
   if(!state.user){
     topbar.classList.add("hidden");
     nav.classList.add("hidden");
+    nav.classList.remove("admin-nav"); document.getElementById("content").classList.remove("admin-nav-space");
     document.getElementById("content").innerHTML = renderAuth();
     setTimeout(renderTurnstileWidget, 0);
     return;
@@ -1540,6 +1733,7 @@ function categoryFor(job){
 }
 
 function jobDistance(job){
+  if(job?.match?.distanceKm !== null && job?.match?.distanceKm !== undefined) return Number(job.match.distanceKm);
   return haversineKm(
     state.profile.latitude, state.profile.longitude,
     job.latitude, job.longitude
@@ -1554,6 +1748,7 @@ function ageEligible(job){
 }
 
 function scoreJob(job){
+  if(job?.match?.score !== null && job?.match?.score !== undefined) return Number(job.match.score);
   let score = 0;
   let weight = 0;
 
@@ -1614,7 +1809,7 @@ function currentFeedJobs(){
   const maxDistance = Number(f.maxDistance || 0);
 
   return state.jobs
-    .filter(j => !state.applications.some(a=>a.jobId===j.id) && !state.skipped.includes(j.id))
+    .filter(j => !state.applications.some(a=>a.jobId===j.id) && !state.skipped.includes(j.id) && !state.optimisticApplied.has(j.id) && !state.optimisticSkipped.has(j.id))
     .filter(ageEligible)
     .filter(j => f.category==="Any" || categoryFor(j)===f.category)
     .filter(j => f.employmentType==="Any" || (j.employment_type || "Part-time")===f.employmentType)
@@ -1681,7 +1876,7 @@ function openJobFilters(){
 
     <label>Work type</label>
     <select id="filterEmployment">
-      ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship"].map(x=>`<option ${f.employmentType===x?"selected":""}>${x}</option>`).join("")}
+      ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship","Work experience"].map(x=>`<option ${f.employmentType===x?"selected":""}>${x}</option>`).join("")}
     </select>
 
     <label>Experience</label>
@@ -1766,7 +1961,7 @@ function renderFeed(){
         </div>
         <div style="display:flex;gap:8px">
           ${state.lastAction ? `<button class="btn btn-outline" onclick="undoLast()">Undo</button>` : ""}
-          <button class="btn btn-outline" onclick="resetDecisions()">Reset</button>
+          <button class="btn btn-outline" onclick="resetDecisions()">Reload jobs</button>
         </div>
       </div>
       <div class="feed-progress">
@@ -1776,7 +1971,7 @@ function renderFeed(){
         current ? renderSwipeCard(current, jobs.length) : `
         <div class="card dark empty">
           <h3 style="margin:0 0 8px">You reached the end</h3>
-          <p style="color:#cbd5e1">You have reviewed all current placeholder jobs. Reset the feed or go to Applied to see the jobs you liked.</p>
+          <p style="color:#cbd5e1">You have reviewed all current jobs. Reload skipped jobs or go to Applications to review your applications.</p>
           <button class="btn btn-light btn-block" onclick="resetDecisions()">Reload jobs</button>
         </div>
         `
@@ -1820,6 +2015,7 @@ function renderSwipeCard(job, remaining){
           <div class="metric"><small>Experience</small><strong>${job.experience || "None"}</strong></div>
           <div class="metric"><small>Start</small><strong>${job.start_date || "To be agreed"}</strong></div>
         </div>
+        ${(job.match?.reasons||[]).length ? `<div class="match-reasons">${job.match.reasons.map(r=>`<span class="match-reason">${safeText(r)}</span>`).join("")}</div>` : ""}
         ${job.description ? `<div class="why"><strong>About the role:</strong> ${job.description}</div>` : ""}
         <div class="swipe-actions">
           <button class="big-action skip" onclick="skipCurrent()" aria-label="Skip this job">Skip</button>
@@ -1864,30 +2060,58 @@ function showJob(id){
   `);
 }
 
-async function acceptCurrent(){
-  const jobs = currentFeedJobs();
-  const current = jobs[0];
-  if(!current) return;
-  try{
-    await api("/api/applications", {method:"POST", body:{jobId:current.id}});
-    state.lastAction = {type:"applied", jobId:current.id};
-    await loadBootstrap();
-    toast("Application sent");
-    render();
-  } catch(e){ toast(e.message); }
+function settleFeedAction(kind, jobId, ok){
+  const bucket = kind === "applied" ? state.optimisticApplied : state.optimisticSkipped;
+  if(!ok) bucket.delete(jobId);
 }
 
-async function skipCurrent(){
+function acceptCurrent(){
   const jobs = currentFeedJobs();
   const current = jobs[0];
   if(!current) return;
-  try{
-    await api("/api/skips", {method:"POST", body:{jobId:current.id}});
-    state.lastAction = {type:"skipped", jobId:current.id};
-    await loadBootstrap();
-    toast("Job skipped");
-    render();
-  } catch(e){ toast(e.message); }
+  const jobId = current.id;
+
+  // Optimistic UI: remove the card immediately. The network request happens after
+  // the next card is already on screen, so swiping never waits on Cloudflare/D1.
+  state.optimisticApplied.add(jobId);
+  render();
+
+  api("/api/applications", {method:"POST", body:{jobId}})
+    .then(async () => {
+      state.lastAction = {type:"applied", jobId};
+      await loadBootstrap();
+      state.optimisticApplied.delete(jobId);
+      render();
+      toast("Application sent");
+    })
+    .catch(e => {
+      state.optimisticApplied.delete(jobId);
+      render();
+      toast(e.message);
+    });
+}
+
+function skipCurrent(){
+  const jobs = currentFeedJobs();
+  const current = jobs[0];
+  if(!current) return;
+  const jobId = current.id;
+
+  state.optimisticSkipped.add(jobId);
+  render();
+
+  api("/api/skips", {method:"POST", body:{jobId}})
+    .then(async () => {
+      state.lastAction = {type:"skipped", jobId};
+      await loadBootstrap();
+      state.optimisticSkipped.delete(jobId);
+      render();
+    })
+    .catch(e => {
+      state.optimisticSkipped.delete(jobId);
+      render();
+      toast(e.message);
+    });
 }
 
 async function undoLast(){
@@ -1910,19 +2134,22 @@ async function resetDecisions(){
   try{
     await api("/api/reset", {method:"POST"});
     state.lastAction = null;
+    state.optimisticSkipped.clear();
     await loadBootstrap();
-    toast("Feed reset");
+    toast("Skipped jobs reloaded");
     render();
   } catch(e){ toast(e.message); }
 }
 
 function renderApplied(){
+  const visibleApplications = state.applications.filter(a=>a.status!=="withdrawn");
   return `
     <div class="section-pad">
-      <div class="title-row"><h2>Applications</h2><span>${state.applications.length} applied</span></div>
+      <div class="title-row"><h2>Applications</h2><span>${visibleApplications.length} active</span></div>
       ${("Notification" in window && Notification.permission !== "granted") ? `<button class="btn btn-outline btn-block" style="margin-bottom:12px" onclick="enableBrowserNotifications()">🔔 Enable browser notifications</button>` : ""}
+      <div class="small" style="margin-bottom:12px">Removing an application withdraws it from the employer and removes it from this list.</div>
       ${
-        state.applications.length ? state.applications.map(a=>{
+        visibleApplications.length ? visibleApplications.map(a=>{
           const hasInterview = !!a.interviewAt;
           const interviewClass = a.interviewStatus==="declined" ? "declined" : (a.interviewStatus==="accepted" ? "" : "pending");
           return `
@@ -1978,18 +2205,16 @@ function renderApplied(){
             ${a.status==="unsuccessful" ? `
               <div class="final-state unsuccessful">This application has been closed by the employer.</div>
             ` : ""}
-            ${a.status==="withdrawn" ? `
-              <div class="final-state withdrawn">You withdrew this application.</div>
-            ` : ""}
             ${a.status==="hired" ? `
               <div class="final-state hired">You have been marked as hired.</div>
             ` : ""}
 
             ${!["hired","unsuccessful","withdrawn"].includes(a.status) ? `
-              <button class="btn btn-outline btn-block" style="margin-bottom:9px" onclick="withdrawApplication('${a.id}')">Withdraw application</button>
+              <button class="btn btn-outline btn-block" style="margin-bottom:9px" onclick="removeApplication('${a.id}')">Remove application</button>
             ` : ""}
 
-            <button class="btn btn-dark btn-block" onclick="showApplicationProfile('${a.jobId}')">View application</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-dark" onclick="showApplicationProfile('${a.jobId}')">View application</button><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openMessages('${a.id}')">Messages</button></div>
+            ${a.interviewAt ? `<a class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-top:8px;text-decoration:none" href="/api/integrations/interviews/${a.id}">Add interview to calendar</a>` : ''}
           </div>
         `}).join('') : `
           <div class="card dark empty">
@@ -2016,8 +2241,8 @@ async function respondToInterview(applicationId, response){
 
 
 
-async function withdrawApplication(applicationId){
-  if(!confirm("Withdraw this application? This closes the application and cannot be undone in the current version.")) return;
+async function removeApplication(applicationId){
+  if(!confirm("Remove this application? The employer will see that you withdrew it.")) return;
   try{
     await api(`/api/applications/${applicationId}/withdraw`, {
       method:"POST",
@@ -2025,7 +2250,7 @@ async function withdrawApplication(applicationId){
     });
     await loadBootstrap();
     render();
-    toast("Application withdrawn");
+    toast("Application removed");
   }catch(e){ toast(e.message); }
 }
 
@@ -2129,12 +2354,14 @@ function renderPrivacySafetyCard(){
     <div class="safety-card">
       <div class="title-row" style="margin-top:0"><h2>Account & privacy</h2><span>${openReports ? `${openReports} report${openReports===1?"":"s"} open` : "Controls"}</span></div>
       <div class="small">
-        Control what is shared, choose recruitment emails, review blocked accounts, export your Buisder data or permanently delete your account.
+        Control what is shared, choose recruitment and app notifications, review blocked accounts, export your Buisder data or permanently delete your account.
       </div>
-      ${!a.consent?.current ? `<div class="notice" style="margin-top:10px"><strong>Review required:</strong> the Buisder Terms and Privacy Notice have been updated for production legal and compliance controls.</div>` : ""}
+      ${!a.consent?.current ? `<div class="notice" style="margin-top:10px"><strong>Review required:</strong> the Buisder Terms or Privacy Notice have been updated. Review the current documents before continuing.</div>` : ""}
       <div class="safety-actions">
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openPrivacySettings()">Privacy settings</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openEmailPreferences()">Email notifications</button>
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openPushSettings()">App notifications</button>
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="installBuisder()">Install Buisder</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openSafetyCentre()">Safety centre</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="downloadMyData()">Export my data</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openAccountLegal()">Terms & privacy</button>
@@ -2616,7 +2843,7 @@ function renderProfile(){
 
         <label>Preferred work type</label>
         <select id="ppreferredtype">
-          ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship"].map(x=>`<option ${String(p.preferred_employment_type || "Any")===x?"selected":""}>${x}</option>`).join("")}
+          ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship","Work experience"].map(x=>`<option ${String(p.preferred_employment_type || "Any")===x?"selected":""}>${x}</option>`).join("")}
         </select>
 
         <label>About you</label>
@@ -2655,6 +2882,7 @@ function renderProfile(){
 
         <button class="btn btn-dark btn-block" onclick="saveProfile()">Save profile</button>
       </div>
+      ${renderReferralCard()}
       ${renderPrivacySafetyCard()}
     </div>
   `;
@@ -3131,16 +3359,8 @@ function renderEmployerAnalytics(){
 }
 
 
-function moneyFromCents(cents){
-  if(cents===null || cents===undefined) return "Price not set";
-  return `€${(Number(cents)/100).toFixed(Number(cents)%100 ? 2 : 0)}/month`;
-}
-
 function commercialPrice(plan){
-  if(!plan) return "";
-  if(plan.priceMode==="free") return "€0/month";
-  if(plan.priceMode==="unset") return "Price not set";
-  return moneyFromCents(plan.monthlyPriceCents);
+  return plan ? "No charge during initial launch" : "";
 }
 
 function planUsagePercent(value, limit){
@@ -3158,7 +3378,7 @@ async function requestPlan(planCode){
   const plan = (state.commercial?.plans || []).find(p=>p.code===planCode);
   openModal(`
     <h3>Request ${plan?.name || cap(planCode)}</h3>
-    <p class="small">Buisder is not taking online payments in v17. This sends the request to the admin commercial queue.</p>
+    <p class="small">Online checkout is not configured for this plan. This sends the request to the Buisder admin commercial queue.</p>
     <label>Message (optional)</label>
     <textarea id="planRequestMessage" maxlength="1000" placeholder="Tell us what you need this plan for"></textarea>
     <button class="btn btn-dark btn-block" onclick="submitPlanRequest('${planCode}')">Send request</button>
@@ -3200,80 +3420,50 @@ async function toggleFeaturedJob(jobId, featured){
 
 function renderCommercialPlan(){
   const c = state.commercial;
-  if(!c) return `<div class="section-pad"><div class="notice">Commercial account information is loading. Refresh if this persists.</div></div>`;
+  if(!c) return `<div class="section-pad"><div class="notice">Employer access information is loading. Refresh if this persists.</div></div>`;
   const a = c.account || {};
   const u = c.usage || {};
   const pending = (c.requests || []).find(r=>r.status==='pending');
 
   return `
     <div class="hero">
-      <h1>Employer plan</h1>
-      <p>Control job capacity and featured placement. Online billing is not enabled yet.</p>
+      <h1>Employer access</h1>
+      <p>Buisder's initial launch is free. Access tiers control job capacity only; there is no checkout, subscription charge or paid featured placement.</p>
     </div>
     <div class="section-pad">
+      <div class="notice"><strong>Free-launch mode:</strong> employers are not charged. Any future paid service will be introduced separately with updated terms and pricing before it is enabled.</div>
       <div class="plan-card current">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
           <div>
             <span class="commercial-badge ${a.planCode==='pilot'?'pilot':''}">${a.status==='trial'?'Trial':cap(a.status||'active')}</span>
             <h2 style="margin:8px 0 2px">${a.planName || cap(a.planCode || 'free')}</h2>
-            <div class="plan-price">${commercialPrice(a)}</div>
+            <div class="plan-price">No charge</div>
             <div class="small">${a.planDescription || ''}</div>
           </div>
           <div class="small" style="text-align:right">${commercialEndLabel(a.accessEndsAt)}</div>
         </div>
-
-        <div style="margin-top:14px">
-          <strong>${u.activeJobs || 0} / ${a.activeJobLimit < 0 ? 'Unlimited' : a.activeJobLimit} active jobs</strong>
-          <div class="usage-meter"><span style="width:${planUsagePercent(u.activeJobs,a.activeJobLimit)}%"></span></div>
-        </div>
-        <div style="margin-top:12px">
-          <strong>${u.featuredJobs || 0} / ${a.featuredJobLimit < 0 ? 'Unlimited' : a.featuredJobLimit} featured jobs</strong>
-          <div class="usage-meter"><span style="width:${planUsagePercent(u.featuredJobs,a.featuredJobLimit)}%"></span></div>
-        </div>
+        <div style="margin-top:14px"><strong>${u.activeJobs || 0} / ${a.activeJobLimit < 0 ? 'Unlimited' : a.activeJobLimit} active jobs</strong><div class="usage-meter"><span style="width:${planUsagePercent(u.activeJobs,a.activeJobLimit)}%"></span></div></div>
+        <div style="margin-top:12px"><strong>${u.featuredJobs || 0} / ${a.featuredJobLimit < 0 ? 'Unlimited' : a.featuredJobLimit} featured jobs</strong><div class="usage-meter"><span style="width:${planUsagePercent(u.featuredJobs,a.featuredJobLimit)}%"></span></div></div>
       </div>
-
-      ${pending ? `<div class="notice"><strong>Upgrade request pending:</strong> ${pending.requestedPlanName}. Buisder admin will review it.</div>` : ''}
-
-      <div class="title-row"><h2>Available plans</h2><span>No payment taken</span></div>
+      ${pending ? `<div class="notice"><strong>Access request pending:</strong> ${pending.requestedPlanName}. Buisder admin will review it.</div>` : ''}
+      <div class="title-row"><h2>Available access tiers</h2><span>Free launch</span></div>
       <div class="plan-grid">
         ${(c.plans || []).filter(p=>p.isPublic || p.code===a.planCode).map(plan=>`
           <div class="plan-card ${plan.code===a.planCode?'current':''}">
             <strong>${plan.name}</strong>
-            <div class="plan-price" style="font-size:19px;margin:6px 0">${commercialPrice(plan)}</div>
+            <div class="plan-price" style="font-size:19px;margin:6px 0">No charge</div>
             <div class="small">${plan.description || ''}</div>
-            <div class="chips">
-              <span class="chip">${plan.activeJobLimit < 0 ? 'Unlimited' : plan.activeJobLimit} active jobs</span>
-              <span class="chip">${plan.featuredJobLimit < 0 ? 'Unlimited' : plan.featuredJobLimit} featured</span>
-            </div>
-            ${plan.code===a.planCode
-              ? `<button class="btn btn-soft btn-block" disabled>Current plan</button>`
-              : plan.isPublic
-                ? `<button class="btn btn-dark btn-block" ${pending?'disabled':''} onclick="requestPlan('${plan.code}')">Request ${plan.name}</button>`
-                : ''}
-          </div>
-        `).join('')}
+            <div class="chips"><span class="chip">${plan.activeJobLimit < 0 ? 'Unlimited' : plan.activeJobLimit} active jobs</span><span class="chip">${plan.featuredJobLimit < 0 ? 'Unlimited' : plan.featuredJobLimit} featured</span></div>
+            ${plan.code===a.planCode ? `<button class="btn btn-soft btn-block" disabled>Current access</button>` : plan.isPublic ? `<button class="btn btn-dark btn-block" ${pending?'disabled':''} onclick="requestPlan('${plan.code}')">Request ${plan.name}</button>` : ''}
+          </div>`).join('')}
       </div>
-
-      <div class="title-row"><h2>Promo or referral code</h2><span>Optional</span></div>
-      <div class="form-card">
-        <input id="commercialCode" placeholder="Enter code">
-        <button class="btn btn-dark btn-block" style="margin-top:8px" onclick="applyCommercialCode()">Apply code</button>
-      </div>
-
+      <div class="title-row"><h2>Access or referral code</h2><span>Optional</span></div>
+      <div class="form-card"><input id="commercialCode" placeholder="Enter code"><button class="btn btn-dark btn-block" style="margin-top:8px" onclick="applyCommercialCode()">Apply code</button></div>
       <div class="title-row"><h2>Your referral code</h2><span>${c.referralCount || 0} referrals</span></div>
-      <div class="card">
-        <strong style="font-size:18px">${c.referralCode || 'Not available'}</strong>
-        <div class="small">Share this with another employer. v17 records referrals but does not automatically award a financial benefit.</div>
-      </div>
-
-      <div class="title-row"><h2>Commercial history</h2><span>${(c.history||[]).length}</span></div>
-      ${(c.history||[]).length ? (c.history||[]).slice(0,10).map(h=>`
-        <div class="admin-row"><strong>${cap(String(h.eventType||'').replaceAll('_',' '))}</strong><div class="admin-meta">${h.description || ''}<br>${formatTimelineDate(h.createdAt)}</div></div>
-      `).join('') : `<div class="notice">No commercial changes yet.</div>`}
-
-      <div class="notice"><strong>v17 commercial mode:</strong> plan prices can be configured by an admin, but Buisder does not charge cards, create invoices or collect subscription payments in this release.</div>
-    </div>
-  `;
+      <div class="card"><strong style="font-size:18px">${c.referralCode || 'Not available'}</strong><div class="small">Share this with another employer. The free launch does not provide cash, credit, points or other financial rewards.</div></div>
+      <div class="title-row"><h2>Access history</h2><span>${(c.history||[]).length}</span></div>
+      ${(c.history||[]).length ? (c.history||[]).slice(0,10).map(h=>`<div class="admin-row"><strong>${cap(String(h.eventType||'').replaceAll('_',' '))}</strong><div class="admin-meta">${h.description || ''}<br>${formatTimelineDate(h.createdAt)}</div></div>`).join('') : `<div class="notice">No access changes yet.</div>`}
+    </div>`;
 }
 
 async function loadAdminCommercial(force=false){
@@ -3332,41 +3522,28 @@ function openPlanEditor(code){
   if(!p) return;
   openModal(`
     <h3>Edit ${p.name}</h3>
+    <div class="notice"><strong>Free-launch mode:</strong> pricing is disabled. These tiers control capacity only.</div>
     <label>Name</label><input id="planEditName" value="${p.name || ''}">
     <label>Description</label><textarea id="planEditDescription">${p.description || ''}</textarea>
-    <label>Pricing</label>
-    <select id="planEditPriceMode" onchange="document.getElementById('planEditPrice').disabled=this.value!=='fixed'">
-      <option value="free" ${p.priceMode==='free'?'selected':''}>Free</option>
-      <option value="unset" ${p.priceMode==='unset'?'selected':''}>Price not set</option>
-      <option value="fixed" ${p.priceMode==='fixed'?'selected':''}>Fixed monthly price</option>
-    </select>
-    <label>Monthly price (€)</label>
-    <input id="planEditPrice" type="number" min="0" step="0.01" value="${p.monthlyPriceCents===null||p.monthlyPriceCents===undefined?'':Number(p.monthlyPriceCents)/100}" ${p.priceMode==='fixed'?'':'disabled'}>
-    <div class="two-col">
-      <div><label>Active job limit</label><input id="planEditJobs" type="number" min="1" value="${p.activeJobLimit}"></div>
-      <div><label>Featured job limit</label><input id="planEditFeatured" type="number" min="0" value="${p.featuredJobLimit}"></div>
-    </div>
-    <div class="privacy-toggle"><input id="planEditPublic" type="checkbox" ${p.isPublic?'checked':''}><label for="planEditPublic" style="margin:0">Employers can request this plan</label></div>
-    <button class="btn btn-dark btn-block" onclick="saveCommercialPlan('${p.code}')">Save plan</button>
-  `);
+    <div class="two-col"><div><label>Active job limit</label><input id="planEditJobs" type="number" min="1" value="${p.activeJobLimit}"></div><div><label>Featured job limit</label><input id="planEditFeatured" type="number" min="0" value="${p.featuredJobLimit}"></div></div>
+    <div class="privacy-toggle"><input id="planEditPublic" type="checkbox" ${p.isPublic?'checked':''}><label for="planEditPublic" style="margin:0">Employers can request this access tier</label></div>
+    <button class="btn btn-dark btn-block" onclick="saveCommercialPlan('${p.code}')">Save access tier</button>`);
 }
 
 async function saveCommercialPlan(code){
   try{
-    const priceMode = document.getElementById('planEditPriceMode')?.value;
-    const euro = document.getElementById('planEditPrice')?.value;
     await api(`/api/admin/commercial/plans/${code}`, {method:'POST', body:{
       name:document.getElementById('planEditName')?.value,
       description:document.getElementById('planEditDescription')?.value,
-      priceMode,
-      monthlyPriceCents:priceMode==='fixed' ? Math.round(Number(euro||0)*100) : null,
+      priceMode:'free',
+      monthlyPriceCents:0,
       activeJobLimit:Number(document.getElementById('planEditJobs')?.value),
       featuredJobLimit:Number(document.getElementById('planEditFeatured')?.value),
       isPublic:Boolean(document.getElementById('planEditPublic')?.checked)
     }});
     closeModal();
     await loadAdminCommercial(true);
-    toast('Plan updated');
+    toast('Access tier updated');
   }catch(e){ toast(e.message); }
 }
 
@@ -3431,8 +3608,8 @@ function renderAdminCommercial(){
   const s = c.summary || {};
   return `
     <div class="hero">
-      <h1>Commercial controls</h1>
-      <p>Configure employer plans and pilot access before payment processing is switched on.</p>
+      <h1>Employer access controls</h1>
+      <p>Configure free-launch employer access tiers, limits and pilot access. Payment processing is disabled.</p>
     </div>
     <div class="section-pad">
       <div class="commercial-grid">
@@ -3445,11 +3622,11 @@ function renderAdminCommercial(){
         <div class="commercial-stat"><strong>${s.growthAccounts||0}</strong><span>Growth</span></div>
         <div class="commercial-stat"><strong>${s.proAccounts||0}</strong><span>Pro</span></div>
       </div>
-      <div class="notice"><strong>Assigned monthly plan value:</strong> ${moneyFromCents(s.assignedMonthlyPlanValueCents||0)}. This is plan value, not collected revenue. v17 does not process payments.</div>
+      <div class="notice"><strong>Free launch:</strong> no employer is charged. Growth/Pro names are capacity tiers only until a future paid release is explicitly enabled.</div>
 
       <div class="title-row"><h2>Plans</h2><span>Admin configurable</span></div>
       <div class="plan-grid">
-        ${(c.plans||[]).map(p=>`<div class="plan-card"><strong>${p.name}</strong><div class="plan-price" style="font-size:18px">${commercialPrice(p)}</div><div class="small">${p.description||''}</div><div class="chips"><span class="chip">${p.activeJobLimit} active jobs</span><span class="chip">${p.featuredJobLimit} featured</span><span class="chip">${p.isPublic?'Public request':'Admin only'}</span></div><button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light)" onclick="openPlanEditor('${p.code}')">Edit plan</button></div>`).join('')}
+        ${(c.plans||[]).map(p=>`<div class="plan-card"><strong>${p.name}</strong><div class="plan-price" style="font-size:18px">No charge</div><div class="small">${p.description||''}</div><div class="chips"><span class="chip">${p.activeJobLimit} active jobs</span><span class="chip">${p.featuredJobLimit} featured</span><span class="chip">${p.isPublic?'Public request':'Admin only'}</span></div><button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light)" onclick="openPlanEditor('${p.code}')">Edit plan</button></div>`).join('')}
       </div>
 
       <div class="title-row"><h2>Upgrade requests</h2><span>${(c.requests||[]).filter(r=>r.status==='pending').length} pending</span></div>
@@ -3467,7 +3644,7 @@ function renderAdminCommercial(){
       </div>
       ${(c.promos||[]).map(p=>`<div class="admin-row"><div style="display:flex;justify-content:space-between;gap:10px"><div><strong>${p.code}</strong><div class="admin-meta">${p.planName} · ${p.durationDays} days · ${p.redemptionCount}/${p.maxRedemptions??'∞'} used${p.expiresAt?` · expires ${formatTimelineDate(p.expiresAt)}`:''}</div></div><span class="pill ${p.active?'good':'soft'}">${p.active?'Active':'Inactive'}</span></div><button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-top:8px" onclick="togglePromo('${p.id}',${Boolean(p.active)})">${p.active?'Deactivate':'Activate'}</button></div>`).join('') || `<div class="notice">No promo codes yet.</div>`}
 
-      <div class="title-row"><h2>Recent commercial history</h2><span>${(c.history||[]).length}</span></div>
+      <div class="title-row"><h2>Recent access history</h2><span>${(c.history||[]).length}</span></div>
       ${(c.history||[]).slice(0,20).map(h=>`<div class="admin-row"><strong>${h.companyName||h.email}</strong><div class="admin-meta">${cap(String(h.eventType||'').replaceAll('_',' '))} · ${h.description||''}<br>${formatTimelineDate(h.createdAt)}</div></div>`).join('') || `<div class="notice">No commercial history yet.</div>`}
     </div>
   `;
@@ -3688,6 +3865,85 @@ async function saveIncident(id){
   try{await api(`/api/admin/compliance/incidents/${id}`,{method:"POST",body:{status:document.getElementById("incStatus")?.value,riskLevel:document.getElementById("incRisk")?.value,breachConfirmed:Boolean(document.getElementById("incBreach")?.checked),affectsChildren:Boolean(document.getElementById("incChildren")?.checked),dpcNotificationRequired,dpcNotifiedAt:document.getElementById("incDpcAt")?.value||null,subjectsNotifiedAt:document.getElementById("incSubjectsAt")?.value||null,summary:document.getElementById("incSummary")?.value||"",actionsTaken:document.getElementById("incActions")?.value||""}});closeModal();state.compliance=null;await loadCompliance(true);toast("Incident updated");}catch(e){toast(e.message)}
 }
 
+async function loadGrowth(force=false){
+  if(state.growthLoading) return;
+  if(state.growth && !force) return;
+  state.growthLoading=true; render();
+  try{state.growth=await api("/api/admin/growth");}
+  catch(e){state.growth={error:e.message};}
+  finally{state.growthLoading=false;render();}
+}
+
+async function growthManage(body, success){
+  try{await api("/api/admin/growth/manage",{method:"POST",body});state.growth=null;closeModal();await loadGrowth(true);toast(success||"Growth record saved");}
+  catch(e){toast(e.message);}
+}
+function growthStatus(v){return `<span class="growth-status ${safeText(v||'')}">${safeText(cap(String(v||'').replaceAll('_',' ')))}</span>`}
+function funnelPct(value,total){const v=Number(value||0);return total&&v?Math.max(2,Math.round(v/Number(total)*100)):0}
+function renderGrowthFunnel(title, stages){const total=Number(stages[0]?.[1]||0);return `<div class="growth-section"><h2>${safeText(title)}</h2><div class="growth-funnel">${stages.map(([label,value])=>`<div class="growth-stage"><span>${safeText(label)}</span><div class="growth-stage-bar"><span style="width:${funnelPct(value,total)}%"></span></div><strong>${Number(value||0)}</strong></div>`).join("")}</div></div>`}
+function growthShareUrl(code){return `${window.location.origin}/join/${encodeURIComponent(code)}`}
+async function copyGrowthLink(code){try{await navigator.clipboard.writeText(growthShareUrl(code));toast("Growth link copied");}catch(e){toast(growthShareUrl(code));}}
+async function copyCampaignLinkById(id){const c=(state.growth?.campaigns||[]).find(x=>x.id===id);if(!c)return;const u=new URL(c.landingPath||"/",window.location.origin);u.searchParams.set("signup","1");u.searchParams.set("utm_source",c.source||"direct");u.searchParams.set("utm_medium",c.medium||"referral");u.searchParams.set("utm_campaign",c.campaignKey);try{await navigator.clipboard.writeText(u.toString());toast("Campaign link copied");}catch(e){toast(u.toString());}}
+
+function openNewGrowthPartner(){openModal(`<h3>Add growth partner</h3><label>Name</label><input id="gpName"><div class="two-col"><div><label>Type</label><select id="gpType"><option value="school">School</option><option value="college">College</option><option value="youth_org">Youth organisation</option><option value="community">Community</option><option value="employer_network">Employer network</option><option value="other">Other</option></select></div><div><label>Region</label><input id="gpRegion" placeholder="e.g. Cork"></div></div><div class="two-col"><div><label>Contact name</label><input id="gpContactName"></div><div><label>Contact email</label><input id="gpContactEmail" type="email"></div></div><label>Notes</label><textarea id="gpNotes"></textarea><button class="btn btn-dark btn-block" onclick="submitGrowthPartner()">Add partner</button>`)}
+function submitGrowthPartner(){growthManage({action:"create_partner",name:document.getElementById("gpName")?.value||"",partnerType:document.getElementById("gpType")?.value||"other",region:document.getElementById("gpRegion")?.value||"",contactName:document.getElementById("gpContactName")?.value||"",contactEmail:document.getElementById("gpContactEmail")?.value||"",notes:document.getElementById("gpNotes")?.value||""},"Partner added")}
+function setGrowthPartnerStatus(id,status){growthManage({action:"update_partner",id,status},"Partner updated")}
+
+function openNewGrowthCampaign(){const g=state.growth||{};openModal(`<h3>Create campaign</h3><label>Name</label><input id="gcName" placeholder="Cork schools launch"><label>Campaign key</label><input id="gcKey" placeholder="cork-schools-2026"><div class="two-col"><div><label>Source</label><input id="gcSource" value="partner"></div><div><label>Medium</label><input id="gcMedium" value="referral"></div></div><div class="two-col"><div><label>Target</label><select id="gcRole"><option value="any">Any</option><option value="jobseeker">Job seekers</option><option value="employer">Employers</option></select></div><div><label>Partner</label><select id="gcPartner"><option value="">None</option>${(g.partners||[]).map(p=>`<option value="${p.id}">${safeText(p.name)}</option>`).join("")}</select></div></div><label>Landing path</label><input id="gcLanding" value="/"><label>Notes</label><textarea id="gcNotes"></textarea><button class="btn btn-dark btn-block" onclick="submitGrowthCampaign()">Create campaign</button>`)}
+function submitGrowthCampaign(){growthManage({action:"create_campaign",name:document.getElementById("gcName")?.value||"",campaignKey:document.getElementById("gcKey")?.value||"",source:document.getElementById("gcSource")?.value||"direct",medium:document.getElementById("gcMedium")?.value||"referral",targetRole:document.getElementById("gcRole")?.value||"any",partnerId:document.getElementById("gcPartner")?.value||null,landingPath:document.getElementById("gcLanding")?.value||"/",status:"active",notes:document.getElementById("gcNotes")?.value||""},"Campaign created")}
+function setGrowthCampaignStatus(id,status){growthManage({action:"update_campaign",id,status},"Campaign updated")}
+
+function openNewGrowthCode(){const g=state.growth||{};openModal(`<h3>Create referral / invite link</h3><div class="two-col"><div><label>Type</label><select id="grType"><option value="partner">Partner</option><option value="campaign">Campaign</option><option value="candidate">Candidate</option><option value="employer">Employer</option></select></div><div><label>Target</label><select id="grRole"><option value="any">Any</option><option value="jobseeker">Job seekers</option><option value="employer">Employers</option></select></div></div><label>Custom code (optional)</label><input id="grCode" placeholder="Auto-generated if blank"><label>Label</label><input id="grLabel" placeholder="Cork College careers office"><div class="two-col"><div><label>Partner</label><select id="grPartner"><option value="">None</option>${(g.partners||[]).map(p=>`<option value="${p.id}">${safeText(p.name)}</option>`).join("")}</select></div><div><label>Campaign</label><select id="grCampaign"><option value="">None</option>${(g.campaigns||[]).map(c=>`<option value="${c.id}">${safeText(c.name)}</option>`).join("")}</select></div></div><div class="two-col"><div><label>Max uses</label><input id="grMax" type="number" min="1"></div><div><label>Expires</label><input id="grExpiry" type="datetime-local"></div></div><button class="btn btn-dark btn-block" onclick="submitGrowthCode()">Create link</button>`)}
+function submitGrowthCode(){growthManage({action:"create_code",referralType:document.getElementById("grType")?.value||"campaign",targetRole:document.getElementById("grRole")?.value||"any",code:document.getElementById("grCode")?.value||"",label:document.getElementById("grLabel")?.value||"",partnerId:document.getElementById("grPartner")?.value||null,campaignId:document.getElementById("grCampaign")?.value||null,maxUses:document.getElementById("grMax")?.value||null,expiresAt:document.getElementById("grExpiry")?.value||null},"Referral link created")}
+function setGrowthCodeStatus(id,status){growthManage({action:"update_code",id,status},"Referral link updated")}
+
+function openNewGrowthLead(){const g=state.growth||{};openModal(`<h3>Add employer prospect</h3><label>Business name</label><input id="glBusiness"><div class="two-col"><div><label>Contact</label><input id="glContact"></div><div><label>Email</label><input id="glEmail" type="email"></div></div><div class="two-col"><div><label>Location</label><input id="glLocation"></div><div><label>Source</label><input id="glSource" placeholder="Outbound, event, partner"></div></div><div class="two-col"><div><label>Partner</label><select id="glPartner"><option value="">None</option>${(g.partners||[]).map(p=>`<option value="${p.id}">${safeText(p.name)}</option>`).join("")}</select></div><div><label>Campaign</label><select id="glCampaign"><option value="">None</option>${(g.campaigns||[]).map(c=>`<option value="${c.id}">${safeText(c.name)}</option>`).join("")}</select></div></div><label>Follow-up</label><input id="glFollow" type="datetime-local"><label>Notes</label><textarea id="glNotes"></textarea><button class="btn btn-dark btn-block" onclick="submitGrowthLead()">Add prospect</button>`)}
+function submitGrowthLead(){growthManage({action:"create_lead",businessName:document.getElementById("glBusiness")?.value||"",contactName:document.getElementById("glContact")?.value||"",contactEmail:document.getElementById("glEmail")?.value||"",location:document.getElementById("glLocation")?.value||"",source:document.getElementById("glSource")?.value||"",partnerId:document.getElementById("glPartner")?.value||null,campaignId:document.getElementById("glCampaign")?.value||null,nextFollowUpAt:document.getElementById("glFollow")?.value||null,notes:document.getElementById("glNotes")?.value||"",stage:"prospect"},"Employer prospect added")}
+function setGrowthLeadStage(id){const el=document.getElementById(`lead-stage-${id}`);if(el)growthManage({action:"update_lead",id,stage:el.value},"Pipeline updated")}
+
+function renderAdminGrowth(){
+  const g=state.growth;
+  if(!g&&!state.growthLoading)setTimeout(()=>loadGrowth(),0);
+  if(state.growthLoading||!g)return `<div class="section-pad"><div class="notice">Loading growth workspace…</div></div>`;
+  if(g.error)return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${safeText(g.error)}</div><button class="btn btn-dark btn-block" onclick="loadGrowth(true)">Retry</button></div>`;
+  const o=g.overview||{}, cf=g.candidateFunnel||{}, ef=g.employerFunnel||{};
+  const loc=new Map();(g.geography?.candidateLocations||[]).forEach(x=>loc.set(String(x.location).toLowerCase(),{location:x.location,candidates:Number(x.count||0),jobs:0}));(g.geography?.jobLocations||[]).forEach(x=>{const k=String(x.location).toLowerCase();const v=loc.get(k)||{location:x.location,candidates:0,jobs:0};v.jobs=Number(x.count||0);loc.set(k,v)});const locations=[...loc.values()].sort((a,b)=>(b.candidates-b.jobs)-(a.candidates-a.jobs)).slice(0,12);
+  return `<div class="growth-page"><div class="hero"><h1>Growth</h1><p>Measure acquisition by outcomes: signups, applications, jobs and hires, not just clicks.</p></div><div class="section-pad">
+    <div class="growth-grid"><div class="growth-kpi"><strong>${o.attributedSignups||0}</strong><span>Attributed signups</span></div><div class="growth-kpi"><strong>${o.referralSignups||0}</strong><span>Referral signups</span></div><div class="growth-kpi"><strong>${o.activeCampaigns||0}</strong><span>Active campaigns</span></div><div class="growth-kpi"><strong>${o.activePartners||0}</strong><span>Active partners</span></div><div class="growth-kpi"><strong>${o.openEmployerLeads||0}</strong><span>Employer prospects in pipeline</span></div></div>
+    ${renderGrowthFunnel("Candidate acquisition funnel",[["Signups",cf.signups],["Profile complete",cf.profileComplete],["Applied",cf.applicants],["Interviewed",cf.interviews],["Hired",cf.hires]])}
+    ${renderGrowthFunnel("Employer acquisition funnel",[["Signups",ef.signups],["Verified",ef.verified],["Posted a job",ef.jobPosted],["Received applicant",ef.receivedApplicant],["Made a hire",ef.hires]])}
+
+    <section class="growth-section"><div class="title-row"><h2>Campaigns</h2><button class="btn btn-outline" onclick="openNewGrowthCampaign()">New campaign</button></div><div class="small">UTM campaign attribution is first-touch and linked to the account only if the visitor signs up.</div>${(g.campaigns||[]).map(c=>`<div class="growth-row"><div class="title-row"><div><strong>${safeText(c.name)}</strong><div class="admin-meta">${safeText(c.source)} / ${safeText(c.medium)} / ${safeText(c.campaignKey)}</div></div>${growthStatus(c.status)}</div><div class="chips"><span class="chip">${c.signups||0} signups</span><span class="chip">${c.applicants||0} applicants</span><span class="chip good">${c.hires||0} hires</span><span class="chip">${c.employersWithJobs||0} employers posted</span></div><div class="growth-actions"><button class="btn btn-outline" onclick="copyCampaignLinkById('${c.id}')">Copy campaign link</button><button class="btn ${c.status==='active'?'btn-bad':'btn-good'}" onclick="setGrowthCampaignStatus('${c.id}','${c.status==='active'?'paused':'active'}')">${c.status==='active'?'Pause':'Activate'}</button></div></div>`).join("")||`<div class="small">No campaigns yet.</div>`}</section>
+
+    <section class="growth-section"><div class="title-row"><h2>Partners</h2><button class="btn btn-outline" onclick="openNewGrowthPartner()">Add partner</button></div>${(g.partners||[]).map(p=>`<div class="growth-row"><div class="title-row"><div><strong>${safeText(p.name)}</strong><div class="admin-meta">${safeText(cap(String(p.partnerType||'other').replaceAll('_',' ')))}${p.region?' · '+safeText(p.region):''}</div></div>${growthStatus(p.status)}</div><div class="chips"><span class="chip">${p.signups||0} signups</span><span class="chip">${p.applicants||0} applicants</span><span class="chip good">${p.hires||0} hires</span><span class="chip">${p.employersWithJobs||0} employers posted</span></div><button class="btn ${p.status==='active'?'btn-bad':'btn-good'} btn-block" style="margin-top:8px" onclick="setGrowthPartnerStatus('${p.id}','${p.status==='active'?'paused':'active'}')">${p.status==='active'?'Pause partner':'Activate partner'}</button></div>`).join("")||`<div class="small">No growth partners yet.</div>`}</section>
+
+    <section class="growth-section"><div class="title-row"><h2>Referral & invite links</h2><button class="btn btn-outline" onclick="openNewGrowthCode()">Create link</button></div><div class="small">No cash or points rewards are enabled. Codes only measure acquisition and can be paused, expired or usage-limited.</div>${(g.codes||[]).map(c=>`<div class="growth-row"><div class="title-row"><div><span class="growth-code">${safeText(c.code)}</span><div class="admin-meta" style="margin-top:4px">${safeText(c.label||cap(c.referralType))}${c.ownerEmail?' · '+safeText(c.ownerEmail):''}${c.partnerName?' · '+safeText(c.partnerName):''}${c.campaignName?' · '+safeText(c.campaignName):''}</div></div>${growthStatus(c.status)}</div><div class="chips"><span class="chip">${c.signups||0} signups</span><span class="chip good">${c.candidateHires||0} hires</span><span class="chip">${c.useCount||0}${c.maxUses?'/'+c.maxUses:''} uses</span></div><div class="growth-actions"><button class="btn btn-outline" onclick="copyGrowthLink('${safeText(c.code)}')">Copy link</button><button class="btn ${c.status==='active'?'btn-bad':'btn-good'}" onclick="setGrowthCodeStatus('${c.id}','${c.status==='active'?'paused':'active'}')">${c.status==='active'?'Pause':'Activate'}</button></div></div>`).join("")||`<div class="small">No referral links yet.</div>`}</section>
+
+    <section class="growth-section"><div class="title-row"><h2>Employer acquisition pipeline</h2><button class="btn btn-outline" onclick="openNewGrowthLead()">Add prospect</button></div>${(g.leads||[]).map(l=>`<div class="growth-row"><div class="title-row"><div><strong>${safeText(l.businessName)}</strong><div class="admin-meta">${safeText(l.contactName||'')}${l.contactEmail?' · '+safeText(l.contactEmail):''}${l.location?' · '+safeText(l.location):''}</div></div>${growthStatus(l.stage)}</div>${l.nextFollowUpAt?`<div class="small">Follow-up: ${formatTimelineDate(l.nextFollowUpAt)}</div>`:''}<div class="two-col"><select id="lead-stage-${l.id}">${['prospect','contacted','interested','invited','registered','verified','first_job','active'].map(v=>`<option value="${v}" ${l.stage===v?'selected':''}>${cap(v.replaceAll('_',' '))}</option>`).join('')}</select><button class="btn btn-outline" onclick="setGrowthLeadStage('${l.id}')">Update stage</button></div></div>`).join("")||`<div class="small">No employer prospects yet.</div>`}</section>
+
+    <section class="growth-section"><div class="title-row"><h2>Geographic expansion</h2><span>Supply vs live jobs</span></div><div class="small">Location names are user/employer-entered and should be normalised before making expansion decisions.</div><div class="growth-location-grid">${locations.map(x=>`<div class="conversion-item"><strong>${safeText(x.location)}</strong><span>${x.candidates} candidates · ${x.jobs} live jobs · gap ${x.candidates-x.jobs>=0?'+':''}${x.candidates-x.jobs}</span></div>`).join('')||`<div class="small">No location data yet.</div>`}</div></section>
+
+    <section class="growth-section"><div class="title-row"><h2>Recent referrals</h2><span>${(g.recentReferrals||[]).length}</span></div>${(g.recentReferrals||[]).slice(0,30).map(r=>`<div class="growth-row"><strong>${safeText(r.referredName||r.referredEmail)}</strong><div class="admin-meta">${cap(r.targetRole)} · referred by ${safeText(r.referrerName||r.referrerEmail||r.partnerName||r.campaignName||'growth link')} · ${formatTimelineDate(r.createdAt)}</div><div class="chips">${r.targetRole==='jobseeker'?`<span class="chip">${r.applicationCount||0} applications</span><span class="chip good">${r.hireCount||0} hires</span>`:`<span class="chip">${safeText(r.employerVerification||'unverified')}</span><span class="chip">${r.jobCount||0} jobs</span>`}</div></div>`).join('')||`<div class="small">No referrals yet.</div>`}</section>
+
+    <div class="analytics-footnote">Growth reporting is first-party. It does not use third-party advertising pixels and is not used to make candidate hiring decisions. Referral rewards remain disabled until the parked payments work and referral terms are reviewed.</div>
+  </div></div>`;
+}
+
+async function loadGrowthMe(force=false){
+  if(state.growthMeLoading)return;
+  if(state.growthMe&&!force)return;
+  state.growthMeLoading=true;
+  try{state.growthMe=await api("/api/growth/me");}catch(e){state.growthMe={error:e.message};}
+  finally{state.growthMeLoading=false;render();}
+}
+async function createMyReferral(){try{state.growthMe=await api("/api/growth/me",{method:"POST",body:{}});render();toast("Referral link created");}catch(e){toast(e.message)}}
+async function copyMyReferral(){const code=state.growthMe?.code?.code;if(!code)return;await copyGrowthLink(code)}
+function renderReferralCard(){
+  if(!state.growthMe&&!state.growthMeLoading)setTimeout(()=>loadGrowthMe(),0);
+  const g=state.growthMe;
+  return `<div class="referral-card"><div class="title-row"><h2>Refer to Buisder</h2><span>Growth</span></div>${state.growthMeLoading||!g?`<div class="small">Loading referral details…</div>`:g.error?`<div class="small">Referral details are temporarily unavailable.</div>`:g.code?`<div class="small">Share your personal ${state.mode==='employer'?'employer':'job seeker'} referral link. It tracks signups and outcomes; no reward or payment is currently attached.</div><div style="margin:10px 0"><span class="growth-code">${safeText(g.code.code)}</span></div><div class="growth-grid"><div class="growth-kpi"><strong>${g.stats?.signups||0}</strong><span>Signups</span></div><div class="growth-kpi"><strong>${g.stats?.activated||0}</strong><span>${state.mode==='employer'?'Verified':'Profile complete'}</span></div><div class="growth-kpi"><strong>${g.stats?.converted||0}</strong><span>${state.mode==='employer'?'Posted a job':'Hired'}</span></div></div><button class="btn btn-dark btn-block" onclick="copyMyReferral()">Copy referral link</button>`:`<div class="small">Create a personal link if you want to invite another ${state.mode==='employer'?'employer':'job seeker'}.</div><button class="btn btn-dark btn-block" style="margin-top:10px" onclick="createMyReferral()">Create my referral link</button>`}</div>`;
+}
+
 function renderAdminCompliance(){
   const c=state.compliance;
   if(!c&&!state.complianceLoading) setTimeout(()=>loadCompliance(),0);
@@ -3716,7 +3972,37 @@ function renderAdminCompliance(){
   </div>`;
 }
 
+async function loadRisk(force=false){
+  if(state.riskLoading)return;
+  if(state.risk&&!force)return;
+  state.riskLoading=true;render();
+  try{state.risk=await api('/api/admin/risk');}catch(e){state.risk={error:e.message};}
+  finally{state.riskLoading=false;render();}
+}
+async function updateRiskFlag(id,status){
+  const note=prompt('Optional admin note:')||'';
+  try{await api(`/api/admin/risk/${id}`,{method:'PATCH',body:{status,note}});state.risk=null;await loadRisk(true);toast('Risk flag updated');}catch(e){toast(e.message);}
+}
+async function updateMessageReport(id,status){
+  const note=prompt('Optional admin note:')||'';
+  try{await api(`/api/admin/risk/message/${id}`,{method:'PATCH',body:{status,note}});state.risk=null;await loadRisk(true);toast('Message report updated');}catch(e){toast(e.message);}
+}
+function renderAdminRisk(){
+  const r=state.risk;
+  if(!r&&!state.riskLoading)setTimeout(()=>loadRisk(),0);
+  if(state.riskLoading||!r)return `<div class="section-pad"><div class="notice">Loading risk controls…</div></div>`;
+  if(r.error)return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${safeText(r.error)}</div><button class="btn btn-dark btn-block" onclick="loadRisk(true)">Retry</button></div>`;
+  const s=r.summary||{};
+  return `<div class="hero"><h1>Fraud, abuse & risk</h1><p>Behavioural risk flags support human review. Buisder does not automatically reject candidates or employers based on these flags.</p></div><div class="section-pad">
+    <div class="risk-grid"><div class="v24-kpi"><strong>${s.open||0}</strong><span>Open flags</span></div><div class="v24-kpi"><strong>${s.highOpen||0}</strong><span>High / critical open</span></div><div class="v24-kpi"><strong>${s.total||0}</strong><span>Total flags</span></div><div class="v24-kpi"><strong>${(r.messageReports||[]).filter(x=>['open','reviewing'].includes(x.status)).length}</strong><span>Open message reports</span></div></div>
+    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Risk flags</h2><span>${(r.flags||[]).length}</span></div>${(r.flags||[]).length?(r.flags||[]).map(f=>`<div class="admin-row"><div style="display:flex;justify-content:space-between;gap:8px"><strong>${safeText(f.risk_type||f.riskType)}</strong><span class="risk-badge ${safeText(f.severity)}">${cap(f.severity)}</span></div><div class="admin-meta">${safeText(f.name||f.email||'Account')} · ${safeText(f.status)} · ${formatTimelineDate(f.created_at||f.createdAt)}</div><div class="small" style="margin-top:6px">${safeText(f.reason)}</div>${['open','reviewing'].includes(f.status)?`<div class="admin-actions"><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateRiskFlag('${f.id}','reviewing')">Reviewing</button><button class="btn btn-good" onclick="updateRiskFlag('${f.id}','dismissed')">Dismiss</button><button class="btn btn-bad" onclick="updateRiskFlag('${f.id}','actioned')">Actioned</button></div>`:''}</div>`).join(''):`<div class="small">No risk flags.</div>`}</div>
+    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Reported messages</h2><span>${(r.messageReports||[]).length}</span></div>${(r.messageReports||[]).length?(r.messageReports||[]).map(m=>`<div class="admin-row"><strong>${safeText(m.senderEmail||'Sender')}</strong><div class="admin-meta">Reported by ${safeText(m.reporterEmail||'user')} · ${safeText(m.status)} · ${formatTimelineDate(m.createdAt)}</div><div class="small">${safeText(m.body||'')}</div>${m.details?`<div class="notice">${safeText(m.details)}</div>`:''}${['open','reviewing'].includes(m.status)?`<div class="admin-actions"><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateMessageReport('${m.id}','reviewing')">Reviewing</button><button class="btn btn-good" onclick="updateMessageReport('${m.id}','resolved')">Resolve</button><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateMessageReport('${m.id}','dismissed')">Dismiss</button></div>`:''}</div>`).join(''):`<div class="small">No message reports.</div>`}</div>
+  </div>`;
+}
+
 function renderAdmin(){
+  if(state.tab==="admin-risk") return renderAdminRisk();
+  if(state.tab==="admin-growth") return renderAdminGrowth();
   if(state.tab==="admin-compliance") return renderAdminCompliance();
   if(state.tab==="admin-pilot") return renderAdminPilot();
   if(state.tab==="admin-launch") return renderAdminLaunch();
@@ -3746,11 +4032,18 @@ function renderAdminHome(){
         <div class="admin-stat"><strong>${o.openReports || 0}</strong><span>Open reports</span></div>
       </div>
 
+      <div class="title-row"><h2>Growth</h2><button class="btn btn-outline" onclick="setTab('admin-growth')">Open growth</button></div>
+      <div class="card dark" style="margin-bottom:12px"><div class="small" style="color:#d8d2c5">Track acquisition, referrals, partners, campaigns, employer leads and geographic expansion.</div></div>
+
       <div class="title-row"><h2>Pilot management</h2><button class="btn btn-outline" onclick="setTab('admin-pilot')">Open pilot</button></div>
       <div class="card dark" style="margin-bottom:12px"><div class="small">Manage cohorts, organisations, invite codes, participant feedback and pilot issues.</div></div>
 
       <div class="title-row"><h2>Legal & compliance</h2><button class="btn btn-outline" onclick="setTab('admin-compliance')">Open workspace</button></div>
       <div class="card dark" style="margin-bottom:12px"><div class="small" style="color:#d8d2c5">Track controller details, GDPR rights requests, processors, retention, incidents and pre-launch legal review.</div></div>
+
+
+      <div class="title-row"><h2>Risk controls</h2><button class="btn btn-outline" onclick="setTab('admin-risk')">Open risk</button></div>
+      <div class="card dark" style="margin-bottom:12px"><div class="small" style="color:#d8d2c5">Review behavioural risk flags and reported application messages. Flags support human review rather than automated hiring decisions.</div></div>
 
       <div class="title-row"><h2>Pilot launch</h2><button class="btn btn-outline" onclick="setTab('admin-launch')">Run preflight</button></div>
       <div class="card dark" style="margin-bottom:12px"><div class="small" style="color:#cbd5e1">Check production configuration, data integrity, demo data and the manual go-live checklist before inviting pilot users.</div></div>
@@ -3958,6 +4251,10 @@ function renderAdminUsers(){
               onclick="adminUserAction('${u.id}','${u.isSuspended ? "restore" : "suspend"}')">
               ${u.isSuspended ? "Restore account" : "Suspend account"}
             </button>
+            <button class="btn btn-bad btn-block" style="margin-top:8px"
+              onclick="openAdminDeleteUser('${u.id}')">
+              Permanently delete account
+            </button>
           ` : ""}
         </div>
       `).join("")}
@@ -3972,6 +4269,34 @@ async function adminUserAction(userId, action){
     await loadBootstrap();
     render();
     toast(action==="suspend" ? "Account suspended" : "Account restored");
+  }catch(e){ toast(e.message); }
+}
+
+function openAdminDeleteUser(userId){
+  const target = (state.admin.users || []).find(u=>String(u.id)===String(userId));
+  if(!target){ toast("User not found"); return; }
+  openModal(`
+    <h3>Permanently delete account</h3>
+    <p><strong>${safeText(target.name || target.email)}</strong><br><span class="small">${safeText(target.email)}</span></p>
+    <div class="notice" style="border-color:#f3b4ad;background:#fff4f2">
+      This permanently deletes the user account and associated Buisder data. This cannot be undone.
+    </div>
+    <label>Type DELETE to confirm</label>
+    <input id="adminDeleteConfirm" autocomplete="off" placeholder="DELETE">
+    <button class="btn btn-bad btn-block" style="margin-top:10px" onclick="adminDeleteUser('${userId}')">Permanently delete account</button>
+  `);
+}
+
+async function adminDeleteUser(userId){
+  const confirmText = document.getElementById("adminDeleteConfirm")?.value || "";
+  if(confirmText !== "DELETE"){ toast("Type DELETE to confirm"); return; }
+  if(!confirm("Final confirmation: permanently delete this account?")) return;
+  try{
+    await api(`/api/admin/users/${userId}`, {method:"DELETE", body:{confirm:"DELETE"}});
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Account permanently deleted");
   }catch(e){ toast(e.message); }
 }
 
@@ -4044,9 +4369,40 @@ async function submitBusinessVerification(){
   }catch(e){ toast(e.message); }
 }
 
+async function loadIntegrations(force=false){
+  if(state.integrationsLoading)return;
+  if(state.integrations&&!force)return;
+  state.integrationsLoading=true; render();
+  try{state.integrations=await api('/api/integrations/keys');}catch(e){state.integrations={error:e.message};}
+  finally{state.integrationsLoading=false;render();}
+}
+async function createIntegrationKey(){
+  const name=document.getElementById('integrationKeyName')?.value?.trim()||'Job import';
+  try{
+    const r=await api('/api/integrations/keys',{method:'POST',body:{name}});
+    openModal(`<h3>API key created</h3><div class="notice"><strong>Copy this now.</strong> Buisder stores only a hash and cannot show the full key again.</div><label>API key</label><textarea id="newApiKey" readonly>${safeText(r.token)}</textarea><button class="btn btn-dark btn-block" onclick="navigator.clipboard.writeText(document.getElementById('newApiKey').value);toast('API key copied')">Copy key</button>`);
+    state.integrations=null; await loadIntegrations(true);
+  }catch(e){toast(e.message);}
+}
+async function revokeIntegrationKey(id){
+  if(!confirm('Revoke this integration key? Any system using it will stop working.'))return;
+  try{await api('/api/integrations/keys',{method:'DELETE',body:{id}});state.integrations=null;await loadIntegrations(true);toast('API key revoked');}catch(e){toast(e.message);}
+}
+function renderIntegrations(){
+  const d=state.integrations;
+  if(!d&&!state.integrationsLoading)setTimeout(()=>loadIntegrations(),0);
+  if(state.integrationsLoading||!d)return `<div class="section-pad"><div class="notice">Loading integrations…</div></div>`;
+  if(d.error)return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${safeText(d.error)}</div></div>`;
+  return `<div class="hero"><h1>Integrations</h1><p>Connect external recruitment tools without exposing your Buisder password.</p></div><div class="section-pad">
+    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Job import API</h2><span>Employer only</span></div><div class="small">Create a scoped API key for your HR or recruitment system. Send JSON to <strong>/api/integrations/jobs</strong> using <strong>Authorization: Bearer &lt;key&gt;</strong>. Each job needs a stable <strong>externalId</strong> and title. Existing external IDs update the linked job rather than creating duplicates.</div><label>Key name</label><input id="integrationKeyName" placeholder="e.g. HR system"><button class="btn btn-dark btn-block" style="margin-top:8px" onclick="createIntegrationKey()">Create API key</button></div>
+    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>API keys</h2><span>${(d.keys||[]).length}</span></div>${(d.keys||[]).length?(d.keys||[]).map(k=>`<div class="admin-row"><strong>${safeText(k.name)}</strong><div class="admin-meta">${safeText(k.tokenPrefix)}… · ${safeText(k.status)}${k.lastUsedAt?` · last used ${formatTimelineDate(k.lastUsedAt)}`:''}</div>${k.status==='active'?`<button class="btn btn-bad btn-block" style="margin-top:8px" onclick="revokeIntegrationKey('${k.id}')">Revoke</button>`:''}</div>`).join(''):`<div class="small">No API keys yet.</div>`}</div>
+    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Interview calendars</h2><span>ICS</span></div><div class="small">Every scheduled interview now has an Add to calendar link. The generated ICS file works with Apple Calendar, Google Calendar, Outlook and other calendar applications.</div></div>
+  </div>`;
+}
+
 function renderEmployer(){
-  if(state.tab==="commercial") return renderCommercialPlan();
   if(state.tab==="employer-analytics") return renderEmployerAnalytics();
+  if(state.tab==="integrations") return renderIntegrations();
   if(state.tab==="post") return renderPostJob();
   if(state.tab==="applicants") return renderApplicants();
   if(state.tab==="profile") return renderBusinessProfile();
@@ -4058,7 +4414,6 @@ function renderEmployer(){
         <button class="btn btn-light" onclick="setTab('post')">Post job</button>
         <button class="btn btn-soft" onclick="setTab('applicants')">View applicants</button>
         <button class="btn btn-soft" onclick="setTab('employer-analytics')">View analytics</button>
-        <button class="btn btn-soft" onclick="setTab('commercial')">Manage plan</button>
       </div>
     </div>
     <div class="section-pad">
@@ -4072,7 +4427,6 @@ function renderEmployer(){
               : "Complete your Business Profile and submit it for verification."}
         </div>
       </div>
-      ${state.commercial ? `<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><span class="commercial-badge ${state.commercial.account?.planCode==='pilot'?'pilot':''}">${state.commercial.account?.planName || cap(state.commercial.account?.planCode || 'free')}</span><div class="small" style="margin-top:6px">${state.commercial.usage?.activeJobs || 0}/${state.commercial.account?.activeJobLimit || 0} active jobs · ${state.commercial.usage?.featuredJobs || 0}/${state.commercial.account?.featuredJobLimit || 0} featured</div></div><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="setTab('commercial')">Plan</button></div></div>` : ''}
       <div class="stats">
         <div class="stat"><strong>${state.postedJobs.filter(j=>j.status==="active").length}</strong><span>Live jobs</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
@@ -4103,8 +4457,8 @@ function renderEmployer(){
             <span class="chip good">${j.experience==="None" ? "No experience" : j.experience}</span>
             <span class="chip">${state.applicants.filter(a=>a.jobId===j.id).length} applicants</span>
           </div>
+          <button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-bottom:8px" onclick="openEditJob('${j.id}')">Edit job</button>
           <button class="btn btn-dark btn-block" onclick="viewJobApplicants('${j.id}')">See applicants</button>
-          ${j.status==='active' ? `<button class="btn ${j.is_featured?'btn-outline':'btn-soft'} btn-block" style="margin-top:8px;${j.is_featured?'color:var(--ink);border-color:var(--line-light)':''}" onclick="toggleFeaturedJob('${j.id}',${Boolean(j.is_featured)})">${j.is_featured?'Remove featured placement':'Feature this job'}</button>` : ''}
           <div class="job-controls">
             ${j.status==="active" ? `
               <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateJobStatus('${j.id}','pause')">Pause</button>
@@ -4120,6 +4474,61 @@ function renderEmployer(){
       `).join('')}
     </div>
   `;
+}
+
+function openEditJob(jobId){
+  const j = state.postedJobs.find(x=>String(x.id)===String(jobId));
+  if(!j){ toast("Job not found"); return; }
+  const tags = Array.isArray(j.tags) ? j.tags : [];
+  const schedule = Array.isArray(j.schedule_tags) ? j.schedule_tags.join(", ") : "";
+  const workTypes = ["Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship","Work experience"];
+  const industries = ["Retail","Hospitality","Technology","Office","Events","Trades","Logistics","Other"];
+  openModal(`
+    <h3>Edit job</h3>
+    <label>Job title</label><input id="editJobTitle" value="${safeText(j.title || "")}">
+    <label>Location</label><input id="editJobLocation" value="${safeText(j.location || "")}">
+    <div class="two-col">
+      <div><label>Pay shown to candidates</label><input id="editJobPay" value="${safeText(j.pay || "")}"></div>
+      <div><label>Hourly rate for matching</label><input id="editJobPayMin" type="number" min="0" step="0.10" value="${j.pay_min ?? ""}"></div>
+    </div>
+    <label>Work type</label>
+    <select id="editJobEmployment">${workTypes.map(x=>`<option ${String(j.employment_type||"Part-time")===x?"selected":""}>${x}</option>`).join("")}</select>
+    <label>Hours</label><input id="editJobHours" value="${safeText(j.hours || "")}">
+    <label>Availability needed</label><input id="editJobSchedule" value="${safeText(schedule)}">
+    <label>Experience</label><select id="editJobExperience">${["None","Helpful","Required"].map(x=>`<option ${String(j.experience||"None")===x?"selected":""}>${x}</option>`).join("")}</select>
+    <label>Age eligibility</label><select id="editJobMinAge"><option value="16" ${Number(j.min_age||16)===16?"selected":""}>16+</option><option value="18" ${Number(j.min_age||16)===18?"selected":""}>18+</option></select>
+    <label>Industry</label><select id="editJobIndustry">${industries.map(x=>`<option ${String(tags[0]||"Other")===x?"selected":""}>${x}</option>`).join("")}</select>
+    <label>Start</label><input id="editJobStart" value="${safeText(j.start_date || "")}">
+    <label>Role description</label><textarea id="editJobDescription">${safeText(j.description || "")}</textarea>
+    <button class="btn btn-dark btn-block" style="margin-top:10px" onclick="saveJobEdit('${j.id}')">Save changes</button>
+  `);
+}
+
+async function saveJobEdit(jobId){
+  const title = document.getElementById("editJobTitle")?.value.trim() || "";
+  if(!title){ toast("Add a job title"); return; }
+  const scheduleTags = (document.getElementById("editJobSchedule")?.value || "").split(",").map(x=>x.trim()).filter(Boolean);
+  try{
+    await api(`/api/jobs/${jobId}`, {method:"PATCH", body:{
+      mode:"edit",
+      title,
+      location:document.getElementById("editJobLocation")?.value || "",
+      pay:document.getElementById("editJobPay")?.value || "",
+      payMin:document.getElementById("editJobPayMin")?.value ?? "",
+      hours:document.getElementById("editJobHours")?.value || "",
+      employmentType:document.getElementById("editJobEmployment")?.value || "Part-time",
+      scheduleTags,
+      experience:document.getElementById("editJobExperience")?.value || "None",
+      minAge:Number(document.getElementById("editJobMinAge")?.value || 16),
+      tags:[document.getElementById("editJobIndustry")?.value || "Other"],
+      startDate:document.getElementById("editJobStart")?.value || "",
+      description:document.getElementById("editJobDescription")?.value || ""
+    }});
+    closeModal();
+    await loadBootstrap();
+    render();
+    toast("Job updated");
+  }catch(e){ toast(e.message); }
 }
 
 function viewJobApplicants(jobId){
@@ -4170,6 +4579,7 @@ function renderPostJob(){
           <option>Temporary / Seasonal</option>
           <option>Weekend / Casual</option>
           <option>Apprenticeship</option>
+          <option>Work experience</option>
         </select>
 
         <label>Hours</label><input id="jhours" placeholder="Saturday + Sunday">
@@ -4453,13 +4863,32 @@ function renderApplicants(){
             <button class="btn btn-bad btn-block" style="margin-top:10px" onclick="openMarkUnsuccessful('${a.id}')">Mark unsuccessful</button>
           ` : ""}
 
-          <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="viewApplicant('${a.id}')">View full applicant</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="btn btn-outline" onclick="viewApplicant('${a.id}')">View full applicant</button><button class="btn btn-dark" onclick="openMessages('${a.id}')">Messages</button></div>
+          ${a.interviewAt ? `<a class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-top:8px;text-decoration:none" href="/api/integrations/interviews/${a.id}">Add interview to calendar</a>` : ''}
         </div>
       `).join('')}
     </div>
   `;
 }
 
+
+async function openMessages(applicationId){
+  try{
+    const d=await api(`/api/messages/${applicationId}`);
+    const messages=d.messages||[];
+    openModal(`<h3>Application messages</h3><p class="small">Messages are available only inside an existing application. Report or block the other account if a conversation becomes inappropriate.</p>
+      <div class="message-list">${messages.length?messages.map(m=>`<div class="message-bubble ${m.senderUserId===state.user.id?'mine':''}"><div>${safeText(m.body)}</div><div class="message-meta">${safeText(m.senderUserId===state.user.id?'You':m.senderName||cap(m.senderRole))} · ${formatTimelineDate(m.createdAt)}</div>${m.senderUserId!==state.user.id?`<button class="btn btn-outline" style="color:inherit;border-color:currentColor;padding:5px 7px;font-size:9px;margin-top:6px" onclick="reportApplicationMessage('${m.id}','${applicationId}')">Report</button>`:''}</div>`).join(''):`<div class="notice">No messages yet.</div>`}</div>
+      ${!['unsuccessful','withdrawn'].includes(d.application?.status)?`<label>Message</label><textarea id="applicationMessageBody" maxlength="1200" placeholder="Write a message about this application"></textarea><button class="btn btn-dark btn-block" onclick="sendApplicationMessage('${applicationId}')">Send message</button>`:`<div class="notice">Messaging is closed for this application.</div>`}`);
+  }catch(e){toast(e.message);}
+}
+async function sendApplicationMessage(applicationId){
+  const body=document.getElementById('applicationMessageBody')?.value?.trim(); if(!body){toast('Write a message first');return;}
+  try{await api(`/api/messages/${applicationId}`,{method:'POST',body:{body}});await loadBootstrap();await openMessages(applicationId);}catch(e){toast(e.message);}
+}
+async function reportApplicationMessage(messageId,applicationId){
+  const details=prompt('Briefly describe why you are reporting this message.'); if(details===null)return;
+  try{await api('/api/messages/report',{method:'POST',body:{messageId,reason:'inappropriate',details}});toast('Message reported for review');await openMessages(applicationId);}catch(e){toast(e.message);}
+}
 
 function openMarkUnsuccessful(id){
   const a = state.applicants.find(x=>String(x.id)===String(id));
@@ -4765,6 +5194,7 @@ function renderBusinessProfile(){
           ? `<button class="btn btn-good btn-block" style="margin-top:10px" onclick="submitBusinessVerification()">Submit for verification</button>`
           : ""}
       </div>
+      ${renderReferralCard()}
       ${renderPrivacySafetyCard()}
     </div>
   `;
@@ -4847,13 +5277,13 @@ function setupSwipe(){
     if(currentX > 120){
       card.style.transform = "translateX(120%) rotate(18deg)";
       like.style.opacity = 1;
-      setTimeout(()=>acceptCurrent(), 180);
+      acceptCurrent();
       return;
     }
     if(currentX < -120){
       card.style.transform = "translateX(-120%) rotate(-18deg)";
       nope.style.opacity = 1;
-      setTimeout(()=>skipCurrent(), 180);
+      skipCurrent();
       return;
     }
     card.style.transform = "";
