@@ -1,5 +1,5 @@
-const CACHE='buisder-shell-v24-5-brand';
-const SHELL=['/','/offline.html','/manifest.webmanifest','/brand/buisder-logo.png','/icons/icon-192.png','/icons/icon-512.png'];
+const CACHE='deasjobs-shell-v25-rebrand';
+const SHELL=['/','/offline.html','/manifest.webmanifest','/brand/deasjobs-logo.png','/icons/icon-192.png','/icons/icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{
@@ -11,9 +11,9 @@ self.addEventListener('fetch',e=>{
   e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r;}).catch(()=>cached)));
 });
 self.addEventListener('push',e=>{
-  let d={title:'Buisder update',body:'You have a new Buisder notification.',url:'/'};
+  let d={title:'DEASJobs update',body:'You have a new DEASJobs notification.',url:'/'};
   try{if(e.data)d={...d,...e.data.json()};}catch{}
-  e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',data:{url:d.url||'/'},tag:d.type?`buisder-${d.type}`:undefined}));
+  e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:'/icons/icon-192.png',badge:'/icons/icon-192.png',data:{url:d.url||'/'},tag:d.type?`deasjobs-${d.type}`:undefined}));
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close(); const url=e.notification.data?.url||'/';

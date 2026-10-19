@@ -1,4 +1,4 @@
-# Buisder v13.1 — Turnstile Siteverify fix
+# DEASJobs v13.1 — Turnstile Siteverify fix
 
 This is a corrective release for v13.
 
@@ -14,7 +14,7 @@ and stopped.
 That meant the Pages Function never ran and therefore Cloudflare Siteverify
 was never called. Cloudflare correctly reported:
 
-`Siteverify isn't being called for Buisder`
+`Siteverify isn't being called for DEASJobs`
 
 ## What v13.1 changes
 
@@ -41,7 +41,7 @@ Replace v13 with v13.1 in GitHub and let Cloudflare redeploy.
 
 Then open:
 
-`https://YOUR-BUISDER-HOST/api/security/diagnostic`
+`https://YOUR-DEASJOBS-HOST/api/security/diagnostic`
 
 You should see:
 

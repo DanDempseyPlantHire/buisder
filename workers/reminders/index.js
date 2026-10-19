@@ -2,7 +2,7 @@ import { createNotification } from '../../functions/_lib/db.js';
 import { maybeSendDueInterviewReminderEmails } from '../../functions/_lib/email-notifications.js';
 
 async function runReminderSweep(env){
-  const request=new Request(env.APP_URL||'https://buisder.invalid/');
+  const request=new Request(env.APP_URL||'https://deasjobs.com/');
   const email=await maybeSendDueInterviewReminderEmails(env,request);
   const {results}=await env.DB.prepare(
     `SELECT a.id AS applicationId,a.jobseeker_id AS userId,j.id AS jobId,j.title,j.company,

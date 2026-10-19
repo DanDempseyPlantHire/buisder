@@ -1,4 +1,4 @@
--- Buisder v12
+-- DEASJobs v12
 -- Application timeline + employer controls + in-app notifications
 --
 -- Only the notification centre needs new database objects.

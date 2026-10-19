@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for Buisder v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
 import { clearSessionCookie, err, json, newId, requireUser, verifyPassword } from "../../_lib/db.js";
 import { PRIVACY_VERSION, TERMS_VERSION } from "../../_lib/policy.js";
 
@@ -496,7 +496,7 @@ const route4 = (() => {
       status: 200,
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="buisder-data-export-${date}.json"`,
+        "Content-Disposition": `attachment; filename="deasjobs-data-export-${date}.json"`,
         "Cache-Control": "no-store"
       }
     });

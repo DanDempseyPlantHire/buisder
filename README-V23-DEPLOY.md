@@ -1,4 +1,4 @@
-# Buisder v23 deployment
+# DEASJobs v23 deployment
 
 1. Back up the existing `buisder-db` D1 database.
 2. Run `migration-growth-v23-d1-safe.sql` against the existing database.

@@ -4,7 +4,7 @@ export async function onRequestPost(context){
   const {request,env}=context; const {user,error}=await requireAdmin(context); if(error)return error;
   const body=await request.json().catch(()=>null); if(!body)return err("Invalid request body");
   const email=String(body.email||"").trim().toLowerCase(); if(!email)return err("Email is required");
-  const target=await env.DB.prepare("SELECT id,email,role FROM users WHERE lower(email)=?").bind(email).first(); if(!target)return err("No Buisder account was found for that email",404);
+  const target=await env.DB.prepare("SELECT id,email,role FROM users WHERE lower(email)=?").bind(email).first(); if(!target)return err("No DEASJobs account was found for that email",404);
   const status=String(body.status||"active"); if(!STATUSES.has(status))return err("Invalid membership status");
   const existing=await env.DB.prepare("SELECT id FROM pilot_memberships WHERE user_id=?").bind(target.id).first();
   if(existing){

@@ -1,4 +1,4 @@
--- Buisder v8 R2 storage migration
+-- DEASJobs v8 R2 storage migration
 -- Run ONCE in Cloudflare D1 before deploying v8.
 --
 -- Your Pages project must already have an R2 binding:

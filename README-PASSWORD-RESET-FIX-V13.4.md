@@ -1,4 +1,4 @@
-# Buisder v13.4 — Password reset diagnostics and hardening
+# DEASJobs v13.4 — Password reset diagnostics and hardening
 
 This release addresses the generic "Something went wrong" error after Turnstile.
 
@@ -24,7 +24,7 @@ However, the original `migration-security-v13.sql` MUST already have been run in
 
 After deployment open:
 
-`https://YOUR-BUISDER-HOST/api/security/diagnostic`
+`https://YOUR-DEASJOBS-HOST/api/security/diagnostic`
 
 The important result is:
 
@@ -36,6 +36,6 @@ and all three of these should be true:
 - auth_tokens
 - auth_rate_limits
 
-If `securityMigrationReady` is false, run `migration-security-v13.sql` in the D1 database bound to the live Buisder Pages project.
+If `securityMigrationReady` is false, run `migration-security-v13.sql` in the D1 database bound to the live DEASJobs Pages project.
 
 Then request a NEW password-reset email. Old reset links can be discarded.

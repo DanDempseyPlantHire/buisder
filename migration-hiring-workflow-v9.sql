@@ -1,5 +1,5 @@
--- Buisder v9 — shortlisting + formal interview workflow
--- Run ONCE in the same Cloudflare D1 database used by Buisder.
+-- DEASJobs v9 — shortlisting + formal interview workflow
+-- Run ONCE in the same Cloudflare D1 database used by DEASJobs.
 
 ALTER TABLE applications ADD COLUMN shortlisted_at TEXT;
 ALTER TABLE applications ADD COLUMN interview_invited_at TEXT;

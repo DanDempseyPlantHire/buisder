@@ -1,4 +1,4 @@
-# Buisder v6 — Business verification + business profile images
+# DEASJobs v6 — Business verification + business profile images
 
 ## Added
 
@@ -32,7 +32,7 @@ The app changes the status to `pending`.
 
 ### Manual beta verification
 There is intentionally no self-service "verify me" shortcut.
-For the beta, the Buisder administrator checks the business and then changes the record to verified in the D1 console.
+For the beta, the DEASJobs administrator checks the business and then changes the record to verified in the D1 console.
 
 See `migration-business-verification-v6.sql` for example SQL to:
 - list pending businesses

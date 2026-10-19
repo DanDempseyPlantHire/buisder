@@ -1,4 +1,4 @@
--- Buisder interview scheduling upgrade
+-- DEASJobs interview scheduling upgrade
 -- Safe to run on an existing D1 database.
 
 CREATE TABLE IF NOT EXISTS interview_invites (

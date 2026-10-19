@@ -123,7 +123,7 @@ INSERT OR IGNORE INTO processor_register(id,provider,service,data_categories,pur
 ('resend','Resend','Transactional email','Email address and email content','Account security and recruitment notifications','Confirm DPA, subprocessors and any transfer safeguards before public launch','review_required','review_required');
 
 INSERT OR IGNORE INTO lawful_basis_register(id,processing_activity,purpose,data_subjects,data_categories,lawful_basis,article_ref,children_consideration) VALUES
-('account_service','Account registration and service delivery','Create and operate Buisder accounts','Job seekers and employers','Identity, contact, account and profile data','Contract','GDPR Art. 6(1)(b)','Use child-oriented transparency for 16–17-year-old users.');
+('account_service','Account registration and service delivery','Create and operate DEASJobs accounts','Job seekers and employers','Identity, contact, account and profile data','Contract','GDPR Art. 6(1)(b)','Use child-oriented transparency for 16–17-year-old users.');
 INSERT OR IGNORE INTO lawful_basis_register(id,processing_activity,purpose,data_subjects,data_categories,lawful_basis,article_ref,children_consideration) VALUES
 ('matching','Job matching and feed ranking','Filter and rank relevant jobs using user-selected preferences','Job seekers','Preferences, availability, approximate location, pay preferences and experience','Contract','GDPR Art. 6(1)(b)','Complete DPIA review before public launch because minors can use the service and ranking/profiling is involved.');
 INSERT OR IGNORE INTO lawful_basis_register(id,processing_activity,purpose,data_subjects,data_categories,lawful_basis,article_ref,children_consideration) VALUES

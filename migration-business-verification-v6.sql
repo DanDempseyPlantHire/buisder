@@ -1,4 +1,4 @@
--- Buisder v6 business verification + business profile image
+-- DEASJobs v6 business verification + business profile image
 -- Run ONCE on your existing D1 database before deploying v6.
 
 ALTER TABLE employer_profiles ADD COLUMN legal_name TEXT;

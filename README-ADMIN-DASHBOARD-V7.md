@@ -1,6 +1,6 @@
-# Buisder v7 — Admin dashboard
+# DEASJobs v7 — Admin dashboard
 
-This version adds a secure Buisder admin layer.
+This version adds a secure DEASJobs admin layer.
 
 ## Admin account
 
@@ -9,8 +9,8 @@ The existing support account is granted admin access by `migration-admin-dashboa
 The migration links admin access by the account email already stored in D1.
 It does NOT store, change, or hard-code the account password.
 
-After the migration and deployment, log in through the normal Buisder login screen.
-That account will automatically open the Buisder Admin dashboard.
+After the migration and deployment, log in through the normal DEASJobs login screen.
+That account will automatically open the DEASJobs Admin dashboard.
 
 ## Admin dashboard
 
@@ -56,10 +56,10 @@ Admin actions are recorded in `admin_audit_log`.
 ## Deployment order
 
 1. Run `migration-admin-dashboard-v7.sql` in Cloudflare D1.
-2. Confirm the final SELECT in the migration returns the Buisder support account.
+2. Confirm the final SELECT in the migration returns the DEASJobs support account.
 3. Upload/commit the v7 files to GitHub.
 4. Let Cloudflare Pages deploy.
-5. Log out of Buisder if already signed in.
+5. Log out of DEASJobs if already signed in.
 6. Log back in with the existing support account.
 7. The Admin dashboard should open automatically.
 

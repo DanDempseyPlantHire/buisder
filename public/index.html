@@ -4,14 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#05070F" />
-  <meta name="description" content="Buisder - swipe-friendly job matching for young people. Apply to local jobs in seconds." />
+  <meta name="description" content="DEASJobs helps young people find local jobs and work experience opportunities and lets employers connect with early-career candidates." />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" href="https://deasjobs.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DEASJobs" />
+  <meta property="og:title" content="DEASJobs | Jobs and work experience for young people" />
+  <meta property="og:description" content="Find local jobs and work experience opportunities, apply through DEASJobs, and connect with verified employers." />
+  <meta property="og:url" content="https://deasjobs.com/" />
+  <meta property="og:image" content="https://deasjobs.com/icons/icon-512.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="DEASJobs | Jobs and work experience for young people" />
+  <meta name="twitter:description" content="Find local jobs and work experience opportunities and connect with employers through DEASJobs." />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://deasjobs.com/#website","url":"https://deasjobs.com/","name":"DEASJobs","description":"Jobs and work experience opportunities for young people."},{"@type":"Organization","@id":"https://deasjobs.com/#organization","name":"DEASJobs","url":"https://deasjobs.com/","logo":"https://deasjobs.com/icons/icon-512.png"}]}</script>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Buisder" />
+  <meta name="apple-mobile-web-app-title" content="DEASJobs" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-  <link rel="icon" type="image/png" href="/icons/icon-192.png" /><rect width=%22100%22 height=%22100%22 rx=%2210%22 fill=%22%237c3aed%22/><text x=%2250%25%22 y=%2262%25%22 font-size=%2258%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22900%22 text-anchor=%22middle%22>B</text></svg>" />
-  <title>Buisder - Jobs for young people</title>
+  <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+  <title>DEASJobs | Jobs and work experience for young people</title>
   <style>
     :root{
       --ink:#181814;
@@ -603,7 +615,7 @@
     .legal-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 
 
-    /* v24.5 Buisder brand refresh */
+    /* v24.5 DEASJobs brand refresh */
     :root{
       --ink:#05070F;
       --panel:#0B1020;
@@ -747,11 +759,11 @@
   <header class="topbar hidden" id="topbar">
     <div class="row">
       <div>
-        <div class="brand"><div class="logo"><img src="/brand/buisder-logo.png" alt="Buisder logo"></div><div class="brand-name">Buisder</div></div>
+        <div class="brand"><div class="logo"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"></div><div class="brand-name">DEASJobs</div></div>
         <div class="subtle" id="modeLabel">Swipe-friendly jobs for young people</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <button class="btn btn-soft install-top hidden" id="installTop" onclick="installBuisder()">Install</button>
+        <button class="btn btn-soft install-top hidden" id="installTop" onclick="installDEASJobs()">Install</button>
         <button class="notify-bell" id="notifyBell" onclick="openNotifications()" aria-label="Notifications">
           🔔<span class="notify-count hidden" id="notifyCount">0</span>
         </button>
@@ -760,7 +772,26 @@
     </div>
   </header>
 
-  <main id="content"><div style="padding:60px 16px;text-align:center;color:var(--muted-on-dark)">Loading…</div></main>
+  <main id="content">
+    <section class="hero" aria-labelledby="seo-home-title">
+      <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></div>
+      <h1 id="seo-home-title">Jobs and work experience for young people</h1>
+      <p>Discover local opportunities, apply through DEASJobs and keep track of your applications in one place.</p>
+    </section>
+    <div class="section-pad" id="seo-home-content">
+      <div class="form-card">
+        <h2>Find opportunities</h2>
+        <p>DEASJobs connects job seekers with verified employers offering jobs and work experience opportunities. Browse public jobs or create an account to use the swipe-based job feed.</p>
+        <a class="btn btn-dark btn-block" href="/jobs">Browse current jobs</a>
+      </div>
+      <div class="form-card" style="margin-top:12px">
+        <h2>For job seekers</h2>
+        <p>Create a profile, filter opportunities, apply, manage interviews and track your application status from DEASJobs.</p>
+        <h2 style="margin-top:18px">For employers</h2>
+        <p>Verified employers can post roles, including work experience opportunities, review applicants and manage recruitment through DEASJobs.</p>
+      </div>
+    </div>
+  </main>
   <nav class="bottomnav hidden" id="bottomnav"></nav>
 </div>
 
@@ -821,7 +852,7 @@ let state = {
   authError:"",
   pendingEmail:"",
   resetToken:"",
-  pilotConfig:{pilotName:"Buisder Pilot",inviteRequired:false,status:"active"},
+  pilotConfig:{pilotName:"DEASJobs Pilot",inviteRequired:false,status:"active"},
   security:{
     turnstileSiteKey:"",
     turnstileEnabled:false,
@@ -832,7 +863,7 @@ let state = {
   turnstileWidgetId:null,
   feedFilters: (() => {
     try{
-      return JSON.parse(localStorage.getItem("buisder_feed_filters")) || {
+      return JSON.parse(localStorage.getItem("deasjobs_feed_filters")) || {
         category:"Any", maxDistance:25, minPay:"", employmentType:"Any",
         experience:"Any", availability:"Match profile"
       };
@@ -908,12 +939,12 @@ function renderApplicationTimeline(a, viewer){
         let actor = "";
         if(h.actorUserId){
           if(viewer==="jobseeker"){
-            actor = h.actorRole==="jobseeker" ? "You" : (h.actorRole==="employer" ? "Employer" : (h.actorName || "Buisder"));
+            actor = h.actorRole==="jobseeker" ? "You" : (h.actorRole==="employer" ? "Employer" : (h.actorName || "DEASJobs"));
           } else {
-            actor = h.actorRole==="employer" ? "You / employer" : (h.actorRole==="jobseeker" ? (h.actorName || "Candidate") : (h.actorName || "Buisder"));
+            actor = h.actorRole==="employer" ? "You / employer" : (h.actorRole==="jobseeker" ? (h.actorName || "Candidate") : (h.actorName || "DEASJobs"));
           }
         } else {
-          actor = "Buisder";
+          actor = "DEASJobs";
         }
         return `
           <div class="timeline-item">
@@ -1015,7 +1046,7 @@ function notifyUnreadNotifications(){
   for(const n of (state.notifications || [])){
     if(!n.readAt && !shownBrowserNotificationIds.has(n.id)){
       shownBrowserNotificationIds.add(n.id);
-      new Notification(n.title || "Buisder update", {body:n.body || ""});
+      new Notification(n.title || "DEASJobs update", {body:n.body || ""});
     }
   }
 }
@@ -1092,18 +1123,18 @@ async function initPwa(){
     try{ await navigator.serviceWorker.register('/sw.js'); }catch(e){}
   }
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;refreshInstallUi();});
-  window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;refreshInstallUi();toast('Buisder installed');});
+  window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;refreshInstallUi();toast('DEASJobs installed');});
   setTimeout(refreshInstallUi,500);
 }
-async function installBuisder(){
-  if(isStandalone()){ toast('Buisder is already installed'); return; }
+async function installDEASJobs(){
+  if(isStandalone()){ toast('DEASJobs is already installed'); return; }
   if(deferredInstallPrompt){
     deferredInstallPrompt.prompt();
     try{ await deferredInstallPrompt.userChoice; }catch(e){}
     deferredInstallPrompt=null; refreshInstallUi(); return;
   }
   if(isIos()){
-    openModal(`<h3>Install Buisder on iPhone</h3><p>In Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>, then confirm <strong>Add</strong>.</p><div class="notice">Buisder will open from your Home Screen like an app.</div>`);
+    openModal(`<h3>Install DEASJobs on iPhone</h3><p>In Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>, then confirm <strong>Add</strong>.</p><div class="notice">DEASJobs will open from your Home Screen like an app.</div>`);
     return;
   }
   toast('Use your browser menu and choose Install app or Add to Home screen');
@@ -1151,7 +1182,7 @@ async function disablePushNotifications(){
 async function openPushSettings(){
   await loadPushConfig();
   openModal(`<h3>App notifications</h3>
-    <p>Receive interview, offer, application and message alerts even when Buisder is closed.</p>
+    <p>Receive interview, offer, application and message alerts even when DEASJobs is closed.</p>
     <div class="notice"><strong>Status:</strong> ${state.pushConfig.subscribed&&state.pushConfig.enabled?'Enabled':state.pushConfig.configured?'Available but not enabled':'Server push keys still need configuration'}</div>
     ${state.pushConfig.subscribed&&state.pushConfig.enabled
       ? `<button class="btn btn-bad btn-block" onclick="disablePushNotifications();closeModal()">Disable background notifications</button>`
@@ -1169,10 +1200,10 @@ async function loadSecurityConfig(){
     if(res.ok){
       state.security = await res.json();
     } else {
-      state.authError = "Buisder could not load its security configuration.";
+      state.authError = "DEASJobs could not load its security configuration.";
     }
   }catch(e){
-    state.authError = "Buisder could not load its security configuration.";
+    state.authError = "DEASJobs could not load its security configuration.";
   }
 }
 
@@ -1316,20 +1347,20 @@ function captureGrowthAttribution(){
     };
     if(q.get("signup")==="1") state.authMode="signup";
     if(Object.values(incoming).some((v,i)=>i<6 && v)){
-      const current=localStorage.getItem("buisder_growth_attribution");
-      if(!current) localStorage.setItem("buisder_growth_attribution",JSON.stringify(incoming));
+      const current=localStorage.getItem("deasjobs_growth_attribution");
+      if(!current) localStorage.setItem("deasjobs_growth_attribution",JSON.stringify(incoming));
       else if(incoming.referralCode){
         const parsed=JSON.parse(current||"{}");
-        if(!parsed.referralCode){ parsed.referralCode=incoming.referralCode; localStorage.setItem("buisder_growth_attribution",JSON.stringify(parsed)); }
+        if(!parsed.referralCode){ parsed.referralCode=incoming.referralCode; localStorage.setItem("deasjobs_growth_attribution",JSON.stringify(parsed)); }
       }
     }
   }catch(e){}
 }
 
 function getGrowthAttribution(){
-  try{return JSON.parse(localStorage.getItem("buisder_growth_attribution")||"{}");}catch(e){return {};}
+  try{return JSON.parse(localStorage.getItem("deasjobs_growth_attribution")||"{}");}catch(e){return {};}
 }
-function clearGrowthAttribution(){ try{localStorage.removeItem("buisder_growth_attribution");}catch(e){} }
+function clearGrowthAttribution(){ try{localStorage.removeItem("deasjobs_growth_attribution");}catch(e){} }
 
 async function trackAnalytics(eventType, data={}){
   if(!state.user) return;
@@ -1357,7 +1388,7 @@ async function api(path, opts = {}){
     const message =
       (data && (data.error || data.message)) ||
       (raw && raw.length < 500 ? raw : "") ||
-      `Buisder server error (${res.status})`;
+      `DEASJobs server error (${res.status})`;
 
     const detail = data && data.detail ? ` ${data.detail}` : "";
     throw new Error(`${message}${detail}`.trim());
@@ -1422,7 +1453,7 @@ async function boot(){
       await loadBootstrap();
     }catch(e){
       state.user = null;
-      state.serviceError = "Buisder could not connect to the service. Check the deployment and try again.";
+      state.serviceError = "DEASJobs could not connect to the service. Check the deployment and try again.";
     }
   }
 
@@ -1496,9 +1527,9 @@ function renderAuth(){
   if(state.authMode === "verify-pending"){
     return `
       <div class="hero">
-        <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
+        <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></div>
         <h1>Check your email</h1>
-        <p>Verify your email address before logging in to Buisder.</p>
+        <p>Verify your email address before logging in to DEASJobs.</p>
       </div>
       <div class="section-pad">
         <div class="form-card">
@@ -1519,7 +1550,7 @@ function renderAuth(){
   if(state.authMode === "forgot"){
     return `
       <div class="hero">
-        <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
+        <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></div>
         <h1>Reset your password</h1>
         <p>Enter your email and we’ll send a password-reset link.</p>
       </div>
@@ -1540,9 +1571,9 @@ function renderAuth(){
   if(state.authMode === "reset"){
     return `
       <div class="hero">
-        <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
+        <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></div>
         <h1>Choose a new password</h1>
-        <p>Use a new password for your Buisder account.</p>
+        <p>Use a new password for your DEASJobs account.</p>
       </div>
       <div class="section-pad">
         <div class="form-card">
@@ -1561,9 +1592,9 @@ function renderAuth(){
   if(state.authMode === "signup"){
     return `
       <div class="hero">
-        <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
+        <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></div>
         <h1>Create your account</h1>
-        <p>Set up Buisder as a job seeker or an employer.</p>
+        <p>Set up DEASJobs as a job seeker or an employer.</p>
       </div>
       <div class="section-pad">
         <div class="form-card">
@@ -1588,22 +1619,22 @@ function renderAuth(){
             <label for="authEligibility" style="margin:0">
               ${state.authRole==="jobseeker"
                 ? "I confirm I am at least 16 years old."
-                : "I confirm I am authorised to use Buisder for this business."}
+                : "I confirm I am authorised to use DEASJobs for this business."}
             </label>
           </div>
           <div class="privacy-toggle">
             <input id="authTerms" type="checkbox">
-            <label for="authTerms" style="margin:0">I accept the <a href="/terms.html" target="_blank" rel="noopener">Buisder Terms of Use</a>.</label>
+            <label for="authTerms" style="margin:0">I accept the <a href="/terms.html" target="_blank" rel="noopener">DEASJobs Terms of Use</a>.</label>
           </div>
           <div class="privacy-toggle">
             <input id="authPrivacy" type="checkbox">
-            <label for="authPrivacy" style="margin:0">I have read the <a href="/privacy.html" target="_blank" rel="noopener">Buisder Privacy Notice</a>.</label>
+            <label for="authPrivacy" style="margin:0">I have read the <a href="/privacy.html" target="_blank" rel="noopener">DEASJobs Privacy Notice</a>.</label>
           </div>
           ${turnstileMarkup()}
           ${errBox}
           <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doSignup()">Create account</button>
           <a class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" href="/jobs">Browse public jobs</a>
-          <button class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" onclick="installBuisder()">Install Buisder app</button>
+          <button class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" onclick="installDEASJobs()">Install DEASJobs app</button>
           <div class="small" style="margin-top:12px;text-align:center">Already have an account? <a href="#" onclick="state.authMode='login';state.authError='';render();return false" style="color:var(--accent-ink)">Log in</a></div>
         </div>
       </div>
@@ -1612,12 +1643,13 @@ function renderAuth(){
 
   return `
     <div class="hero">
-      <div class="auth-brand"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></div>
-      <h1>Welcome back</h1>
-      <p>Log in to your Buisder account.</p>
+      <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></div>
+      <h1>Jobs and work experience for young people</h1>
+      <p>Find local opportunities, apply through DEASJobs and manage your applications in one place.</p>
     </div>
     <div class="section-pad">
       <div class="form-card">
+        <h2 style="margin-top:0">Log in</h2>
         <label>Email</label>
         <input id="authEmail" type="email" value="${state.pendingEmail || ""}" placeholder="you@example.com">
         <label>Password</label>
@@ -1626,12 +1658,21 @@ function renderAuth(){
         ${errBox}
         <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="doLogin()">Log in</button>
         <a class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" href="/jobs">Browse public jobs</a>
-        <button class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" onclick="installBuisder()">Install Buisder app</button>
+        <button class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" onclick="installDEASJobs()">Install DEASJobs app</button>
         <div class="small" style="margin-top:12px;text-align:center">
           <a href="#" onclick="state.authMode='forgot';state.authError='';render();return false" style="color:var(--accent-ink)">Forgot password?</a>
         </div>
         ${state.security.emailVerificationRequired ? `<div class="small" style="margin-top:8px;text-align:center"><a href="#" onclick="state.pendingEmail=document.getElementById('authEmail')?.value.trim()||state.pendingEmail;state.authMode='verify-pending';state.authError='';render();return false" style="color:var(--accent-ink)">Resend verification email</a></div>` : ""}
         <div class="small" style="margin-top:12px;text-align:center">New here? <a href="#" onclick="state.authMode='signup';state.authError='';render();return false" style="color:var(--accent-ink)">Create an account</a></div>
+      </div>
+      <div class="form-card" style="margin-top:12px">
+        <h2 style="margin-top:0">Find jobs with DEASJobs</h2>
+        <p class="small">DEASJobs connects young job seekers with verified employers. Browse jobs and work experience opportunities, create a profile, apply and keep track of interviews and application updates.</p>
+        <a class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" href="/jobs">View public jobs</a>
+      </div>
+      <div class="form-card" style="margin-top:12px">
+        <h2 style="margin-top:0">Employers</h2>
+        <p class="small">Employers can create a business profile, post jobs or work experience opportunities and manage applicants through DEASJobs.</p>
       </div>
     </div>
   `;
@@ -1776,7 +1817,7 @@ async function doLogout(){
 async function retryService(){
   state.serviceError=""; render();
   try{ await loadBootstrap(); }
-  catch(e){ state.serviceError="Buisder could not connect to the service. Check the deployment and try again."; }
+  catch(e){ state.serviceError="DEASJobs could not connect to the service. Check the deployment and try again."; }
   render();
 }
 
@@ -1819,7 +1860,7 @@ function render(){
   nav.classList.remove("hidden");
   document.getElementById("modeLabel").textContent =
     state.mode==="jobseeker" ? "Job seeker account" :
-    state.mode==="employer" ? "Employer account" : "Buisder admin";
+    state.mode==="employer" ? "Employer account" : "DEASJobs admin";
   renderNav();
   renderNotificationBell();
   document.getElementById("content").innerHTML =
@@ -1976,7 +2017,7 @@ function currentFeedJobs(){
 }
 
 function saveFeedFilters(){
-  try{ localStorage.setItem("buisder_feed_filters", JSON.stringify(state.feedFilters)); }catch(e){}
+  try{ localStorage.setItem("deasjobs_feed_filters", JSON.stringify(state.feedFilters)); }catch(e){}
 }
 
 function activeFilterLabels(){
@@ -2033,7 +2074,7 @@ function openJobFilters(){
     </select>
 
     <div class="notice">
-      Distance filtering works when you and the employer have added device locations. If either location is missing, Buisder keeps the job rather than hiding it.
+      Distance filtering works when you and the employer have added device locations. If either location is missing, DEASJobs keeps the job rather than hiding it.
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
@@ -2496,14 +2537,14 @@ function renderPrivacySafetyCard(){
     <div class="safety-card">
       <div class="title-row" style="margin-top:0"><h2>Account & privacy</h2><span>${openReports ? `${openReports} report${openReports===1?"":"s"} open` : "Controls"}</span></div>
       <div class="small">
-        Control what is shared, choose recruitment and app notifications, review blocked accounts, export your Buisder data or permanently delete your account.
+        Control what is shared, choose recruitment and app notifications, review blocked accounts, export your DEASJobs data or permanently delete your account.
       </div>
-      ${!a.consent?.current ? `<div class="notice" style="margin-top:10px"><strong>Review required:</strong> the Buisder Terms or Privacy Notice have been updated. Review the current documents before continuing.</div>` : ""}
+      ${!a.consent?.current ? `<div class="notice" style="margin-top:10px"><strong>Review required:</strong> the DEASJobs Terms or Privacy Notice have been updated. Review the current documents before continuing.</div>` : ""}
       <div class="safety-actions">
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openPrivacySettings()">Privacy settings</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openEmailPreferences()">Email notifications</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openPushSettings()">App notifications</button>
-        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="installBuisder()">Install Buisder</button>
+        <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="installDEASJobs()">Install DEASJobs</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openSafetyCentre()">Safety centre</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="downloadMyData()">Export my data</button>
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openAccountLegal()">Terms & privacy</button>
@@ -2532,7 +2573,7 @@ async function openPilotCentre(){
   const feedback=p.feedback||[];
   const issues=p.issues||[];
   openModal(`
-    <h3>${safeText(p.settings?.pilotName || "Buisder Pilot")}</h3>
+    <h3>${safeText(p.settings?.pilotName || "DEASJobs Pilot")}</h3>
     ${m ? `
       <div class="pilot-card" style="margin-top:0">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
@@ -2550,7 +2591,7 @@ async function openPilotCentre(){
           <div><label>Overall rating (1–5)</label><select id="pilotRating"><option value="">Not scored</option>${[1,2,3,4,5].map(x=>`<option value="${x}">${x}</option>`).join("")}</select></div>
           <div><label>Ease of use (1–5)</label><select id="pilotEase"><option value="">Not scored</option>${[1,2,3,4,5].map(x=>`<option value="${x}">${x}</option>`).join("")}</select></div>
         </div>
-        <label>How likely are you to recommend Buisder? (0–10)</label>
+        <label>How likely are you to recommend DEASJobs? (0–10)</label>
         <select id="pilotRecommend"><option value="">Not scored</option>${Array.from({length:11},(_,i)=>`<option value="${i}">${i}</option>`).join("")}</select>
         <label>Comments</label>
         <textarea id="pilotComments" maxlength="3000" placeholder="What worked well, what was difficult, or what would you change?"></textarea>
@@ -2560,7 +2601,7 @@ async function openPilotCentre(){
       <button class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light)" onclick="openPilotIssueForm()">Log an issue</button>
       ${issues.length ? `<div class="title-row"><h2>Your recent issues</h2><span>${issues.length}</span></div>${issues.slice(0,5).map(i=>`<div class="admin-row"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><strong>${safeText(i.title)}</strong><span class="report-status ${i.status}">${cap(i.status)}</span></div><div class="admin-meta"><span class="issue-severity ${i.severity}">${cap(i.severity)}</span> · ${cap(i.category)} · ${formatTimelineDate(i.createdAt)}</div>${i.adminNote ? `<div class="small" style="margin-top:6px"><strong>Admin note:</strong> ${safeText(i.adminNote)}</div>`:""}</div>`).join("")}` : ""}
     ` : `
-      <div class="notice">You are not currently linked to a Buisder pilot cohort. If you were given an invite code, enter it below.</div>
+      <div class="notice">You are not currently linked to a DEASJobs pilot cohort. If you were given an invite code, enter it below.</div>
       <label>Pilot invite code</label>
       <input id="pilotJoinCode" autocomplete="off" placeholder="BUI-AB12CD34">
       <button class="btn btn-dark btn-block" style="margin-top:10px" onclick="joinPilot()">Join pilot</button>
@@ -2628,7 +2669,7 @@ function openEmailPreferences(){
   const master = privacyBool(p.recruitmentEmails);
   openModal(`
     <h3>Email notifications</h3>
-    <p class="small">Choose which recruitment updates Buisder sends by email. In-app notifications are not affected.</p>
+    <p class="small">Choose which recruitment updates DEASJobs sends by email. In-app notifications are not affected.</p>
     <div class="privacy-toggle">
       <input id="emailRecruitment" type="checkbox" ${master?"checked":""} onchange="syncEmailPreferenceControls()">
       <label for="emailRecruitment" style="margin:0"><strong>Recruitment emails</strong><br><span class="small">Master switch for the recruitment categories below.</span></label>
@@ -2695,11 +2736,11 @@ function openPrivacySettings(){
 
   openModal(`
     <h3>Privacy settings</h3>
-    ${young ? `<div class="notice"><strong>16–17 protection:</strong> direct email, CV and profile photo sharing are disabled. Employers can still use Buisder's interview and offer workflow.</div>` : ""}
+    ${young ? `<div class="notice"><strong>16–17 protection:</strong> direct email, CV and profile photo sharing are disabled. Employers can still use DEASJobs's interview and offer workflow.</div>` : ""}
     ${state.mode==="jobseeker" ? `
       <div class="privacy-toggle">
         <input id="privacyEmail" type="checkbox" ${privacyBool(p.shareEmail)&&!young?"checked":""} ${young?"disabled":""}>
-        <label for="privacyEmail" style="margin:0"><strong>Share email with employers I apply to</strong><br><span class="small">Turn this off to keep contact inside Buisder.</span></label>
+        <label for="privacyEmail" style="margin:0"><strong>Share email with employers I apply to</strong><br><span class="small">Turn this off to keep contact inside DEASJobs.</span></label>
       </div>
       <div class="privacy-toggle">
         <input id="privacyCv" type="checkbox" ${privacyBool(p.shareCv)&&!young?"checked":""} ${young?"disabled":""}>
@@ -2744,7 +2785,7 @@ function openSafetyCentre(){
 
   openModal(`
     <h3>Safety centre</h3>
-    <p class="small">Reports are reviewed by Buisder administrators. Blocking prevents future matching and closes active recruitment interactions between the two accounts.</p>
+    <p class="small">Reports are reviewed by DEASJobs administrators. Blocking prevents future matching and closes active recruitment interactions between the two accounts.</p>
 
     <div class="title-row"><h2>Blocked accounts</h2><span>${blocks.length}</span></div>
     ${blocks.length ? blocks.map(b=>`
@@ -2811,7 +2852,7 @@ async function openDataRightsCentre(){
   try{
     const data=await api("/api/account/data-rights");
     const requests=data.requests||[];
-    openModal(`<h3>Data protection request</h3><p class="small">You can use this form for access, correction, erasure assistance, restriction, objection, portability or another data-protection request. Existing self-service export and delete controls remain available.</p><label>Request type</label><select id="rightsType"><option value="access">Access</option><option value="rectification">Rectification</option><option value="erasure">Erasure / deletion assistance</option><option value="restriction">Restriction</option><option value="objection">Objection</option><option value="portability">Portability</option><option value="other">Other</option></select><label>Details</label><textarea id="rightsDetails" placeholder="What would you like Buisder to do?"></textarea><button class="btn btn-dark btn-block" onclick="submitDataRight()">Submit request</button><div class="title-row"><h2>Your recent requests</h2><span>${requests.length}</span></div>${requests.map(r=>`<div class="admin-row"><strong>${cap(r.requestType)}</strong><div class="admin-meta">${cap(r.status.replaceAll('_',' '))} · submitted ${formatTimelineDate(r.createdAt)} · target ${formatTimelineDate(r.dueAt)}</div>${r.adminResponse?`<div class="small">Response: ${safeText(r.adminResponse)}</div>`:""}</div>`).join("")||`<div class="notice">No formal requests submitted.</div>`}`);
+    openModal(`<h3>Data protection request</h3><p class="small">You can use this form for access, correction, erasure assistance, restriction, objection, portability or another data-protection request. Existing self-service export and delete controls remain available.</p><label>Request type</label><select id="rightsType"><option value="access">Access</option><option value="rectification">Rectification</option><option value="erasure">Erasure / deletion assistance</option><option value="restriction">Restriction</option><option value="objection">Objection</option><option value="portability">Portability</option><option value="other">Other</option></select><label>Details</label><textarea id="rightsDetails" placeholder="What would you like DEASJobs to do?"></textarea><button class="btn btn-dark btn-block" onclick="submitDataRight()">Submit request</button><div class="title-row"><h2>Your recent requests</h2><span>${requests.length}</span></div>${requests.map(r=>`<div class="admin-row"><strong>${cap(r.requestType)}</strong><div class="admin-meta">${cap(r.status.replaceAll('_',' '))} · submitted ${formatTimelineDate(r.createdAt)} · target ${formatTimelineDate(r.dueAt)}</div>${r.adminResponse?`<div class="small">Response: ${safeText(r.adminResponse)}</div>`:""}</div>`).join("")||`<div class="notice">No formal requests submitted.</div>`}`);
   }catch(e){toast(e.message)}
 }
 async function submitDataRight(){ try{await api("/api/account/data-rights",{method:"POST",body:{requestType:document.getElementById("rightsType")?.value,details:document.getElementById("rightsDetails")?.value||""}});toast("Data protection request submitted");await openDataRightsCentre();}catch(e){toast(e.message)} }
@@ -2827,8 +2868,8 @@ function downloadMyData(){
 
 function openDeleteAccount(){
   const employerWarning = state.mode==="employer"
-    ? "<strong>Employer account:</strong> deleting this account also removes its Buisder job listings and associated recruitment records."
-    : "Your profile, applications and Buisder account data will be permanently removed.";
+    ? "<strong>Employer account:</strong> deleting this account also removes its DEASJobs job listings and associated recruitment records."
+    : "Your profile, applications and DEASJobs account data will be permanently removed.";
 
   openModal(`
     <h3>Delete account</h3>
@@ -2843,7 +2884,7 @@ function openDeleteAccount(){
 }
 
 async function deleteMyAccount(){
-  if(!confirm("Permanently delete this Buisder account? This cannot be undone.")) return;
+  if(!confirm("Permanently delete this DEASJobs account? This cannot be undone.")) return;
   try{
     await api("/api/account/delete", {
       method:"POST",
@@ -2883,7 +2924,7 @@ function reportReasonLabel(reason){
 function openReport(targetType, targetId, context={}){
   openModal(`
     <h3>Report ${targetType}</h3>
-    <p class="small">Send this to the Buisder moderation queue. Do not include unnecessary sensitive information.</p>
+    <p class="small">Send this to the DEASJobs moderation queue. Do not include unnecessary sensitive information.</p>
     <label>Reason</label>
     <select id="reportReason">
       <option value="scam_fraud">Scam or fraud</option>
@@ -3382,7 +3423,7 @@ function adminAnalyticsCsv(){
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `buisder-pilot-metrics-${new Date().toISOString().slice(0,10)}.csv`;
+  link.download = `deasjobs-pilot-metrics-${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -3520,7 +3561,7 @@ async function requestPlan(planCode){
   const plan = (state.commercial?.plans || []).find(p=>p.code===planCode);
   openModal(`
     <h3>Request ${plan?.name || cap(planCode)}</h3>
-    <p class="small">Online checkout is not configured for this plan. This sends the request to the Buisder admin commercial queue.</p>
+    <p class="small">Online checkout is not configured for this plan. This sends the request to the DEASJobs admin commercial queue.</p>
     <label>Message (optional)</label>
     <textarea id="planRequestMessage" maxlength="1000" placeholder="Tell us what you need this plan for"></textarea>
     <button class="btn btn-dark btn-block" onclick="submitPlanRequest('${planCode}')">Send request</button>
@@ -3570,7 +3611,7 @@ function renderCommercialPlan(){
   return `
     <div class="hero">
       <h1>Employer access</h1>
-      <p>Buisder's initial launch is free. Access tiers control job capacity only; there is no checkout, subscription charge or paid featured placement.</p>
+      <p>DEASJobs's initial launch is free. Access tiers control job capacity only; there is no checkout, subscription charge or paid featured placement.</p>
     </div>
     <div class="section-pad">
       <div class="notice"><strong>Free-launch mode:</strong> employers are not charged. Any future paid service will be introduced separately with updated terms and pricing before it is enabled.</div>
@@ -3587,7 +3628,7 @@ function renderCommercialPlan(){
         <div style="margin-top:14px"><strong>${u.activeJobs || 0} / ${a.activeJobLimit < 0 ? 'Unlimited' : a.activeJobLimit} active jobs</strong><div class="usage-meter"><span style="width:${planUsagePercent(u.activeJobs,a.activeJobLimit)}%"></span></div></div>
         <div style="margin-top:12px"><strong>${u.featuredJobs || 0} / ${a.featuredJobLimit < 0 ? 'Unlimited' : a.featuredJobLimit} featured jobs</strong><div class="usage-meter"><span style="width:${planUsagePercent(u.featuredJobs,a.featuredJobLimit)}%"></span></div></div>
       </div>
-      ${pending ? `<div class="notice"><strong>Access request pending:</strong> ${pending.requestedPlanName}. Buisder admin will review it.</div>` : ''}
+      ${pending ? `<div class="notice"><strong>Access request pending:</strong> ${pending.requestedPlanName}. DEASJobs admin will review it.</div>` : ''}
       <div class="title-row"><h2>Available access tiers</h2><span>Free launch</span></div>
       <div class="plan-grid">
         ${(c.plans || []).filter(p=>p.isPublic || p.code===a.planCode).map(plan=>`
@@ -3814,12 +3855,12 @@ async function runLaunchMaintenance(action){
 }
 function downloadLaunchReport(){
   const d=state.launchReadiness; if(!d||d.error) return;
-  const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`buisder-launch-readiness-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`deasjobs-launch-readiness-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 function renderAdminLaunch(){
   const r=state.launchReadiness;
   if(!r&&!state.launchLoading) setTimeout(()=>loadLaunchReadiness(),0);
-  if(state.launchLoading||!r) return `<div class="section-pad"><div class="notice">Running Buisder pilot preflight checks…</div></div>`;
+  if(state.launchLoading||!r) return `<div class="section-pad"><div class="notice">Running DEASJobs pilot preflight checks…</div></div>`;
   if(r.error) return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${r.error}</div><button class="btn btn-dark btn-block" onclick="loadLaunchReadiness(true)">Retry preflight</button></div>`;
   const completed=(r.checklist||[]).filter(x=>Boolean(x.completed)).length,total=(r.checklist||[]).length;
   return `
@@ -3855,7 +3896,7 @@ function pilotOptionRows(rows, selected){
 async function savePilotSettings(){
   try{
     await api("/api/admin/pilot/settings",{method:"POST",body:{
-      pilotName:document.getElementById("pilotName")?.value||"Buisder Pilot",
+      pilotName:document.getElementById("pilotName")?.value||"DEASJobs Pilot",
       status:document.getElementById("pilotStatus")?.value||"active",
       inviteRequired:Boolean(document.getElementById("pilotInviteRequired")?.checked),
       feedbackEnabled:Boolean(document.getElementById("pilotFeedbackEnabled")?.checked)
@@ -3891,7 +3932,7 @@ async function sendPilotInviteEmail(id){try{await api(`/api/admin/pilot/invites/
 
 function openAddPilotParticipant(){
   const p=state.adminPilot||{};
-  openModal(`<h3>Add existing user to pilot</h3><p class="small">Use this when the person already has a Buisder account.</p><label>Account email</label><input id="addPilotMemberEmail" type="email" placeholder="user@example.com"><label>Cohort</label><select id="addPilotMemberCohort">${pilotOptionRows(p.cohorts)}</select><label>Organisation</label><select id="addPilotMemberOrg">${pilotOptionRows(p.organizations)}</select><button class="btn btn-dark btn-block" style="margin-top:10px" onclick="addPilotParticipant()">Add participant</button>`);
+  openModal(`<h3>Add existing user to pilot</h3><p class="small">Use this when the person already has a DEASJobs account.</p><label>Account email</label><input id="addPilotMemberEmail" type="email" placeholder="user@example.com"><label>Cohort</label><select id="addPilotMemberCohort">${pilotOptionRows(p.cohorts)}</select><label>Organisation</label><select id="addPilotMemberOrg">${pilotOptionRows(p.organizations)}</select><button class="btn btn-dark btn-block" style="margin-top:10px" onclick="addPilotParticipant()">Add participant</button>`);
 }
 async function addPilotParticipant(){try{await api("/api/admin/pilot/members",{method:"POST",body:{email:document.getElementById("addPilotMemberEmail")?.value||"",cohortId:document.getElementById("addPilotMemberCohort")?.value||null,organizationId:document.getElementById("addPilotMemberOrg")?.value||null,status:"active"}});closeModal();state.adminPilot=null;await loadAdminPilot(true);toast("Participant added");}catch(e){toast(e.message)}}
 
@@ -3924,7 +3965,7 @@ function renderAdminPilot(){
 
       <div class="title-row"><h2>Pilot settings</h2><span>${cap(s.status||"active")}</span></div>
       <div class="form-card">
-        <label>Pilot name</label><input id="pilotName" value="${safeText(s.pilotName||"Buisder Pilot")}">
+        <label>Pilot name</label><input id="pilotName" value="${safeText(s.pilotName||"DEASJobs Pilot")}">
         <div class="two-col"><div><label>Status</label><select id="pilotStatus">${["planned","active","paused","completed"].map(x=>`<option value="${x}" ${s.status===x?"selected":""}>${cap(x)}</option>`).join("")}</select></div><div></div></div>
         <div class="privacy-toggle"><input id="pilotInviteRequired" type="checkbox" ${Number(s.inviteRequired)?"checked":""}><label for="pilotInviteRequired" style="margin:0"><strong>Require invite code for new signups</strong><br><span class="small">Use only when you want to gate the pilot.</span></label></div>
         <div class="privacy-toggle"><input id="pilotFeedbackEnabled" type="checkbox" ${Number(s.feedbackEnabled)?"checked":""}><label for="pilotFeedbackEnabled" style="margin:0"><strong>Collect participant feedback</strong></label></div>
@@ -4083,7 +4124,7 @@ async function copyMyReferral(){const code=state.growthMe?.code?.code;if(!code)r
 function renderReferralCard(){
   if(!state.growthMe&&!state.growthMeLoading)setTimeout(()=>loadGrowthMe(),0);
   const g=state.growthMe;
-  return `<div class="referral-card"><div class="title-row"><h2>Refer to Buisder</h2><span>Growth</span></div>${state.growthMeLoading||!g?`<div class="small">Loading referral details…</div>`:g.error?`<div class="small">Referral details are temporarily unavailable.</div>`:g.code?`<div class="small">Share your personal ${state.mode==='employer'?'employer':'job seeker'} referral link. It tracks signups and outcomes; no reward or payment is currently attached.</div><div style="margin:10px 0"><span class="growth-code">${safeText(g.code.code)}</span></div><div class="growth-grid"><div class="growth-kpi"><strong>${g.stats?.signups||0}</strong><span>Signups</span></div><div class="growth-kpi"><strong>${g.stats?.activated||0}</strong><span>${state.mode==='employer'?'Verified':'Profile complete'}</span></div><div class="growth-kpi"><strong>${g.stats?.converted||0}</strong><span>${state.mode==='employer'?'Posted a job':'Hired'}</span></div></div><button class="btn btn-dark btn-block" onclick="copyMyReferral()">Copy referral link</button>`:`<div class="small">Create a personal link if you want to invite another ${state.mode==='employer'?'employer':'job seeker'}.</div><button class="btn btn-dark btn-block" style="margin-top:10px" onclick="createMyReferral()">Create my referral link</button>`}</div>`;
+  return `<div class="referral-card"><div class="title-row"><h2>Refer to DEASJobs</h2><span>Growth</span></div>${state.growthMeLoading||!g?`<div class="small">Loading referral details…</div>`:g.error?`<div class="small">Referral details are temporarily unavailable.</div>`:g.code?`<div class="small">Share your personal ${state.mode==='employer'?'employer':'job seeker'} referral link. It tracks signups and outcomes; no reward or payment is currently attached.</div><div style="margin:10px 0"><span class="growth-code">${safeText(g.code.code)}</span></div><div class="growth-grid"><div class="growth-kpi"><strong>${g.stats?.signups||0}</strong><span>Signups</span></div><div class="growth-kpi"><strong>${g.stats?.activated||0}</strong><span>${state.mode==='employer'?'Verified':'Profile complete'}</span></div><div class="growth-kpi"><strong>${g.stats?.converted||0}</strong><span>${state.mode==='employer'?'Posted a job':'Hired'}</span></div></div><button class="btn btn-dark btn-block" onclick="copyMyReferral()">Copy referral link</button>`:`<div class="small">Create a personal link if you want to invite another ${state.mode==='employer'?'employer':'job seeker'}.</div><button class="btn btn-dark btn-block" style="margin-top:10px" onclick="createMyReferral()">Create my referral link</button>`}</div>`;
 }
 
 function renderAdminCompliance(){
@@ -4135,7 +4176,7 @@ function renderAdminRisk(){
   if(state.riskLoading||!r)return `<div class="section-pad"><div class="notice">Loading risk controls…</div></div>`;
   if(r.error)return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${safeText(r.error)}</div><button class="btn btn-dark btn-block" onclick="loadRisk(true)">Retry</button></div>`;
   const s=r.summary||{};
-  return `<div class="hero"><h1>Fraud, abuse & risk</h1><p>Behavioural risk flags support human review. Buisder does not automatically reject candidates or employers based on these flags.</p></div><div class="section-pad">
+  return `<div class="hero"><h1>Fraud, abuse & risk</h1><p>Behavioural risk flags support human review. DEASJobs does not automatically reject candidates or employers based on these flags.</p></div><div class="section-pad">
     <div class="risk-grid"><div class="v24-kpi"><strong>${s.open||0}</strong><span>Open flags</span></div><div class="v24-kpi"><strong>${s.highOpen||0}</strong><span>High / critical open</span></div><div class="v24-kpi"><strong>${s.total||0}</strong><span>Total flags</span></div><div class="v24-kpi"><strong>${(r.messageReports||[]).filter(x=>['open','reviewing'].includes(x.status)).length}</strong><span>Open message reports</span></div></div>
     <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Risk flags</h2><span>${(r.flags||[]).length}</span></div>${(r.flags||[]).length?(r.flags||[]).map(f=>`<div class="admin-row"><div style="display:flex;justify-content:space-between;gap:8px"><strong>${safeText(f.risk_type||f.riskType)}</strong><span class="risk-badge ${safeText(f.severity)}">${cap(f.severity)}</span></div><div class="admin-meta">${safeText(f.name||f.email||'Account')} · ${safeText(f.status)} · ${formatTimelineDate(f.created_at||f.createdAt)}</div><div class="small" style="margin-top:6px">${safeText(f.reason)}</div>${['open','reviewing'].includes(f.status)?`<div class="admin-actions"><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateRiskFlag('${f.id}','reviewing')">Reviewing</button><button class="btn btn-good" onclick="updateRiskFlag('${f.id}','dismissed')">Dismiss</button><button class="btn btn-bad" onclick="updateRiskFlag('${f.id}','actioned')">Actioned</button></div>`:''}</div>`).join(''):`<div class="small">No risk flags.</div>`}</div>
     <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Reported messages</h2><span>${(r.messageReports||[]).length}</span></div>${(r.messageReports||[]).length?(r.messageReports||[]).map(m=>`<div class="admin-row"><strong>${safeText(m.senderEmail||'Sender')}</strong><div class="admin-meta">Reported by ${safeText(m.reporterEmail||'user')} · ${safeText(m.status)} · ${formatTimelineDate(m.createdAt)}</div><div class="small">${safeText(m.body||'')}</div>${m.details?`<div class="notice">${safeText(m.details)}</div>`:''}${['open','reviewing'].includes(m.status)?`<div class="admin-actions"><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateMessageReport('${m.id}','reviewing')">Reviewing</button><button class="btn btn-good" onclick="updateMessageReport('${m.id}','resolved')">Resolve</button><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="updateMessageReport('${m.id}','dismissed')">Dismiss</button></div>`:''}</div>`).join(''):`<div class="small">No message reports.</div>`}</div>
@@ -4162,7 +4203,7 @@ function renderAdminHome(){
   const pending = (state.admin.verifications || []).filter(v=>v.verificationStatus==="pending");
   return `
     <div class="hero">
-      <h1>Buisder Admin</h1>
+      <h1>DEASJobs Admin</h1>
       <p>Review businesses, users and live job listings from one place.</p>
     </div>
     <div class="section-pad">
@@ -4342,7 +4383,7 @@ function openAdminVerificationDecision(userId, action){
     <h3>${approving ? "Approve business" : "Reject / revoke verification"}</h3>
     <p><strong>${v.companyName || v.legalName || v.email}</strong></p>
     <label>Admin note</label>
-    <textarea id="adminVerificationNote" placeholder="${approving ? "Optional approval note" : "Reason for rejection or revocation"}">${approving ? "Manually verified by Buisder admin" : ""}</textarea>
+    <textarea id="adminVerificationNote" placeholder="${approving ? "Optional approval note" : "Reason for rejection or revocation"}">${approving ? "Manually verified by DEASJobs admin" : ""}</textarea>
     <div class="notice">
       ${approving
         ? "The business will immediately display a Verified business badge to job seekers."
@@ -4379,7 +4420,7 @@ function renderAdminUsers(){
                 ${u.email}<br>
                 ${cap(u.role)} · ${u.createdAt || ""}<br>
                 ${u.emailVerified ? "Email verified" : "Email not verified"}
-                ${u.isAdmin ? "<br><strong>Buisder admin</strong>" : ""}
+                ${u.isAdmin ? "<br><strong>DEASJobs admin</strong>" : ""}
               </div>
             </div>
             <div>
@@ -4421,7 +4462,7 @@ function openAdminDeleteUser(userId){
     <h3>Permanently delete account</h3>
     <p><strong>${safeText(target.name || target.email)}</strong><br><span class="small">${safeText(target.email)}</span></p>
     <div class="notice" style="border-color:#f3b4ad;background:#fff4f2">
-      This permanently deletes the user account and associated Buisder data. This cannot be undone.
+      This permanently deletes the user account and associated DEASJobs data. This cannot be undone.
     </div>
     <label>Type DELETE to confirm</label>
     <input id="adminDeleteConfirm" autocomplete="off" placeholder="DELETE">
@@ -4522,7 +4563,7 @@ async function createIntegrationKey(){
   const name=document.getElementById('integrationKeyName')?.value?.trim()||'Job import';
   try{
     const r=await api('/api/integrations/keys',{method:'POST',body:{name}});
-    openModal(`<h3>API key created</h3><div class="notice"><strong>Copy this now.</strong> Buisder stores only a hash and cannot show the full key again.</div><label>API key</label><textarea id="newApiKey" readonly>${safeText(r.token)}</textarea><button class="btn btn-dark btn-block" onclick="navigator.clipboard.writeText(document.getElementById('newApiKey').value);toast('API key copied')">Copy key</button>`);
+    openModal(`<h3>API key created</h3><div class="notice"><strong>Copy this now.</strong> DEASJobs stores only a hash and cannot show the full key again.</div><label>API key</label><textarea id="newApiKey" readonly>${safeText(r.token)}</textarea><button class="btn btn-dark btn-block" onclick="navigator.clipboard.writeText(document.getElementById('newApiKey').value);toast('API key copied')">Copy key</button>`);
     state.integrations=null; await loadIntegrations(true);
   }catch(e){toast(e.message);}
 }
@@ -4535,7 +4576,7 @@ function renderIntegrations(){
   if(!d&&!state.integrationsLoading)setTimeout(()=>loadIntegrations(),0);
   if(state.integrationsLoading||!d)return `<div class="section-pad"><div class="notice">Loading integrations…</div></div>`;
   if(d.error)return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${safeText(d.error)}</div></div>`;
-  return `<div class="hero"><h1>Integrations</h1><p>Connect external recruitment tools without exposing your Buisder password.</p></div><div class="section-pad">
+  return `<div class="hero"><h1>Integrations</h1><p>Connect external recruitment tools without exposing your DEASJobs password.</p></div><div class="section-pad">
     <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Job import API</h2><span>Employer only</span></div><div class="small">Create a scoped API key for your HR or recruitment system. Send JSON to <strong>/api/integrations/jobs</strong> using <strong>Authorization: Bearer &lt;key&gt;</strong>. Each job needs a stable <strong>externalId</strong> and title. Existing external IDs update the linked job rather than creating duplicates.</div><label>Key name</label><input id="integrationKeyName" placeholder="e.g. HR system"><button class="btn btn-dark btn-block" style="margin-top:8px" onclick="createIntegrationKey()">Create API key</button></div>
     <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>API keys</h2><span>${(d.keys||[]).length}</span></div>${(d.keys||[]).length?(d.keys||[]).map(k=>`<div class="admin-row"><strong>${safeText(k.name)}</strong><div class="admin-meta">${safeText(k.tokenPrefix)}… · ${safeText(k.status)}${k.lastUsedAt?` · last used ${formatTimelineDate(k.lastUsedAt)}`:''}</div>${k.status==='active'?`<button class="btn btn-bad btn-block" style="margin-top:8px" onclick="revokeIntegrationKey('${k.id}')">Revoke</button>`:''}</div>`).join(''):`<div class="small">No API keys yet.</div>`}</div>
     <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Interview calendars</h2><span>ICS</span></div><div class="small">Every scheduled interview now has an Add to calendar link. The generated ICS file works with Apple Calendar, Google Calendar, Outlook and other calendar applications.</div></div>
@@ -4752,7 +4793,7 @@ function renderPostJob(){
         <label>Role description</label>
         <textarea id="jdescription" placeholder="What will this person actually do day-to-day?"></textarea>
 
-        <div class="notice"><strong>Matching:</strong> structured pay, work type, availability and location help Buisder put this role in front of the best-fit candidates first.</div>
+        <div class="notice"><strong>Matching:</strong> structured pay, work type, availability and location help DEASJobs put this role in front of the best-fit candidates first.</div>
         <button class="btn btn-dark btn-block" onclick="postJob()">Publish</button>
       </div>
     </div>
@@ -5043,7 +5084,7 @@ function openMarkUnsuccessful(id){
       This will close the application and remove any outstanding interview invitation or pending offer.
     </div>
     <label>Internal note / reason (optional)</label>
-    <textarea id="unsuccessfulNote" placeholder="Optional note for the Buisder application history"></textarea>
+    <textarea id="unsuccessfulNote" placeholder="Optional note for the DEASJobs application history"></textarea>
     <button class="btn btn-bad btn-block" style="margin-top:12px" onclick="markUnsuccessful('${a.id}')">Confirm unsuccessful</button>
   `);
 }
@@ -5088,7 +5129,7 @@ function openOffer(id){
     <textarea id="offerMessage" placeholder="Welcome message or important offer details">${a.offerMessage || ""}</textarea>
 
     <div class="notice">
-      The candidate will see the offer in Buisder and can accept or decline it.
+      The candidate will see the offer in DEASJobs and can accept or decline it.
     </div>
 
     <button class="btn btn-good btn-block" style="margin-top:12px" onclick="sendOffer('${a.id}')">
@@ -5247,7 +5288,7 @@ function openInterviewInvite(id){
     <textarea id="interviewMessage" placeholder="e.g. Please ask for Sarah at reception.">${existingMessage}</textarea>
 
     <div class="notice">
-      The job seeker will see a new interview notification in Buisder with the proposed date, time and location. They can accept or decline it.
+      The job seeker will see a new interview notification in DEASJobs with the proposed date, time and location. They can accept or decline it.
     </div>
 
     <button class="btn btn-dark btn-block" style="margin-top:12px" onclick="sendInterviewInvite('${a.id}')">

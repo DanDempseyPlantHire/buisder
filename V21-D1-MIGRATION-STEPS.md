@@ -1,4 +1,4 @@
-# Buisder v21 D1 migration
+# DEASJobs v21 D1 migration
 
 Back up the production D1 database first. Then execute `migration-legal-compliance-v21-d1-safe.sql` against the existing production `buisder-db`.
 

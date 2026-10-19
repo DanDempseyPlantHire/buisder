@@ -1,4 +1,4 @@
-# Buisder v10 — Job offer workflow
+# DEASJobs v10 — Job offer workflow
 
 This version adds the next hiring-stage workflow after interview completion.
 

@@ -22,11 +22,11 @@ export async function onRequestGet(context){
     tables=await getTables(env);
     checks.push(item("database","D1 database","pass","Database connection is working."));
   }catch{
-    return json({automatedReady:false,checklistComplete:false,launchReady:false,checks:[item("database","D1 database","critical","Buisder cannot query the D1 database.")],checklist:[],summary:{critical:1,warning:0,pass:0,info:0},checkedAt:new Date().toISOString()},{headers:{"Cache-Control":"no-store"}});
+    return json({automatedReady:false,checklistComplete:false,launchReady:false,checks:[item("database","D1 database","critical","DEASJobs cannot query the D1 database.")],checklist:[],summary:{critical:1,warning:0,pass:0,info:0},checkedAt:new Date().toISOString()},{headers:{"Cache-Control":"no-store"}});
   }
 
   const missing=EXPECTED_TABLES.filter(t=>!tables.has(t));
-  checks.push(item("schema","Database schema",missing.length?"critical":"pass",missing.length?`Missing required tables: ${missing.join(", ")}`:"All expected Buisder tables are present."));
+  checks.push(item("schema","Database schema",missing.length?"critical":"pass",missing.length?`Missing required tables: ${missing.join(", ")}`:"All expected DEASJobs tables are present."));
 
   const filesOk=Boolean(env.FILES);
   checks.push(item("r2","Private file storage",filesOk?"pass":"critical",filesOk?"R2 FILES binding is configured.":"R2 FILES binding is missing."));

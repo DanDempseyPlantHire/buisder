@@ -1,4 +1,4 @@
-# Buisder v16 — Analytics + Pilot Measurement
+# DEASJobs v16 — Analytics + Pilot Measurement
 
 v15 Public Jobs + SEO remains deliberately deferred. v16 implements the next roadmap block.
 
@@ -49,7 +49,7 @@ Employers now have an Analytics tab showing:
 
 ## First-party product analytics
 
-v16 creates `analytics_events` in Buisder's own D1 database.
+v16 creates `analytics_events` in DEASJobs's own D1 database.
 
 It records only a small set of product events:
 - user_signup
@@ -74,7 +74,7 @@ The personal-data export includes analytics events that are still linked to the 
 
 ## Historical data
 
-The migration backfills what Buisder can reliably reconstruct:
+The migration backfills what DEASJobs can reliably reconstruct:
 - user signups
 - job posts
 - applications

@@ -1,11 +1,11 @@
-# Buisder v19 — Recruitment Email Notifications
+# DEASJobs v19 — Recruitment Email Notifications
 
-v19 reuses the Resend configuration already used by Buisder authentication emails.
+v19 reuses the Resend configuration already used by DEASJobs authentication emails.
 No additional email provider is required.
 
 ## Recruitment emails added
 
-Buisder now sends preference-controlled emails for:
+DEASJobs now sends preference-controlled emails for:
 
 - new applications to employers
 - candidate shortlisting and application updates
@@ -58,9 +58,9 @@ Admin -> Launch now warns when recruitment email delivery failures have occurred
 
 ## Interview reminders
 
-The existing Buisder application polls bootstrap while users are active. v19 uses a database throttle so any authenticated app activity can run the due-interview email sweep at most once every 15 minutes.
+The existing DEASJobs application polls bootstrap while users are active. v19 uses a database throttle so any authenticated app activity can run the due-interview email sweep at most once every 15 minutes.
 
-This is appropriate for the controlled pilot, but it is **not a guaranteed background scheduler**. If Buisder needs reminder emails to fire even when nobody is using the app, add a Cloudflare scheduled Worker/Cron trigger in a later release.
+This is appropriate for the controlled pilot, but it is **not a guaranteed background scheduler**. If DEASJobs needs reminder emails to fire even when nobody is using the app, add a Cloudflare scheduled Worker/Cron trigger in a later release.
 
 ## Privacy update
 

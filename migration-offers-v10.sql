@@ -1,5 +1,5 @@
--- Buisder v10 — Job offer workflow
--- Run ONCE in the same Cloudflare D1 database used by Buisder.
+-- DEASJobs v10 — Job offer workflow
+-- Run ONCE in the same Cloudflare D1 database used by DEASJobs.
 -- This migration only CREATES a new table/indexes. It does not alter existing columns.
 
 CREATE TABLE IF NOT EXISTS job_offers (

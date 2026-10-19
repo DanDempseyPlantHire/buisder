@@ -1,6 +1,6 @@
-# Buisder v20 D1 migration steps
+# DEASJobs v20 D1 migration steps
 
-The preferred method is to run `migration-pilot-management-v20-d1-safe.sql` against the existing Buisder D1 database.
+The preferred method is to run `migration-pilot-management-v20-d1-safe.sql` against the existing DEASJobs D1 database.
 
 If the Cloudflare D1 Console gives an error when a large multi-statement paste is used, run the migration in smaller groups in this order:
 
@@ -10,6 +10,6 @@ If the Cloudflare D1 Console gives an error when a large multi-statement paste i
 4. the v20 indexes
 5. the `pilot_management_tested` launch-checklist insert
 
-Do not create a second D1 database. Use the same production database already bound to Buisder as `DB`.
+Do not create a second D1 database. Use the same production database already bound to DEASJobs as `DB`.
 
 The migration is idempotent: the CREATE statements use `IF NOT EXISTS` and the checklist/settings seed rows use `INSERT OR IGNORE`.

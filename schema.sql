@@ -1,4 +1,4 @@
--- Buisder database schema (Cloudflare D1 / SQLite)
+-- DEASJobs database schema (Cloudflare D1 / SQLite)
 -- Run with: wrangler d1 execute buisder-db --remote --file=./schema.sql
 
 CREATE TABLE IF NOT EXISTS users (
@@ -336,8 +336,8 @@ ON commercial_history(employer_id, created_at);
 INSERT OR IGNORE INTO commercial_plans
 (code, name, description, price_mode, monthly_price_cents, active_job_limit, featured_job_limit, is_public, sort_order)
 VALUES
-('free', 'Free', 'For trying Buisder with one active role.', 'free', 0, 1, 0, 1, 10),
-('pilot', 'Pilot', 'Controlled pilot access assigned by Buisder.', 'free', 0, 5, 2, 0, 20),
+('free', 'Free', 'For trying DEASJobs with one active role.', 'free', 0, 1, 0, 1, 10),
+('pilot', 'Pilot', 'Controlled pilot access assigned by DEASJobs.', 'free', 0, 5, 2, 0, 20),
 ('growth', 'Growth', 'For employers hiring regularly.', 'unset', NULL, 5, 2, 1, 30),
 ('pro', 'Pro', 'For larger or higher-volume hiring.', 'unset', NULL, 20, 5, 1, 40);
 
@@ -514,7 +514,7 @@ VALUES ('recruitment_emails_tested', 'Recruitment email notifications and prefer
 
 CREATE TABLE IF NOT EXISTS pilot_settings (
   id TEXT PRIMARY KEY CHECK (id='default'),
-  pilot_name TEXT NOT NULL DEFAULT 'Buisder Pilot',
+  pilot_name TEXT NOT NULL DEFAULT 'DEASJobs Pilot',
   invite_required INTEGER NOT NULL DEFAULT 0,
   feedback_enabled INTEGER NOT NULL DEFAULT 1,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('planned','active','paused','completed')),
@@ -524,7 +524,7 @@ CREATE TABLE IF NOT EXISTS pilot_settings (
 
 INSERT OR IGNORE INTO pilot_settings
 (id, pilot_name, invite_required, feedback_enabled, status)
-VALUES ('default', 'Buisder Pilot', 0, 1, 'active');
+VALUES ('default', 'DEASJobs Pilot', 0, 1, 'active');
 
 CREATE TABLE IF NOT EXISTS pilot_cohorts (
   id TEXT PRIMARY KEY,
@@ -750,7 +750,7 @@ INSERT OR IGNORE INTO processor_register(id,provider,service,data_categories,pur
 ('resend','Resend','Transactional email','Email address and email content','Account security and recruitment notifications','Confirm DPA, subprocessors and any transfer safeguards before public launch','review_required','review_required');
 
 INSERT OR IGNORE INTO lawful_basis_register(id,processing_activity,purpose,data_subjects,data_categories,lawful_basis,article_ref,children_consideration) VALUES
-('account_service','Account registration and service delivery','Create and operate Buisder accounts','Job seekers and employers','Identity, contact, account and profile data','Contract','GDPR Art. 6(1)(b)','Use child-oriented transparency for 16–17-year-old users.');
+('account_service','Account registration and service delivery','Create and operate DEASJobs accounts','Job seekers and employers','Identity, contact, account and profile data','Contract','GDPR Art. 6(1)(b)','Use child-oriented transparency for 16–17-year-old users.');
 INSERT OR IGNORE INTO lawful_basis_register(id,processing_activity,purpose,data_subjects,data_categories,lawful_basis,article_ref,children_consideration) VALUES
 ('matching','Job matching and feed ranking','Filter and rank relevant jobs using user-selected preferences','Job seekers','Preferences, availability, approximate location, pay preferences and experience','Contract','GDPR Art. 6(1)(b)','Complete DPIA review before public launch because minors can use the service and ranking/profiling is involved.');
 INSERT OR IGNORE INTO lawful_basis_register(id,processing_activity,purpose,data_subjects,data_categories,lawful_basis,article_ref,children_consideration) VALUES
@@ -798,7 +798,7 @@ INSERT OR IGNORE INTO compliance_checklist(item_key,category,label) VALUES ('min
 -- A few seed jobs so the swipe feed isn't empty on a fresh database.
 -- Safe to delete these rows once real employers start posting.
 INSERT OR IGNORE INTO users (id, email, password_hash, password_salt, role, name)
-VALUES ('seed-employer', 'seed@buisder.app', 'x', 'x', 'employer', 'Buisder Demo Employer');
+VALUES ('seed-employer', 'seed@deasjobs.app', 'x', 'x', 'employer', 'DEASJobs Demo Employer');
 INSERT OR IGNORE INTO employer_profiles
 (user_id, company_name, legal_name, location, description, verification_status, verification_reviewed_at)
 VALUES
@@ -882,7 +882,7 @@ WHERE j.employer_id <> 'seed-employer';
 
 
 -- v23 Growth
--- Buisder v23 Growth migration (Cloudflare D1 / SQLite)
+-- DEASJobs v23 Growth migration (Cloudflare D1 / SQLite)
 -- Safe to run more than once. No ALTER TABLE statements are used.
 
 CREATE TABLE IF NOT EXISTS growth_partners (
@@ -1053,7 +1053,7 @@ VALUES ('referral_terms_review','growth','Referral programme terms, anti-abuse r
 
 
 -- v24 Production Expansion
--- Buisder v24 Production Expansion: v22 Payments + post-launch upgrades
+-- DEASJobs v24 Production Expansion: v22 Payments + post-launch upgrades
 -- Cloudflare D1 / SQLite. Idempotent. No ALTER TABLE statements.
 
 CREATE TABLE IF NOT EXISTS push_subscriptions (

@@ -1,4 +1,4 @@
-# Buisder onboarding + profile photo upgrade
+# DEASJobs onboarding + profile photo upgrade
 
 Changes:
 - First-time job seekers are prompted to complete their profile before browsing jobs.
