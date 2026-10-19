@@ -2,7 +2,7 @@ import { categoryPath, employerPath, jobPath, listPublicJobs, locationPath, site
 function xml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;")}
 export async function onRequestGet(context){
   const origin=siteOrigin(context); const jobs=await listPublicJobs(context.env,{limit:5000}); const {categories,locations}=uniqueTaxonomy(jobs); const employers=[...new Set(jobs.map(j=>j.employer_id))];
-  const entries=[{loc:`${origin}/jobs`}];
+  const entries=[{loc:`${origin}/`},{loc:`${origin}/jobs`}];
   for(const job of jobs) entries.push({loc:`${origin}${jobPath(job)}`,lastmod:String(job.created_at||"").slice(0,10)});
   for(const id of employers) entries.push({loc:`${origin}${employerPath(id)}`});
   for(const v of categories.values()) entries.push({loc:`${origin}${categoryPath(v)}`});

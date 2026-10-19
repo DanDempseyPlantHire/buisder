@@ -10,6 +10,6 @@ export async function onRequestGet(context) {
   let label = slug.replace(/-/g," ");
   for (const job of jobs) { try { const found=JSON.parse(job.tags||"[]").find(tag=>slugify(tag)===slug); if(found){label=String(found);break;} } catch {} }
   const canonical=`${origin}/jobs/category/${encodeURIComponent(slug)}`;
-  const body=`<div class="breadcrumbs"><a href="/jobs">Jobs</a> / Category</div><section class="hero"><h1>${escapeHtml(label)} jobs</h1><p>Current ${escapeHtml(label)} opportunities from verified employers on Buisder.</p></section>${jobs.length?`<section class="grid">${jobs.map(jobCard).join("")}</section>`:`<div class="empty">No current jobs in this category. <a href="/jobs">Browse all jobs</a>.</div>`}`;
-  return pageResponse(layout({title:`${label} jobs | Buisder`,description:`Browse current ${label} jobs on Buisder.`,canonical,body,noindex:!jobs.length}),jobs.length?200:404);
+  const body=`<div class="breadcrumbs"><a href="/jobs">Jobs</a> / Category</div><section class="hero"><h1>${escapeHtml(label)} jobs</h1><p>Current ${escapeHtml(label)} opportunities from verified employers on DEASJobs.</p></section>${jobs.length?`<section class="grid">${jobs.map(jobCard).join("")}</section>`:`<div class="empty">No current jobs in this category. <a href="/jobs">Browse all jobs</a>.</div>`}`;
+  return pageResponse(layout({title:`${label} jobs | DEASJobs`,description:`Browse current ${label} jobs on DEASJobs.`,canonical,body,noindex:!jobs.length}),jobs.length?200:404);
 }

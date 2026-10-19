@@ -244,7 +244,14 @@ export async function markAuthTokenUsed(env, tokenId) {
 
 export function appOrigin(env, request) {
   const configured = String(env.APP_URL || "").trim().replace(/\/+$/g, "");
-  if (configured) return configured;
+  if (configured) {
+    try {
+      const u = new URL(configured);
+      if (!["buisder.com", "www.buisder.com"].includes(u.hostname.toLowerCase())) return configured;
+    } catch {}
+  }
+  const requestHost = new URL(request.url).hostname.toLowerCase();
+  if (["deasjobs.com", "www.deasjobs.com", "buisder.com", "www.buisder.com"].includes(requestHost)) return "https://deasjobs.com";
   return new URL(request.url).origin;
 }
 

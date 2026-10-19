@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for Buisder v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
 import { err, getUser, json, newId, requireUser } from "../../_lib/db.js";
 import { pushConfigured, sendPushToUser } from "../../_lib/push.js";
 
@@ -55,7 +55,7 @@ const route1 = (() => {
 const route2 = (() => {
   async function onRequestPost(context){
     const {user,error}=await requireUser(context); if(error)return error;
-    try{await sendPushToUser(context.env,user.id,{title:'Buisder notifications are on',body:'You can now receive important recruitment updates when Buisder is closed.',url:'/'});return json({ok:true});}
+    try{await sendPushToUser(context.env,user.id,{title:'DEASJobs notifications are on',body:'You can now receive important recruitment updates when DEASJobs is closed.',url:'/'});return json({ok:true});}
     catch(e){return err(e.message||'Push test failed',503);}
   }
   return { onRequestPost };

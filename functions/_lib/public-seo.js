@@ -30,8 +30,15 @@ export function parseJsonArray(value) {
 
 export function siteOrigin(context) {
   const configured = String(context.env.APP_URL || "").trim().replace(/\/+$/, "");
-  if (/^https?:\/\//i.test(configured)) return configured;
-  return new URL(context.request.url).origin;
+  if (/^https?:\/\//i.test(configured)) {
+    try {
+      const u = new URL(configured);
+      if (u.hostname.toLowerCase() !== "buisder.com" && u.hostname.toLowerCase() !== "www.buisder.com") return configured;
+    } catch {}
+  }
+  const requestOrigin = new URL(context.request.url);
+  if (["deasjobs.com", "www.deasjobs.com"].includes(requestOrigin.hostname.toLowerCase())) return "https://deasjobs.com";
+  return "https://deasjobs.com";
 }
 
 export function jobPath(job) {
@@ -102,16 +109,16 @@ export function publicStyles() {
 
 export function layout({ title, description, canonical, body, jsonLd = null, noindex = false }) {
   const safeTitle = escapeHtml(title);
-  const safeDescription = escapeHtml(description || "Find jobs with Buisder.");
+  const safeDescription = escapeHtml(description || "Find jobs with DEASJobs.");
   const safeCanonical = escapeHtml(canonical);
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#05070F"><link rel="icon" type="image/png" href="/icons/icon-192.png">
 <title>${safeTitle}</title><meta name="description" content="${safeDescription}">
 <link rel="canonical" href="${safeCanonical}"><meta name="robots" content="${noindex ? "noindex,nofollow" : "index,follow"}">
-<meta property="og:type" content="website"><meta property="og:site_name" content="Buisder"><meta property="og:title" content="${safeTitle}"><meta property="og:description" content="${safeDescription}"><meta property="og:url" content="${safeCanonical}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="DEASJobs"><meta property="og:title" content="${safeTitle}"><meta property="og:description" content="${safeDescription}"><meta property="og:url" content="${safeCanonical}">
 <meta name="twitter:card" content="summary"><meta name="twitter:title" content="${safeTitle}"><meta name="twitter:description" content="${safeDescription}">
 <style>${publicStyles()}</style>${jsonLd ? `<script type="application/ld+json">${safeJsonLd(jsonLd)}</script>` : ""}</head>
-<body><div class="shell"><header><a class="brand" href="/jobs"><img src="/brand/buisder-logo.png" alt="Buisder logo"><span>Buisder</span></a><a class="header-link" href="/">Sign in / join</a></header><main>${body}</main><footer>Buisder connects job seekers and employers. Public job information is supplied by participating employers.</footer></div></body></html>`;
+<body><div class="shell"><header><a class="brand" href="/jobs"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></a><a class="header-link" href="/">Sign in / join</a></header><main>${body}</main><footer>DEASJobs connects job seekers and employers. Public job information is supplied by participating employers.</footer></div></body></html>`;
 }
 
 export async function listPublicJobs(env, { limit = 100 } = {}) {

@@ -1,22 +1,11 @@
 export async function onRequest(context) {
-  const response = await context.next();
-  const secured = new Response(response.body, response);
-
-  secured.headers.set("X-Content-Type-Options", "nosniff");
-  secured.headers.set("X-Frame-Options", "DENY");
-  secured.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  secured.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(self)"
-  );
-
-  const pathname = new URL(context.request.url).pathname;
-  if (pathname.startsWith("/api/")) {
-    secured.headers.set("Cache-Control", "no-store");
+  const url = new URL(context.request.url);
+  const host = url.hostname.toLowerCase();
+  if (host === "buisder.com" || host === "www.buisder.com" || host === "www.deasjobs.com") {
+    url.protocol = "https:";
+    url.hostname = "deasjobs.com";
+    url.port = "";
+    return Response.redirect(url.toString(), 301);
   }
-  if (pathname === "/") {
-    secured.headers.set("Cache-Control", "no-cache");
-  }
-
-  return secured;
+  return context.next();
 }

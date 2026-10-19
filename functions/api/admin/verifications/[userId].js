@@ -19,7 +19,7 @@ export async function onRequestPost(context) {
   if (!target) return err("Business profile not found", 404);
 
   const status = action === "approve" ? "verified" : "rejected";
-  const note = String(body.note || (action === "approve" ? "Approved by Buisder admin" : "Verification rejected"));
+  const note = String(body.note || (action === "approve" ? "Approved by DEASJobs admin" : "Verification rejected"));
 
   await env.DB.prepare(
     `UPDATE employer_profiles

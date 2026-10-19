@@ -117,7 +117,7 @@ export async function sendRecruitmentEmail(env, request, {
 
     const origin = request ? appOrigin(env, request) : String(env.APP_URL || "").trim().replace(/\/+$/g, "");
     const safeName = escapeHtml(user.name || "there");
-    const safeHeading = escapeHtml(heading || subject || "Buisder update");
+    const safeHeading = escapeHtml(heading || subject || "DEASJobs update");
     const safeBody = escapeHtml(body || "");
     const detailsHtml = (detailLines || [])
       .filter(Boolean)
@@ -130,22 +130,22 @@ export async function sendRecruitmentEmail(env, request, {
         <p>Hi ${safeName},</p>
         <p>${safeBody}</p>
         ${detailsHtml ? `<ul style="padding-left:20px">${detailsHtml}</ul>` : ""}
-        ${origin ? `<p style="margin-top:24px"><a href="${escapeHtml(origin)}" style="display:inline-block;padding:11px 16px;background:#182230;color:#fff;text-decoration:none;border-radius:8px">Open Buisder</a></p>` : ""}
-        <p style="font-size:12px;color:#667085;margin-top:28px">You can change recruitment email preferences in Buisder under Account &amp; Privacy. Security and account-recovery emails cannot be disabled.</p>
+        ${origin ? `<p style="margin-top:24px"><a href="${escapeHtml(origin)}" style="display:inline-block;padding:11px 16px;background:#182230;color:#fff;text-decoration:none;border-radius:8px">Open DEASJobs</a></p>` : ""}
+        <p style="font-size:12px;color:#667085;margin-top:28px">You can change recruitment email preferences in DEASJobs under Account &amp; Privacy. Security and account-recovery emails cannot be disabled.</p>
       </div>`;
 
     const text = [
-      heading || subject || "Buisder update",
+      heading || subject || "DEASJobs update",
       `Hi ${user.name || "there"},`,
       body || "",
       ...(detailLines || []).filter(Boolean).map(line => `- ${line}`),
-      origin ? `Open Buisder: ${origin}` : "",
+      origin ? `Open DEASJobs: ${origin}` : "",
       "You can change recruitment email preferences in Account & Privacy."
     ].filter(Boolean).join("\n\n");
 
     const sent = await sendEmail(env, {
       to:user.email,
-      subject:subject || "Buisder update",
+      subject:subject || "DEASJobs update",
       html,
       text
     });

@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for Buisder v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
 import { createNotification, err, json, newId, requireUser } from "../../_lib/db.js";
 import { sendRecruitmentEmail } from "../../_lib/email-notifications.js";
 

@@ -15,7 +15,7 @@ export async function getPilotSettings(env) {
   ).first();
 
   return row || {
-    pilotName: "Buisder Pilot",
+    pilotName: "DEASJobs Pilot",
     inviteRequired: 0,
     feedbackEnabled: 1,
     status: "active",

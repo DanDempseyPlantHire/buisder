@@ -33,7 +33,7 @@ async function vapidJwt(env,endpoint){
   const key=await crypto.subtle.importKey('jwk',{kty:'EC',crv:'P-256',x,y,d,ext:true},{name:'ECDSA',namedCurve:'P-256'},false,['sign']);
   const header=bytesToB64url(text(JSON.stringify({typ:'JWT',alg:'ES256'})));
   const origin=new URL(endpoint).origin;
-  const payload=bytesToB64url(text(JSON.stringify({aud:origin,exp:Math.floor(Date.now()/1000)+12*3600,sub:env.VAPID_SUBJECT||'mailto:support@buisder.com'})));
+  const payload=bytesToB64url(text(JSON.stringify({aud:origin,exp:Math.floor(Date.now()/1000)+12*3600,sub:env.VAPID_SUBJECT||'mailto:support@deasjobs.com'})));
   const input=`${header}.${payload}`;
   const sig=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},key,text(input));
   return `${input}.${bytesToB64url(sig)}`;
