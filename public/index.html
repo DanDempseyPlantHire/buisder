@@ -119,6 +119,9 @@
     .stat strong{display:block;font-size:19px;font-weight:700}
     .stat span{font-size:11px;color:var(--muted-on-dark)}
     .feed-wrap{padding:10px 16px 110px}
+    .opportunity-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 14px}
+    .opportunity-tab{min-height:45px;padding:9px 8px;border:1px solid var(--line-dark);border-radius:9px;background:var(--panel);color:var(--paper);font-size:13px;font-weight:700}
+    .opportunity-tab.active{border-color:var(--accent);background:var(--accent);color:#fff}
     .feed-intro{
       display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px
     }
@@ -823,7 +826,7 @@
         <article class="form-card">
           <h2>Looking for work experience?</h2>
           <p>DEASJobs supports work experience listings alongside regular vacancies. Review the details of available opportunities before choosing whether to apply.</p>
-          <a href="/jobs">Browse jobs and work experience</a>
+          <a href="/jobs#work-experience">Browse work experience</a>
         </article>
         <article class="form-card">
           <h2>Hiring young people?</h2>
@@ -917,9 +920,13 @@ let state = {
   },
   turnstileToken:"",
   turnstileWidgetId:null,
+  postOpportunityKind: "job",
   feedFilters: (() => {
     try{
-      return JSON.parse(localStorage.getItem("deasjobs_feed_filters")) || {
+      const stored = JSON.parse(localStorage.getItem("deasjobs_feed_filters"));
+      // v25.3 migration: work experience is a separate feed, not a job-type filter.
+      if(stored?.employmentType === "Work experience") stored.employmentType = "Any";
+      return stored || {
         category:"Any", maxDistance:25, minPay:"", employmentType:"Any",
         experience:"Any", availability:"Match profile"
       };
@@ -1462,7 +1469,7 @@ async function loadBootstrap(){
   state.mode = data.user.isAdmin ? "admin" : data.user.role;
 
   const validTab = state.mode==="jobseeker"
-    ? ["feed","applications","profile"].includes(state.tab)
+    ? ["feed","work-experience","applications","profile"].includes(state.tab)
     : state.mode==="employer"
       ? ["home","employer-analytics","post","applicants","integrations","profile"].includes(state.tab)
       : ["admin-home","admin-growth","admin-pilot","admin-launch","admin-analytics","admin-commercial","admin-risk","admin-compliance","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
@@ -1531,6 +1538,8 @@ async function boot(){
 }
 
 async function setTab(tab){
+  // The employer's standard Post job tab always starts a regular job listing.
+  if(tab === "post" && state.mode === "employer") state.postOpportunityKind = "job";
   state.tab = tab;
   render();
 
@@ -1876,7 +1885,7 @@ function renderNav(){
   const nav = document.getElementById("bottomnav");
   const unread = state.mode==="jobseeker" ? unreadInterviewCount() : 0;
   const items = state.mode==="jobseeker"
-    ? [["feed","Jobs"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
+    ? [["feed","Jobs"],["work-experience","Work experience"],["applications",`Applied${unread ? ` (${unread})` : ""}`],["profile","Profile"]]
     : state.mode==="employer"
       ? [["home","Dashboard"],["employer-analytics","Analytics"],["post","Post job"],["applicants","Applicants"],["integrations","Integrations"],["profile","Business"]]
       : [["admin-home","Admin"],["admin-growth","Growth"],["admin-pilot","Pilot"],["admin-launch","Launch"],["admin-analytics","Analytics"],["admin-commercial","Plans"],["admin-risk","Risk"],["admin-compliance","Compliance"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
@@ -1925,7 +1934,7 @@ function render(){
     state.mode==="admin"
       ? renderAdmin()
       : (needsOnboarding() ? renderOnboarding() : (state.mode==="jobseeker" ? renderJobseeker() : renderEmployer()));
-  if(state.mode==="jobseeker" && state.tab==="feed"){ setupSwipe(); }
+  if(state.mode==="jobseeker" && ["feed","work-experience"].includes(state.tab)){ setupSwipe(); }
 }
 
 function normalizeList(value){
@@ -2044,6 +2053,10 @@ function scoreJob(job){
   return Math.max(0, Math.min(100, Math.round(score / weight * 100)));
 }
 
+function isWorkExperience(job){
+  return String(job?.employment_type || "").trim().toLowerCase() === "work experience";
+}
+
 function currentFeedJobs(){
   const f = state.feedFilters || {};
   const minPay = Number(f.minPay || 0);
@@ -2052,10 +2065,12 @@ function currentFeedJobs(){
   return state.jobs
     .filter(j => !state.applications.some(a=>a.jobId===j.id) && !state.skipped.includes(j.id) && !state.optimisticApplied.has(j.id) && !state.optimisticSkipped.has(j.id))
     .filter(ageEligible)
+    // Keep work experience separate from paid / regular job discovery.
+    .filter(j => state.tab === "work-experience" ? isWorkExperience(j) : !isWorkExperience(j))
     .filter(j => f.category==="Any" || categoryFor(j)===f.category)
-    .filter(j => f.employmentType==="Any" || (j.employment_type || "Part-time")===f.employmentType)
+    .filter(j => state.tab === "work-experience" || f.employmentType==="Any" || (j.employment_type || "Part-time")===f.employmentType)
     .filter(j => f.experience==="Any" || (f.experience==="None required" ? (j.experience || "None")==="None" : (j.experience || "None")!== "Required"))
-    .filter(j => !minPay || !parsePay(j) || parsePay(j) >= minPay)
+    .filter(j => state.tab === "work-experience" || !minPay || !parsePay(j) || parsePay(j) >= minPay)
     .filter(j => {
       if(f.availability!=="Match profile") return true;
       const overlap = scheduleOverlap(j);
@@ -2082,9 +2097,9 @@ function activeFilterLabels(){
   const f = state.feedFilters;
   const out = [];
   if(f.category!=="Any") out.push(f.category);
-  if(f.employmentType!=="Any") out.push(f.employmentType);
+  if(state.tab !== "work-experience" && f.employmentType!=="Any") out.push(f.employmentType);
   if(f.experience!=="Any") out.push(f.experience);
-  if(f.minPay) out.push(`€${f.minPay}+/hr`);
+  if(state.tab !== "work-experience" && f.minPay) out.push(`€${f.minPay}+/hr`);
   if(f.maxDistance) out.push(`${f.maxDistance} km`);
   if(f.availability==="Match profile") out.push("My availability");
   return out;
@@ -2113,12 +2128,13 @@ function openJobFilters(){
     </select>
 
     <label>Minimum hourly pay</label>
-    <input id="filterPay" type="number" min="0" step="0.10" value="${f.minPay || ""}" placeholder="e.g. 14.50">
+    <input id="filterPay" type="number" min="0" step="0.10" value="${f.minPay || ""}" placeholder="e.g. 14.50" ${state.tab === "work-experience" ? "disabled" : ""}>
 
     <label>Work type</label>
-    <select id="filterEmployment">
-      ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship","Work experience"].map(x=>`<option ${f.employmentType===x?"selected":""}>${x}</option>`).join("")}
+    <select id="filterEmployment" ${state.tab === "work-experience" ? "disabled" : ""}>
+      ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship"].map(x=>`<option ${f.employmentType===x?"selected":""}>${x}</option>`).join("")}
     </select>
+    ${state.tab === "work-experience" ? `<p class="small" style="margin-top:6px">This view shows only work experience opportunities, regardless of your usual job type preferences.</p>` : ""}
 
     <label>Experience</label>
     <select id="filterExperience">
@@ -2146,8 +2162,8 @@ function applyJobFilters(){
   state.feedFilters = {
     category:document.getElementById("filterCategory").value,
     maxDistance:Number(document.getElementById("filterDistance").value),
-    minPay:document.getElementById("filterPay").value,
-    employmentType:document.getElementById("filterEmployment").value,
+    minPay:document.getElementById("filterPay").disabled ? state.feedFilters.minPay : document.getElementById("filterPay").value,
+    employmentType:document.getElementById("filterEmployment").disabled ? state.feedFilters.employmentType : document.getElementById("filterEmployment").value,
     experience:document.getElementById("filterExperience").value,
     availability:document.getElementById("filterAvailability").value
   };
@@ -2170,9 +2186,11 @@ function renderJobseeker(){
 }
 
 function renderFeed(){
+  const placementView = state.tab === "work-experience";
   const jobs = currentFeedJobs();
   const current = jobs[0];
-  const progress = Math.min(state.jobs.length, 5);
+  const progress = Math.min(jobs.length, 5);
+  const sectionName = placementView ? "work experience opportunities" : "jobs";
   return `
     <div class="feed-wrap">
       ${unreadInterviewCount() ? `
@@ -2183,11 +2201,15 @@ function renderFeed(){
           ${("Notification" in window && Notification.permission !== "granted") ? `<button class="notify-btn" onclick="enableBrowserNotifications()">Enable browser notifications</button>` : ""}
         </div>
       ` : ""}
+      <div class="opportunity-tabs" role="group" aria-label="Choose opportunities to browse">
+        <button type="button" class="opportunity-tab ${!placementView ? "active" : ""}" onclick="setTab('feed')" aria-pressed="${!placementView}">Jobs</button>
+        <button type="button" class="opportunity-tab ${placementView ? "active" : ""}" onclick="setTab('work-experience')" aria-pressed="${placementView}">Work experience</button>
+      </div>
       <div class="filter-bar">
         <div class="filter-row">
           <div>
-            <strong style="font-size:13px">Best-fit feed</strong>
-            <div class="filter-summary">${currentFeedJobs().length} jobs match your current filters</div>
+            <strong style="font-size:13px">${placementView ? "Work experience" : "Best-fit jobs"}</strong>
+            <div class="filter-summary">${jobs.length} ${sectionName} match your current filters</div>
           </div>
           <button class="btn btn-outline" onclick="openJobFilters()">Filters</button>
         </div>
@@ -2197,7 +2219,7 @@ function renderFeed(){
       </div>
       <div class="feed-intro">
         <div>
-          <h2>Swipe jobs</h2>
+          <h2>${placementView ? "Swipe work experience" : "Swipe jobs"}</h2>
           <div class="hint">Right = apply · Left = skip</div>
         </div>
         <div style="display:flex;gap:8px">
@@ -2211,8 +2233,8 @@ function renderFeed(){
       ${
         current ? renderSwipeCard(current, jobs.length) : `
         <div class="card dark empty">
-          <h3 style="margin:0 0 8px">You reached the end</h3>
-          <p style="color:#cbd5e1">You have reviewed all current jobs. Reload skipped jobs or go to Applications to review your applications.</p>
+          <h3 style="margin:0 0 8px">${placementView ? "No more work experience opportunities" : "You reached the end"}</h3>
+          <p style="color:#cbd5e1">${placementView ? "No matching work experience placements are available right now. Try changing your filters or check back later." : "You have reviewed all current jobs. Reload skipped jobs or go to Applications to review your applications."}</p>
           <button class="btn btn-light btn-block" onclick="resetDecisions()">Reload jobs</button>
         </div>
         `
@@ -2246,12 +2268,12 @@ function renderSwipeCard(job, remaining){
         <div class="chips">
           <span class="chip good">No CV needed</span>
           <span class="chip">${job.experience || "No experience listed"}</span>
-          <span class="chip">${job.employment_type || "Part-time"}</span>
+          <span class="chip">${isWorkExperience(job) ? "Work experience" : (job.employment_type || "Part-time")}</span>
           <span class="chip">${Number(job.min_age || 16)}+</span>
           ${job._distance !== null && job._distance !== undefined ? `<span class="chip">${job._distance.toFixed(1)} km away</span>` : ""}
         </div>
         <div class="grid">
-          <div class="metric"><small>Pay</small><strong>${job.pay || "On request"}</strong></div>
+          <div class="metric"><small>${isWorkExperience(job) ? "Pay / expenses" : "Pay"}</small><strong>${job.pay || "Not specified"}</strong></div>
           <div class="metric"><small>Hours</small><strong>${job.hours || "Flexible"}</strong></div>
           <div class="metric"><small>Experience</small><strong>${job.experience || "None"}</strong></div>
           <div class="metric"><small>Start</small><strong>${job.start_date || "To be agreed"}</strong></div>
@@ -4641,6 +4663,28 @@ function renderIntegrations(){
   </div>`;
 }
 
+function startPostOpportunity(kind){
+  state.postOpportunityKind = kind === "work-experience" ? "work-experience" : "job";
+  state.tab = "post";
+  render();
+}
+
+function updatePostOpportunityForm(){
+  const isExperience = document.getElementById("jopportunitykind")?.value === "work-experience";
+  state.postOpportunityKind = isExperience ? "work-experience" : "job";
+  document.getElementById("postEmploymentRow")?.classList.toggle("hidden", isExperience);
+  const note = document.getElementById("postTypeNote");
+  if(note) note.textContent = isExperience
+    ? "This will appear only in the Work experience feed. State whether the placement is paid, any expenses covered, the duration and who will supervise it."
+    : "This will appear in the Jobs feed, not the separate Work experience feed.";
+  const btn = document.getElementById("publishOpportunityButton");
+  if(btn) btn.textContent = isExperience ? "Publish work experience" : "Publish job";
+}
+
+function updateEditOpportunityForm(){
+  document.getElementById("editJobEmploymentRow")?.classList.toggle("hidden", document.getElementById("editJobOpportunity")?.value === "work-experience");
+}
+
 function renderEmployer(){
   if(state.tab==="employer-analytics") return renderEmployerAnalytics();
   if(state.tab==="integrations") return renderIntegrations();
@@ -4652,7 +4696,8 @@ function renderEmployer(){
       <h1>Employer dashboard</h1>
       <p>Keep the hiring side simple while the candidate experience feels modern and swipe-friendly.</p>
       <div class="cta-row">
-        <button class="btn btn-light" onclick="setTab('post')">Post job</button>
+        <button class="btn btn-light" onclick="startPostOpportunity('job')">Post a job</button>
+        <button class="btn btn-soft" onclick="startPostOpportunity('work-experience')">Post work experience</button>
         <button class="btn btn-soft" onclick="setTab('applicants')">View applicants</button>
         <button class="btn btn-soft" onclick="setTab('employer-analytics')">View analytics</button>
       </div>
@@ -4669,12 +4714,12 @@ function renderEmployer(){
         </div>
       </div>
       <div class="stats">
-        <div class="stat"><strong>${state.postedJobs.filter(j=>j.status==="active").length}</strong><span>Live jobs</span></div>
+        <div class="stat"><strong>${state.postedJobs.filter(j=>j.status==="active").length}</strong><span>Live listings</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
         <div class="stat"><strong>${state.applicants.filter(a=>a.status==="shortlisted").length}</strong><span>Shortlisted</span></div>
         <div class="stat"><strong>${state.applicants.filter(a=>a.interviewAt).length}</strong><span>Interviews</span></div>
       </div>
-      <div class="title-row"><h2>Your jobs</h2><span>Current</span></div>
+      <div class="title-row"><h2>Your listings</h2><span>Current</span></div>
       ${!state.postedJobs.length ? `
         <div class="card dark empty">
           <h3 style="margin:0 0 8px">No jobs posted yet</h3>
@@ -4686,7 +4731,7 @@ function renderEmployer(){
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
             <div>
               <div style="font-weight:900">${j.title}</div>
-              <div class="small">${j.location} · ${j.pay}</div>
+              <div class="small">${isWorkExperience(j) ? "Work experience · " : ""}${j.location} · ${j.pay || "Pay not specified"}</div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
               ${j.is_featured ? `<span class="commercial-badge featured">Featured</span>` : ''}
@@ -4732,8 +4777,15 @@ function openEditJob(jobId){
       <div><label>Pay shown to candidates</label><input id="editJobPay" value="${safeText(j.pay || "")}"></div>
       <div><label>Hourly rate for matching</label><input id="editJobPayMin" type="number" min="0" step="0.10" value="${j.pay_min ?? ""}"></div>
     </div>
-    <label>Work type</label>
-    <select id="editJobEmployment">${workTypes.map(x=>`<option ${String(j.employment_type||"Part-time")===x?"selected":""}>${x}</option>`).join("")}</select>
+    <label>Opportunity type</label>
+    <select id="editJobOpportunity" onchange="updateEditOpportunityForm()">
+      <option value="job" ${!isWorkExperience(j) ? "selected" : ""}>Job</option>
+      <option value="work-experience" ${isWorkExperience(j) ? "selected" : ""}>Work experience</option>
+    </select>
+    <div id="editJobEmploymentRow" class="${isWorkExperience(j) ? "hidden" : ""}">
+      <label>Work type</label>
+      <select id="editJobEmployment">${workTypes.filter(x=>x!=="Work experience").map(x=>`<option ${String(j.employment_type||"Part-time")===x?"selected":""}>${x}</option>`).join("")}</select>
+    </div>
     <label>Hours</label><input id="editJobHours" value="${safeText(j.hours || "")}">
     <label>Availability needed</label><input id="editJobSchedule" value="${safeText(schedule)}">
     <label>Experience</label><select id="editJobExperience">${["None","Helpful","Required"].map(x=>`<option ${String(j.experience||"None")===x?"selected":""}>${x}</option>`).join("")}</select>
@@ -4757,7 +4809,7 @@ async function saveJobEdit(jobId){
       pay:document.getElementById("editJobPay")?.value || "",
       payMin:document.getElementById("editJobPayMin")?.value ?? "",
       hours:document.getElementById("editJobHours")?.value || "",
-      employmentType:document.getElementById("editJobEmployment")?.value || "Part-time",
+      employmentType:document.getElementById("editJobOpportunity")?.value === "work-experience" ? "Work experience" : (document.getElementById("editJobEmployment")?.value || "Part-time"),
       scheduleTags,
       experience:document.getElementById("editJobExperience")?.value || "None",
       minAge:Number(document.getElementById("editJobMinAge")?.value || 16),
@@ -4791,12 +4843,19 @@ async function updateJobStatus(jobId, action){
 }
 
 function renderPostJob(){
+  const isExperience = state.postOpportunityKind === "work-experience";
   return `
     <div class="section-pad">
-      <div class="title-row"><h2>Post a job</h2><span>Better matching</span></div>
+      <div class="title-row"><h2>${isExperience ? "Post work experience" : "Post a job"}</h2><span>Employer opportunities</span></div>
       ${state.commercial ? `<div class="notice"><strong>${state.commercial.account?.planName || 'Current'} plan:</strong> ${state.commercial.usage?.activeJobs || 0} of ${state.commercial.account?.activeJobLimit || 0} active job slots in use. ${Number(state.commercial.usage?.activeJobs || 0) >= Number(state.commercial.account?.activeJobLimit || 0) ? 'You need to pause/close a job or change plan before publishing another active role.' : ''}</div>` : ''}
       <div class="form-card">
-        <label>Job title</label><input id="jtitle" placeholder="Weekend Retail Assistant">
+        <label>Opportunity type</label>
+        <select id="jopportunitykind" onchange="updatePostOpportunityForm()">
+          <option value="job" ${!isExperience ? "selected" : ""}>Job</option>
+          <option value="work-experience" ${isExperience ? "selected" : ""}>Work experience</option>
+        </select>
+        <div class="notice" id="postTypeNote">${isExperience ? "This will appear only in the Work experience feed. State whether the placement is paid, any expenses covered, the duration and who will supervise it." : "This will appear in the Jobs feed, not the separate Work experience feed."}</div>
+        <label>${isExperience ? "Placement title" : "Job title"}</label><input id="jtitle" placeholder="${isExperience ? "One-week office work experience" : "Weekend Retail Assistant"}">
 
         <label>Location</label><input id="jlocation" value="${state.profile.location || "Cork"}">
         <button type="button" class="btn btn-dark btn-block" style="margin-top:8px" onclick="captureJobLocation()">Use this device as the workplace location</button>
@@ -4813,15 +4872,16 @@ function renderPostJob(){
           </div>
         </div>
 
-        <label>Work type</label>
-        <select id="jemployment">
-          <option>Part-time</option>
-          <option>Full-time</option>
-          <option>Temporary / Seasonal</option>
-          <option>Weekend / Casual</option>
-          <option>Apprenticeship</option>
-          <option>Work experience</option>
-        </select>
+        <div id="postEmploymentRow" class="${isExperience ? "hidden" : ""}">
+          <label>Work type</label>
+          <select id="jemployment">
+            <option>Part-time</option>
+            <option>Full-time</option>
+            <option>Temporary / Seasonal</option>
+            <option>Weekend / Casual</option>
+            <option>Apprenticeship</option>
+          </select>
+        </div>
 
         <label>Hours</label><input id="jhours" placeholder="Saturday + Sunday">
 
@@ -4852,7 +4912,7 @@ function renderPostJob(){
         <textarea id="jdescription" placeholder="What will this person actually do day-to-day?"></textarea>
 
         <div class="notice"><strong>Matching:</strong> structured pay, work type, availability and location help DEASJobs put this role in front of the best-fit candidates first.</div>
-        <button class="btn btn-dark btn-block" onclick="postJob()">Publish</button>
+        <button id="publishOpportunityButton" class="btn btn-dark btn-block" onclick="postJob()">${isExperience ? "Publish work experience" : "Publish job"}</button>
       </div>
     </div>
   `;
@@ -4878,6 +4938,7 @@ function captureJobLocation(){
 }
 
 async function postJob(){
+  const isExperience = document.getElementById("jopportunitykind")?.value === "work-experience";
   const title = document.getElementById("jtitle").value.trim();
   if(!title){ toast("Add a job title"); return; }
   const scheduleTags = document.getElementById("jschedule").value
@@ -4886,11 +4947,11 @@ async function postJob(){
   const body = {
     title,
     location: document.getElementById("jlocation").value || "Cork",
-    pay: document.getElementById("jpay").value || "Pay shown on request",
+    pay: document.getElementById("jpay").value || (isExperience ? "Not specified" : "Pay shown on request"),
     payMin: document.getElementById("jpaymin").value,
     hours: document.getElementById("jhours").value || "Flexible",
     experience: document.getElementById("jexp").value,
-    employmentType: document.getElementById("jemployment").value,
+    employmentType: isExperience ? "Work experience" : document.getElementById("jemployment").value,
     minAge: Number(document.getElementById("jminage").value),
     scheduleTags,
     latitude: draftJobLat,
@@ -4906,7 +4967,7 @@ async function postJob(){
     await loadBootstrap();
     state.tab = "home";
     render();
-    toast("Job published");
+    toast(isExperience ? "Work experience published" : "Job published");
   } catch(e){ toast(e.message); }
 }
 
