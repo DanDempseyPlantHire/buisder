@@ -751,6 +751,23 @@
     .card .small,.form-card .small,.sheet .small,.safety-card .small,.metric-card span,.commercial-stat span,.launch-kpi span,.readiness-detail,.timeline-meta,.notification-time,.security-note,.turnstile-status,.admin-meta,.metric small,.geo-status,.photo-help,.admin-stat span{color:#60728C}
     .card .title-row span,.form-card .title-row span,.sheet .title-row span,.safety-card .title-row span,.admin-row .title-row span{color:#60728C}
 
+
+    /* v25.1: real public content remains readable before and after app hydration. */
+    .seo-home-intro .hero{margin-bottom:12px}
+    .seo-home-intro .hero h1{font-size:clamp(24px,5vw,31px);line-height:1.15}
+    .seo-home-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+    .seo-home-actions .btn{min-height:43px;text-decoration:none;font-size:13px}
+    .seo-home-actions .btn-outline{color:#eaf3ff}
+    .seo-home-details{padding-bottom:24px}
+    .seo-home-grid{display:grid;gap:12px}
+    .seo-home-grid .form-card{min-width:0}
+    .seo-home-grid h2,.seo-home-how h2{margin:0 0 9px;font-size:18px;color:#08111f}
+    .seo-home-grid p,.seo-home-how p,.seo-home-how li{font-size:13px;line-height:1.55;color:#334862}
+    .seo-home-grid a,.seo-home-legal a{color:#1366c2;font-weight:700;font-size:13px}
+    .seo-home-how{margin-top:12px}
+    .seo-home-how ol{padding-left:18px}
+    .seo-home-how li+li{margin-top:6px}
+    .seo-home-legal{display:flex;gap:12px;flex-wrap:wrap;padding:17px 0}
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -772,26 +789,65 @@
     </div>
   </header>
 
-  <main id="content">
-    <section class="hero" aria-labelledby="seo-home-title">
+  <!-- Public homepage is independent of the authenticated app. Unlike the v25
+       version, client-side auth rendering does not replace/remove this content. -->
+  <section id="seoHomeIntro" class="seo-home-intro" aria-labelledby="seo-home-title">
+    <div class="hero">
       <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></div>
-      <h1 id="seo-home-title">Jobs and work experience for young people</h1>
-      <p>Discover local opportunities, apply through DEASJobs and keep track of your applications in one place.</p>
-    </section>
-    <div class="section-pad" id="seo-home-content">
-      <div class="form-card">
-        <h2>Find opportunities</h2>
-        <p>DEASJobs connects job seekers with verified employers offering jobs and work experience opportunities. Browse public jobs or create an account to use the swipe-based job feed.</p>
-        <a class="btn btn-dark btn-block" href="/jobs">Browse current jobs</a>
+      <h1 id="seo-home-title">Find local jobs and work experience with DEASJobs</h1>
+      <p>DEASJobs connects young people looking for work with employers offering jobs and work experience opportunities in Ireland. Browse vacancies without an account, then sign up to apply and manage your applications.</p>
+      <div class="seo-home-actions">
+        <a class="btn btn-dark" href="/jobs">Explore available jobs</a>
+        <a class="btn btn-outline" href="#login">Log in or join</a>
       </div>
-      <div class="form-card" style="margin-top:12px">
-        <h2>For job seekers</h2>
-        <p>Create a profile, filter opportunities, apply, manage interviews and track your application status from DEASJobs.</p>
-        <h2 style="margin-top:18px">For employers</h2>
-        <p>Verified employers can post roles, including work experience opportunities, review applicants and manage recruitment through DEASJobs.</p>
+    </div>
+  </section>
+  <main id="content">
+    <div class="section-pad" id="login">
+      <div class="form-card">
+        <h2>Get started with DEASJobs</h2>
+        <p>Log in or create your free account to apply for jobs, save your profile and manage recruitment.</p>
+        <a class="btn btn-dark btn-block" href="/jobs">Browse current opportunities</a>
+        <noscript><p>Enable JavaScript to log in or create an account. Public job listings remain available without JavaScript.</p></noscript>
       </div>
     </div>
   </main>
+  <section id="seoHomeDetails" class="seo-home-details" aria-label="About DEASJobs">
+    <div class="section-pad">
+      <div class="seo-home-grid">
+        <article class="form-card">
+          <h2>Looking for your first job?</h2>
+          <p>Discover opportunities from participating employers, including part-time work and entry-level roles. Create a candidate profile, add your CV and apply using the swipe-style job feed.</p>
+          <a href="/jobs">See public job listings</a>
+        </article>
+        <article class="form-card">
+          <h2>Looking for work experience?</h2>
+          <p>DEASJobs supports work experience listings alongside regular vacancies. Review the details of available opportunities before choosing whether to apply.</p>
+          <a href="/jobs">Browse jobs and work experience</a>
+        </article>
+        <article class="form-card">
+          <h2>Hiring young people?</h2>
+          <p>Employers can set up a business profile, submit their business for verification, publish jobs and review applications. Recruitment features include shortlisting and interview invitations.</p>
+          <a href="#login">Join as an employer</a>
+        </article>
+      </div>
+      <div class="form-card seo-home-how">
+        <h2>How DEASJobs works</h2>
+        <ol>
+          <li><strong>Explore:</strong> Browse publicly listed jobs from verified employers.</li>
+          <li><strong>Join:</strong> Create a job seeker or employer account at no charge during the free launch.</li>
+          <li><strong>Connect:</strong> Job seekers apply and track updates; employers manage applicants and interviews.</li>
+        </ol>
+        <p>Public listings are accessible without signing in. Applying to a job requires a candidate account.</p>
+      </div>
+      <div class="seo-home-legal">
+        <a href="/jobs">Job listings</a>
+        <a href="/privacy.html">Privacy notice</a>
+        <a href="/terms.html">Terms of use</a>
+        <a href="/children.html">Information for young users</a>
+      </div>
+    </div>
+  </section>
   <nav class="bottomnav hidden" id="bottomnav"></nav>
 </div>
 
@@ -1642,12 +1698,7 @@ function renderAuth(){
   }
 
   return `
-    <div class="hero">
-      <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="DEASJobs logo"><span>DEASJobs</span></div>
-      <h1>Jobs and work experience for young people</h1>
-      <p>Find local opportunities, apply through DEASJobs and manage your applications in one place.</p>
-    </div>
-    <div class="section-pad">
+    <div class="section-pad" id="login">
       <div class="form-card">
         <h2 style="margin-top:0">Log in</h2>
         <label>Email</label>
@@ -1838,6 +1889,13 @@ function renderNav(){
 }
 
 function render(){
+  // This public page is not owned by #content and is never removed by renderAuth().
+  // It also remains visible if the API fails, so crawlers never receive only an error panel.
+  const showPublicHome = !state.user && (state.authMode === "login" || Boolean(state.serviceError));
+  for(const id of ["seoHomeIntro", "seoHomeDetails"]){
+    const section = document.getElementById(id);
+    if(section) section.classList.toggle("hidden", !showPublicHome);
+  }
   const topbar = document.getElementById("topbar");
   const nav = document.getElementById("bottomnav");
   if(state.serviceError){

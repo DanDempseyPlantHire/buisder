@@ -1,8 +1,8 @@
-# Buisder v8 — Cloudflare R2 file storage
+# DEASJobs v8 — Cloudflare R2 file storage
 
 ## What changed
 
-Buisder now stores new uploads in the private `buisder-files` R2 bucket.
+DEASJobs now stores new uploads in the private `buisder-files` R2 bucket.
 
 ### R2 files
 - Job-seeker profile photos
@@ -22,14 +22,14 @@ It no longer stores newly uploaded image bodies as base64.
 
 The R2 bucket remains private.
 
-Files are served through authenticated Buisder Functions:
+Files are served through authenticated DEASJobs Functions:
 
-- profile photo: signed-in Buisder users
-- business logo: signed-in Buisder users
+- profile photo: signed-in DEASJobs users
+- business logo: signed-in DEASJobs users
 - CV: only:
   - the job seeker who owns it
   - an employer who has received an application from that job seeker
-  - a Buisder admin
+  - a DEASJobs admin
 
 Employers cannot browse arbitrary CVs.
 
@@ -38,7 +38,7 @@ Employers cannot browse arbitrary CVs.
 Existing base64 profile photos and business logos are not deleted by the migration.
 They remain visible as a fallback.
 
-When the user next uploads a new photo/logo, Buisder stores it in R2 and clears the old base64 copy.
+When the user next uploads a new photo/logo, DEASJobs stores it in R2 and clears the old base64 copy.
 
 ## Existing CV entries
 
@@ -57,7 +57,7 @@ The real file will then be uploaded to R2.
 1. Confirm Cloudflare Pages has:
    - R2 binding variable: `FILES`
    - bucket: `buisder-files`
-2. Run `migration-r2-storage-v8.sql` ONCE in the same D1 database used by Buisder.
+2. Run `migration-r2-storage-v8.sql` ONCE in the same D1 database used by DEASJobs.
 3. Commit/deploy the v8 files.
 4. Redeploy Cloudflare Pages.
 5. Test with a job-seeker account:

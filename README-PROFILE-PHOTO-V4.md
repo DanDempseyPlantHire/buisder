@@ -1,4 +1,4 @@
-# Buisder persistent profile photo + onboarding v4
+# DEASJobs persistent profile photo + onboarding v4
 
 ## What changed
 - Every job seeker, including existing accounts, can upload or change a profile picture from **Profile**.
