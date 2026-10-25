@@ -914,6 +914,30 @@
     .auth-login-foot{text-align:center;margin:20px 0 0;font-size:13px;color:#AFC6E5}
     .auth-login-foot a{color:#7DEEFF;font-weight:700}
     @media(min-height:760px){.app.auth-layout:not(.logged-in-app) #content{padding-top:calc(34px + env(safe-area-inset-top,0px))}}
+
+    /* v25.10: dedicated mobile settings and full-width navigation */
+    .settings-screen{padding:8px 16px calc(160px + env(safe-area-inset-bottom,0px));color:#EAF3FF}
+    .settings-screen h1{font-size:26px;letter-spacing:-.02em;margin:8px 0 15px}
+    .settings-identity{background:#0C1732;border:1px solid rgba(45,123,255,.38);padding:16px;display:flex;flex-direction:column;gap:4px;margin-bottom:16px;overflow-wrap:anywhere}
+    .settings-identity strong{font-size:16px}.settings-identity span{color:#EAF3FF;font-size:13px}.settings-identity small{font-size:11px;color:#A6BDD9}
+    .settings-group{margin-bottom:16px;background:#0B1020;border:1px solid rgba(45,123,255,.34)}
+    .settings-group h2{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:#9DB8DC;margin:0;padding:12px 14px;background:rgba(45,123,255,.10)}
+    .settings-action{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:13px 14px;border:0;border-top:1px solid rgba(45,123,255,.22);background:transparent;color:#EAF3FF;text-decoration:none;text-align:left;font:inherit;cursor:pointer}
+    .settings-action:focus-visible{outline:2px solid #00E5FF;outline-offset:-2px}
+    .settings-action .nav-icon{width:20px;height:20px;flex:none;color:#77CFFF}
+    .settings-action-text{display:flex;flex-direction:column;flex:1;min-width:0;gap:3px}
+    .settings-action-text strong{font-size:14px;font-weight:650}.settings-action-text small{font-size:11px;color:#9DB8DC}
+    .settings-chevron{font-size:20px;line-height:1;color:#799DC4}
+    .settings-danger .settings-action{color:#FFA89F}.settings-danger .settings-action .nav-icon{color:#FFA89F}
+    .settings-warning{padding:12px;margin:0 0 14px;border:1px solid #CBA46C;background:#2A231B;color:#FFE7C3;font-size:12px;line-height:1.5}
+    .settings-warning button{color:#A7E9FF;font-weight:700;text-decoration:underline;border:0;background:none;cursor:pointer}
+    .account-shortcut{padding:12px 16px 0}.account-shortcut .btn{border:1px solid rgba(45,123,255,.46)}
+    @media(max-width:699px){
+      .bottomnav.employer-nav:not(.hidden){grid-template-columns:repeat(4,minmax(0,1fr))!important}
+      .bottomnav.employer-nav:not(.hidden) .nav-button{min-height:47px!important;padding:5px 2px!important}
+      .bottomnav.employer-nav .nav-label{font-size:10px;line-height:1.1}
+      #content.employer-nav-space{padding-bottom:calc(150px + var(--deas-safe-bottom))}
+    }
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -1491,6 +1515,7 @@ function captureGrowthAttribution(){
       landingPath:window.location.pathname + window.location.search
     };
     if(q.get("signup")==="1") state.authMode="signup";
+    if(q.get("forgot")==="1") state.authMode="forgot";
     if(Object.values(incoming).some((v,i)=>i<6 && v)){
       const current=localStorage.getItem("deasjobs_growth_attribution");
       if(!current) localStorage.setItem("deasjobs_growth_attribution",JSON.stringify(incoming));
@@ -1551,10 +1576,10 @@ async function loadBootstrap(){
   state.mode = data.user.isAdmin ? "admin" : data.user.role;
 
   const validTab = state.mode==="jobseeker"
-    ? ["feed","work-experience","applications","profile"].includes(state.tab)
+    ? ["feed","work-experience","applications","profile","settings"].includes(state.tab)
     : state.mode==="employer"
-      ? ["home","employer-analytics","post","applicants","integrations","profile"].includes(state.tab)
-      : ["admin-home","admin-growth","admin-pilot","admin-launch","admin-analytics","admin-commercial","admin-risk","admin-compliance","verifications","admin-users","admin-jobs","admin-reports"].includes(state.tab);
+      ? ["home","employer-analytics","post","applicants","integrations","profile","settings"].includes(state.tab)
+      : ["admin-home","admin-growth","admin-pilot","admin-launch","admin-analytics","admin-commercial","admin-risk","admin-compliance","verifications","admin-users","admin-jobs","admin-reports","settings"].includes(state.tab);
 
   if(!validTab){
     state.tab = state.mode==="jobseeker" ? "feed" : (state.mode==="employer" ? "home" : "admin-home");
@@ -1809,7 +1834,7 @@ function renderAuth(){
         </div>
       </div>
       <p class="auth-login-foot">New to Deas Jobs? <a href="/login.html?signup=1">Create account</a></p>
-      <p class="auth-login-foot"><a href="/">Back to home</a></p>
+      <p class="auth-login-foot"><a href="/">Back to home</a> · <a href="/contact.html">Contact us</a></p>
     </div>
   `;
 }
@@ -1975,7 +2000,14 @@ const NAV_ICON_PATHS = Object.freeze({
   compliance: '<path d="M9 3H5v18h14V3h-4M9 2h6v4H9zM8 13l3 3 5-6"/>',
   reports: '<path d="M5 22V3m0 1c4-2 7 2 11 0v11c-4 2-7-2-11 0"/>',
   verify: '<path d="M12 2 4 6v7c0 5 4 7 8 9 4-2 8-4 8-9V6l-8-4Z"/><path d="m8 12 3 3 5-6"/>',
-  users: '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 20v-2a6 6 0 0 1 12 0v2M15 15a6 6 0 0 1 7 5"/>'
+  users: '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 20v-2a6 6 0 0 1 12 0v2M15 15a6 6 0 0 1 7 5"/>',
+  settings: '<path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="M19.3 13.7 22 12l-2.7-1.7-.5-2.3-2.4-.4L14.8 5h-5.6L7.6 7.6l-2.4.4-.5 2.3L2 12l2.7 1.7.5 2.3 2.4.4L9.2 19h5.6l1.6-2.6 2.4-.4.5-2.3Z"/>',
+  lock: '<rect x="5" y="10" width="14" height="11"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 15v2"/>',
+  mail: '<rect x="3" y="5" width="18" height="14"/><path d="m3 7 9 7 9-7"/>',
+  download: '<path d="M12 3v13m-5-5 5 5 5-5M4 18v3h16v-3"/>',
+  logout: '<path d="M9 3H4v18h5M15 8l5 4-5 4M20 12H9"/>',
+  delete: '<path d="M4 6h16M9 6V4h6v2M6 6l1 15h10l1-15M10 10v7M14 10v7"/>',
+  document: '<path d="M6 3h9l4 4v14H6Z M15 3v5h4 M9 12h7 M9 16h7"/>'
 });
 function navIcon(icon){
   return `<svg class="nav-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">${NAV_ICON_PATHS[icon] || NAV_ICON_PATHS.jobs}</svg>`;
@@ -1985,15 +2017,16 @@ function renderNav(){
   const unreadInterviews = state.mode==="jobseeker" ? unreadInterviewCount() : 0;
   const unreadAlerts = unreadNotificationCount();
   const items = state.mode==="jobseeker"
-    ? [["feed","Jobs","jobs"],["work-experience","Work experience","experience"],["applications",`Applied${unreadInterviews ? ` (${unreadInterviews})` : ""}`,"applied"],["profile","Profile","profile"],["notifications","Notifications","notifications"]]
+    ? [["feed","Jobs","jobs"],["work-experience","Work experience","experience"],["applications",`Applied${unreadInterviews ? ` (${unreadInterviews})` : ""}`,"applied"],["profile","Profile","profile"],["notifications","Notifications","notifications"],["settings","Settings","settings"]]
     : state.mode==="employer"
-      ? [["home","Dashboard","dashboard"],["employer-analytics","Analytics","analytics"],["post","Post job","post"],["applicants","Applicants","applicants"],["integrations","API tools","integrations"],["profile","Business","business"],["notifications","Alerts","notifications"]]
-      : [["admin-home","Admin","dashboard"],["admin-growth","Growth","growth"],["admin-pilot","Pilot","pilot"],["admin-launch","Launch","launch"],["admin-analytics","Analytics","analytics"],["admin-commercial","Plans","plans"],["admin-risk","Risk","risk"],["admin-compliance","Compliance","compliance"],["admin-reports","Reports","reports"],["verifications","Verify","verify"],["admin-users","Users","users"],["admin-jobs","Jobs","jobs"],["notifications","Notifications","notifications"]];
+      ? [["home","Dashboard","dashboard"],["employer-analytics","Analytics","analytics"],["post","Post job","post"],["applicants","Applicants","applicants"],["integrations","API tools","integrations"],["profile","Business","business"],["notifications","Alerts","notifications"],["settings","Settings","settings"]]
+      : [["admin-home","Admin","dashboard"],["admin-growth","Growth","growth"],["admin-pilot","Pilot","pilot"],["admin-launch","Launch","launch"],["admin-analytics","Analytics","analytics"],["admin-commercial","Plans","plans"],["admin-risk","Risk","risk"],["admin-compliance","Compliance","compliance"],["admin-reports","Reports","reports"],["verifications","Verify","verify"],["admin-users","Users","users"],["admin-jobs","Jobs","jobs"],["notifications","Notifications","notifications"],["settings","Settings","settings"]];
   nav.style.removeProperty("grid-template-columns");
   nav.style.setProperty("--nav-count", String(items.length));
   nav.classList.toggle("employer-nav", state.mode==="employer");
   nav.classList.toggle("admin-nav", state.mode==="admin");
   document.getElementById("content").classList.toggle("admin-nav-space", state.mode==="admin");
+  document.getElementById("content").classList.toggle("employer-nav-space", state.mode==="employer");
   nav.innerHTML = items.map(([key,label,icon]) => {
     const notification = key === "notifications";
     return `<button type="button" class="nav-button ${!notification && state.tab===key ? 'active' : ''}" aria-label="${notification ? `Notifications${unreadAlerts ? `, ${unreadAlerts} unread` : ''}` : label}" ${!notification ? `aria-current="${state.tab===key ? 'page' : 'false'}"` : ''} onclick="${notification ? 'openNotifications()' : `setTab('${key}')`}"><span class="nav-icon-wrap">${navIcon(icon)}${notification && unreadAlerts ? `<span class="nav-unread-count" id="navNotifyCount">${unreadAlerts>99 ? '99+' : unreadAlerts}</span>` : ''}</span><span class="nav-label">${label}</span></button>`;
@@ -2007,7 +2040,7 @@ function render(){
   const nav = document.getElementById("bottomnav");
   if(state.serviceError){
     topbar.classList.add("hidden"); nav.classList.add("hidden");
-    nav.classList.remove("admin-nav", "employer-nav"); document.getElementById("content").classList.remove("admin-nav-space");
+    nav.classList.remove("admin-nav", "employer-nav"); document.getElementById("content").classList.remove("admin-nav-space", "employer-nav-space");
     document.getElementById("content").innerHTML = `
       <div class="hero"><h1>Service unavailable</h1><p>${state.serviceError}</p></div>
       <div class="section-pad"><div class="card"><strong>Your account data has not been changed.</strong><p class="small">Retry the connection. If the problem continues, check Cloudflare Pages and D1 before making database changes.</p><button class="btn btn-dark btn-block" onclick="retryService()">Retry connection</button></div></div>`;
@@ -2017,7 +2050,7 @@ function render(){
     document.title = state.authMode === "signup" ? "Create account | Deas Jobs" : "Log in | Deas Jobs";
     topbar.classList.add("hidden");
     nav.classList.add("hidden");
-    nav.classList.remove("admin-nav", "employer-nav"); document.getElementById("content").classList.remove("admin-nav-space");
+    nav.classList.remove("admin-nav", "employer-nav"); document.getElementById("content").classList.remove("admin-nav-space", "employer-nav-space");
     document.getElementById("content").innerHTML = renderAuth();
     setTimeout(renderTurnstileWidget, 0);
     return;
@@ -2031,6 +2064,7 @@ function render(){
   renderNav();
   renderNotificationBell();
   document.getElementById("content").innerHTML =
+    state.tab === "settings" ? renderSettings() :
     state.mode==="admin"
       ? renderAdmin()
       : (needsOnboarding() ? renderOnboarding() : (state.mode==="jobseeker" ? renderJobseeker() : renderEmployer()));
@@ -2705,6 +2739,60 @@ function privacyBool(value){
   return value === true || value === 1 || value === "1";
 }
 
+// Deas Jobs v25.10: account options in one place for job seekers, employers and admins.
+function settingsAction(label, icon, action, detail=""){
+  return `<button type="button" class="settings-action" onclick="${action}">${navIcon(icon)}<span class="settings-action-text"><strong>${label}</strong>${detail ? `<small>${detail}</small>` : ""}</span><span class="settings-chevron" aria-hidden="true">›</span></button>`;
+}
+function settingsLink(label, icon, href, detail=""){
+  return `<a class="settings-action" href="${href}">${navIcon(icon)}<span class="settings-action-text"><strong>${label}</strong>${detail ? `<small>${detail}</small>` : ""}</span><span class="settings-chevron" aria-hidden="true">›</span></a>`;
+}
+function renderSettings(){
+  const personal = state.mode !== "admin";
+  const role = state.mode === "employer" ? "Employer" : state.mode === "admin" ? "Administrator" : "Job seeker";
+  const user = state.user || {};
+  const consentNeedsReview = personal && !state.account?.consent?.current;
+  return `<div class="settings-screen">
+    <h1>Settings</h1>
+    <div class="settings-identity"><strong>${safeText(user.name || "Your account")}</strong><span>${safeText(user.email || "")}</span><small>${role} account</small></div>
+    ${consentNeedsReview ? `<p class="settings-warning">Your terms or privacy notice need reviewing. <button type="button" onclick="openAccountLegal()">Review now</button></p>` : ""}
+    <section class="settings-group" aria-label="Account">
+      <h2>Account</h2>
+      ${personal ? settingsAction(state.mode === "employer" ? "Edit business profile" : "Edit job profile", "profile", "setTab('profile')") : ""}
+      ${settingsAction("Reset password", "lock", "openPasswordResetHelp()", "Secure email reset")}
+      ${personal ? settingsAction("Privacy settings", "risk", "openPrivacySettings()") : ""}
+    </section>
+    <section class="settings-group" aria-label="Notifications">
+      <h2>Notifications</h2>
+      ${personal ? settingsAction("Email preferences", "mail", "openEmailPreferences()") : ""}
+      ${settingsAction("Push notifications", "notifications", "openPushSettings()")}
+      ${settingsAction("View notifications", "notifications", "openNotifications()")}
+    </section>
+    <section class="settings-group" aria-label="Support and legal">
+      <h2>Support & privacy</h2>
+      ${settingsLink("Contact us", "mail", "/contact.html")}
+      ${personal ? settingsAction("Safety & blocked accounts", "risk", "openSafetyCentre()") : ""}
+      ${personal ? settingsAction("Download my data", "download", "downloadMyData()") : ""}
+      ${personal ? settingsAction("Terms & privacy", "document", "openAccountLegal()") : settingsLink("Privacy notice", "document", "/privacy.html")}
+      ${personal ? settingsAction("Data rights & requests", "document", "openDataRightsCentre()") : ""}
+    </section>
+    <section class="settings-group" aria-label="Account actions">
+      <h2>Account actions</h2>
+      ${settingsAction("Log out", "logout", "doLogout()")}
+      ${personal ? `<div class="settings-danger">${settingsAction("Delete account", "delete", "openDeleteAccount()")}</div>` : ""}
+    </section>
+  </div>`;
+}
+function openPasswordResetHelp(){
+  openModal(`<h3>Reset password</h3><p>To protect your account, reset your password using a secure email link. You will need to log out first.</p>
+    <button type="button" class="btn btn-dark btn-block" onclick="logoutForPasswordReset()">Log out & reset password</button>
+    <button type="button" class="btn btn-outline btn-block" style="margin-top:9px;color:var(--ink);border-color:var(--line-light)" onclick="closeModal()">Cancel</button>`);
+}
+async function logoutForPasswordReset(){
+  try{await api("/api/auth/logout",{method:"POST"});}
+  catch(e){toast("Could not log out. Try again.");return;}
+  location.replace("/login.html?forgot=1");
+}
+
 function renderPrivacySafetyCard(){
   const a = state.account || {};
   const reports = a.reports || [];
@@ -3240,7 +3328,7 @@ function renderProfile(){
         <button class="btn btn-dark btn-block" onclick="saveProfile()">Save profile</button>
       </div>
       ${renderReferralCard()}
-      ${renderPrivacySafetyCard()}
+      <div class="account-shortcut"><button class="btn btn-outline btn-block" onclick="setTab('settings')">Account settings</button></div>
     </div>
   `;
 }
@@ -5591,7 +5679,7 @@ function renderBusinessProfile(){
           : ""}
       </div>
       ${renderReferralCard()}
-      ${renderPrivacySafetyCard()}
+      <div class="account-shortcut"><button class="btn btn-outline btn-block" onclick="setTab('settings')">Account settings</button></div>
     </div>
   `;
 }
