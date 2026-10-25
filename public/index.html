@@ -31,8 +31,8 @@
     html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
     a{color:inherit}
     a:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
-    .site{max-width:980px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 18px calc(env(safe-area-inset-bottom,0px) + 30px)}
-    header{display:flex;gap:16px;justify-content:space-between;align-items:center;padding:8px 0 20px;border-bottom:1px solid rgba(45,123,255,.32)}
+    .site{max-width:980px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 4px) 18px calc(env(safe-area-inset-bottom,0px) + 30px)}
+    header{display:flex;gap:16px;justify-content:space-between;align-items:center;padding:4px 0 16px;border-bottom:1px solid rgba(45,123,255,.32)}
     .brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:750;letter-spacing:.015em;white-space:nowrap}
     .brand img{width:43px;height:43px;object-fit:contain}
     .topnav{display:flex;gap:8px;align-items:center}
@@ -54,8 +54,6 @@
     .tile h3{font-size:18px;margin:0 0 8px}
     .tile p{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 22px}
     .tile a{color:#72EDFF;font-size:14px;font-weight:700;margin-top:auto}
-    .how{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 32px}
-    .how span{border-left:3px solid var(--cyan);padding:10px 12px;background:#0B1530;font-size:14px}
     footer{display:flex;flex-wrap:wrap;gap:13px 20px;border-top:1px solid rgba(45,123,255,.35);padding-top:23px;font-size:13px;color:var(--muted)}
     footer a{text-decoration:underline;text-underline-offset:3px}
     @media(max-width:680px){.hero{grid-template-columns:1fr;padding:30px 0 26px;gap:10px}.hero-logo{display:none}.grid{grid-template-columns:1fr}.tile{min-height:0}.topnav .signup{display:none}h1{font-size:clamp(32px,8vw,45px)}.hero p{font-size:15px}.site{padding-inline:16px}}
@@ -85,12 +83,8 @@
           <article class="tile"><h3>Employers</h3><p>Advertise vacancies, review applicants and manage interviews.</p><a data-auth-link href="/login.html?signup=1">Join as an employer</a></article>
         </div>
       </section>
-      <section class="section-top" aria-labelledby="how-heading">
-        <h2 id="how-heading">How it works</h2>
-        <div class="how"><span>1. Browse opportunities</span><span>2. Create a profile</span><span>3. Apply and track progress</span></div>
-      </section>
     </main>
-    <footer aria-label="Legal and information"><a href="/jobs">Job listings</a><a href="/privacy.html">Privacy notice</a><a href="/terms.html">Terms of use</a><a href="/children.html">Young users</a><span>© Deas Jobs</span></footer>
+    <footer aria-label="Legal and information"><a href="/jobs">Job listings</a><a href="/privacy.html">Privacy notice</a><a href="/terms.html">Terms of use</a><a href="/children.html">Young users</a></footer>
   </div>
   <script>
   (function(){
