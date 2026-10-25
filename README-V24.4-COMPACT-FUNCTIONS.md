@@ -1,4 +1,4 @@
-# DEASJobs v24.4 Compact Functions
+# Deas Jobs v24.4 Compact Functions
 
 This release keeps the v24.3 launch-fix behaviour but restructures Cloudflare Pages Functions so the `functions/` directory contains fewer than 100 files.
 
@@ -39,8 +39,8 @@ The compact structure makes browser uploads possible again, but the preferred lo
 
 Use GitHub Desktop or normal Git instead:
 
-1. Clone the DEASJobs repository locally.
-2. Replace the repository files with the contents of the latest DEASJobs release.
+1. Clone the Deas Jobs repository locally.
+2. Replace the repository files with the contents of the latest Deas Jobs release.
 3. Review the changed files.
 4. Commit the update.
 5. Push to `main`.

@@ -1,4 +1,4 @@
-# DEASJobs v17 - Employer Plans + Commercial Controls
+# Deas Jobs v17 - Employer Plans + Commercial Controls
 
 v17 adds the commercial structure without enabling card payments.
 
