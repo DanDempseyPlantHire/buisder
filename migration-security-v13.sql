@@ -1,5 +1,5 @@
--- DEASJobs v13 — authentication and security
--- Run ONCE in the same D1 database used by the live DEASJobs Pages project.
+-- Deas Jobs v13 — authentication and security
+-- Run ONCE in the same D1 database used by the live Deas Jobs Pages project.
 -- This migration uses CREATE TABLE / INSERT only. No ALTER TABLE statements.
 
 CREATE TABLE IF NOT EXISTS verified_emails (

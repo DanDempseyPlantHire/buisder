@@ -1,4 +1,4 @@
-DEASJobs v25.3 Functions manifest - 72 files
+Deas Jobs v25.3 Functions manifest - 72 files
 
 functions/_lib/analytics.js
 functions/_lib/commercial.js

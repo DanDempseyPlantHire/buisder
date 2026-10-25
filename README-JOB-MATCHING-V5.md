@@ -1,4 +1,4 @@
-# DEASJobs v5 — Job matching and filters
+# Deas Jobs v5 — Job matching and filters
 
 This upgrade adds:
 

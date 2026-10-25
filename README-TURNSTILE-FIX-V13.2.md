@@ -1,4 +1,4 @@
-# DEASJobs v13.2 — Turnstile initialization fix
+# Deas Jobs v13.2 — Turnstile initialization fix
 
 ## Fix
 

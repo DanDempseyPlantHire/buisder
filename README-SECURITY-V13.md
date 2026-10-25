@@ -1,4 +1,4 @@
-# DEASJobs v13 — Authentication and security
+# Deas Jobs v13 — Authentication and security
 
 This release adds the next roadmap block.
 
@@ -51,7 +51,7 @@ Pages Functions middleware adds:
 In your Pages project, add these under Settings -> Variables and Secrets.
 
 ### Turnstile
-Create a Turnstile widget for your DEASJobs domain and add:
+Create a Turnstile widget for your Deas Jobs domain and add:
 
 TURNSTILE_SITE_KEY = the public Turnstile site key
 TURNSTILE_SECRET_KEY = the Turnstile secret key
@@ -64,7 +64,7 @@ v13 uses Resend for verification/reset emails.
 Add:
 
 RESEND_API_KEY = your Resend API key
-EMAIL_FROM = DEASJobs <noreply@YOUR-VERIFIED-DOMAIN>
+EMAIL_FROM = Deas Jobs <noreply@YOUR-VERIFIED-DOMAIN>
 APP_URL = https://YOUR-DEASJOBS-DOMAIN
 
 Store RESEND_API_KEY as a secret.

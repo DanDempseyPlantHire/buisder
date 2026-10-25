@@ -1,4 +1,4 @@
-# DEASJobs v13.4 — Password reset diagnostics and hardening
+# Deas Jobs v13.4 — Password reset diagnostics and hardening
 
 This release addresses the generic "Something went wrong" error after Turnstile.
 
@@ -36,6 +36,6 @@ and all three of these should be true:
 - auth_tokens
 - auth_rate_limits
 
-If `securityMigrationReady` is false, run `migration-security-v13.sql` in the D1 database bound to the live DEASJobs Pages project.
+If `securityMigrationReady` is false, run `migration-security-v13.sql` in the D1 database bound to the live Deas Jobs Pages project.
 
 Then request a NEW password-reset email. Old reset links can be discarded.

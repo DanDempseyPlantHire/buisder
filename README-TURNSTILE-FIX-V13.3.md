@@ -1,4 +1,4 @@
-# DEASJobs v13.3 — Turnstile whitespace hardening
+# Deas Jobs v13.3 — Turnstile whitespace hardening
 
 The Turnstile widget failed because the configured site key contained trailing whitespace.
 

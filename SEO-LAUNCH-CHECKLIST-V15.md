@@ -1,4 +1,4 @@
-# DEASJobs v15 SEO launch checklist
+# Deas Jobs v15 SEO launch checklist
 
 ## Before indexing
 - Confirm the production custom domain and set `APP_URL` to that canonical origin.
@@ -26,4 +26,4 @@
 - Keep employer verification current.
 - Close roles promptly when no longer available.
 - Review Search Console errors before changing structured data.
-- Do not add salary JSON-LD unless DEASJobs stores reliable structured salary amount/unit/currency data.
+- Do not add salary JSON-LD unless Deas Jobs stores reliable structured salary amount/unit/currency data.

@@ -1,4 +1,4 @@
-# DEASJobs v10 — Job offer workflow
+# Deas Jobs v10 — Job offer workflow
 
 This version adds the next hiring-stage workflow after interview completion.
 

@@ -1,4 +1,4 @@
-# DEASJobs v19 — Email Notification Test Plan
+# Deas Jobs v19 — Email Notification Test Plan
 
 Use disposable candidate and employer accounts whose inboxes you can access.
 
@@ -63,7 +63,7 @@ From Account & privacy -> Email notifications:
 
 Use a disposable accepted interview scheduled within 24 hours.
 
-1. Keep one authenticated DEASJobs session active long enough for bootstrap to run.
+1. Keep one authenticated Deas Jobs session active long enough for bootstrap to run.
 2. Confirm the 24-hour reminder email arrives.
 3. Check that refreshing repeatedly does not create duplicate reminder emails.
 4. For a test interview within one hour, confirm the one-hour reminder email is also deduplicated.

@@ -1,4 +1,4 @@
-# DEASJobs v13.1 — Turnstile Siteverify fix
+# Deas Jobs v13.1 — Turnstile Siteverify fix
 
 This is a corrective release for v13.
 
@@ -14,7 +14,7 @@ and stopped.
 That meant the Pages Function never ran and therefore Cloudflare Siteverify
 was never called. Cloudflare correctly reported:
 
-`Siteverify isn't being called for DEASJobs`
+`Siteverify isn't being called for Deas Jobs`
 
 ## What v13.1 changes
 

@@ -1,4 +1,4 @@
-# DEASJobs v24.1 Free Launch
+# Deas Jobs v24.1 Free Launch
 
 This release keeps the v24 post-launch upgrades but removes payment functionality from the initial launch.
 

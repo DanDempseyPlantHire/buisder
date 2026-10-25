@@ -1,4 +1,4 @@
--- DEASJobs v24.1 FREE LAUNCH
+-- Deas Jobs v24.1 FREE LAUNCH
 -- Payments/Stripe are disabled. Safe to run after a partial v24 migration.
 -- Existing billing tables, if any, are intentionally left dormant rather than dropped.
 

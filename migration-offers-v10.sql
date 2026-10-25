@@ -1,5 +1,5 @@
--- DEASJobs v10 — Job offer workflow
--- Run ONCE in the same Cloudflare D1 database used by DEASJobs.
+-- Deas Jobs v10 — Job offer workflow
+-- Run ONCE in the same Cloudflare D1 database used by Deas Jobs.
 -- This migration only CREATES a new table/indexes. It does not alter existing columns.
 
 CREATE TABLE IF NOT EXISTS job_offers (

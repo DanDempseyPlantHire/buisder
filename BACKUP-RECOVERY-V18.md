@@ -1,4 +1,4 @@
-# DEASJobs v18 — Production Backup & Recovery
+# Deas Jobs v18 — Production Backup & Recovery
 
 ## Before the pilot
 

@@ -1,4 +1,4 @@
-# DEASJobs v21 Test Plan
+# Deas Jobs v21 Test Plan
 
 ## Migration and build
 1. Back up production D1.

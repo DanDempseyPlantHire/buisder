@@ -1,4 +1,4 @@
-# DEASJobs v15 - Public Jobs + SEO
+# Deas Jobs v15 - Public Jobs + SEO
 
 This release activates the previously parked public-jobs and search-discovery work. It is built on v21 and does not require a D1 migration.
 
@@ -20,7 +20,7 @@ Public job pages include:
 - Twitter summary metadata
 - Schema.org `JobPosting` JSON-LD
 
-Only fields DEASJobs actually stores are emitted. Salary structured data is deliberately omitted rather than guessing a machine-readable salary basis from free text.
+Only fields Deas Jobs actually stores are emitted. Salary structured data is deliberately omitted rather than guessing a machine-readable salary basis from free text.
 
 ## Public visibility rule
 A job is public only when:

@@ -1,4 +1,4 @@
-# DEASJobs v23 Growth test plan
+# Deas Jobs v23 Growth test plan
 
 1. Run the v23 migration twice; the second run must succeed.
 2. Admin: open Growth and create a partner, campaign, referral link and employer prospect.

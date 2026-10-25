@@ -1,4 +1,4 @@
--- DEASJobs v23 Growth migration (Cloudflare D1 / SQLite)
+-- Deas Jobs v23 Growth migration (Cloudflare D1 / SQLite)
 -- Safe to run more than once. No ALTER TABLE statements are used.
 
 CREATE TABLE IF NOT EXISTS growth_partners (

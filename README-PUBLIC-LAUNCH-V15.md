@@ -1,4 +1,4 @@
-# DEASJobs v15 Public Jobs + SEO release
+# Deas Jobs v15 Public Jobs + SEO release
 
 Built on v21 Production Legal & Compliance.
 

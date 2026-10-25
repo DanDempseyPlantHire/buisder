@@ -114,8 +114,8 @@ ON commercial_history(employer_id, created_at);
 INSERT OR IGNORE INTO commercial_plans
 (code, name, description, price_mode, monthly_price_cents, active_job_limit, featured_job_limit, is_public, sort_order)
 VALUES
-('free', 'Free', 'For trying DEASJobs with one active role.', 'free', 0, 1, 0, 1, 10),
-('pilot', 'Pilot', 'Controlled pilot access assigned by DEASJobs.', 'free', 0, 5, 2, 0, 20),
+('free', 'Free', 'For trying Deas Jobs with one active role.', 'free', 0, 1, 0, 1, 10),
+('pilot', 'Pilot', 'Controlled pilot access assigned by Deas Jobs.', 'free', 0, 5, 2, 0, 20),
 ('growth', 'Growth', 'For employers hiring regularly.', 'unset', NULL, 5, 2, 1, 30),
 ('pro', 'Pro', 'For larger or higher-volume hiring.', 'unset', NULL, 20, 5, 1, 40);
 

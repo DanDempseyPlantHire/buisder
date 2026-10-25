@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS pilot_settings (
   id TEXT PRIMARY KEY CHECK (id='default'),
-  pilot_name TEXT NOT NULL DEFAULT 'DEASJobs Pilot',
+  pilot_name TEXT NOT NULL DEFAULT 'Deas Jobs Pilot',
   invite_required INTEGER NOT NULL DEFAULT 0,
   feedback_enabled INTEGER NOT NULL DEFAULT 1,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('planned','active','paused','completed')),
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS pilot_settings (
 
 INSERT OR IGNORE INTO pilot_settings
 (id, pilot_name, invite_required, feedback_enabled, status)
-VALUES ('default', 'DEASJobs Pilot', 0, 1, 'active');
+VALUES ('default', 'Deas Jobs Pilot', 0, 1, 'active');
 
 CREATE TABLE IF NOT EXISTS pilot_cohorts (
   id TEXT PRIMARY KEY,

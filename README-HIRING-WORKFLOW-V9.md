@@ -1,4 +1,4 @@
-# DEASJobs v9 — Shortlisting + formal interview workflow
+# Deas Jobs v9 — Shortlisting + formal interview workflow
 
 This version implements the next two roadmap items.
 
@@ -41,7 +41,7 @@ The UI does not yet expose the complete timeline; that remains a later roadmap i
 
 ## Deployment
 
-1. Run `migration-hiring-workflow-v9.sql` ONCE in the same D1 database used by DEASJobs.
+1. Run `migration-hiring-workflow-v9.sql` ONCE in the same D1 database used by Deas Jobs.
 2. Commit/deploy the v9 files to GitHub.
 3. Let Cloudflare Pages redeploy.
 4. Test:

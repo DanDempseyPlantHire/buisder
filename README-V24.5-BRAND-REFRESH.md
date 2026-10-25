@@ -1,6 +1,6 @@
-# DEASJobs v24.5 Brand Refresh
+# Deas Jobs v24.5 Brand Refresh
 
-This release applies the supplied DEASJobs B logo across the app and public job pages.
+This release applies the supplied Deas Jobs B logo across the app and public job pages.
 
 ## Brand implementation
 - Uses the supplied logo as the in-app brand mark and PWA icon.

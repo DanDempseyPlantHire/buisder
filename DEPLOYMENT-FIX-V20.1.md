@@ -1,4 +1,4 @@
-# DEASJobs v20.1 Cloudflare Pages build fix
+# Deas Jobs v20.1 Cloudflare Pages build fix
 
 Cloudflare reported unresolved imports for these exact files:
 

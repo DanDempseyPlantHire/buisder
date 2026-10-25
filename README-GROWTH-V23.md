@@ -1,4 +1,4 @@
-# DEASJobs v23 - Growth
+# Deas Jobs v23 - Growth
 
 This release adds first-party acquisition measurement without enabling paid referral rewards or ad-tech trackers.
 

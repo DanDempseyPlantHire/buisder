@@ -1,4 +1,4 @@
--- DEASJobs v16 — Analytics + Pilot Measurement
+-- Deas Jobs v16 — Analytics + Pilot Measurement
 -- Run once in the live D1 database before deploying v16.
 -- No ALTER TABLE statements are used.
 

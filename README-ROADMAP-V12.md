@@ -1,4 +1,4 @@
-# DEASJobs v12 — Timeline + employer controls + notifications
+# Deas Jobs v12 — Timeline + employer controls + notifications
 
 This release combines the next three roadmap items.
 
@@ -39,7 +39,7 @@ No database migration is required for paused job status because `jobs.status` is
 
 ## 3. Notification centre
 
-A new notification bell appears in DEASJobs.
+A new notification bell appears in Deas Jobs.
 
 Notifications are created for:
 - new applications (employer)
@@ -60,13 +60,13 @@ Features:
 - mark one as read
 - mark all as read
 - clicking an application notification opens the appropriate Applications/Applicants area
-- browser Notification API alerts while DEASJobs is open, if the user grants permission
+- browser Notification API alerts while Deas Jobs is open, if the user grants permission
 
 ## Important notification limitation
 
 This release provides persistent in-app notifications and browser alerts while the web app is running.
 
-True background push notifications when DEASJobs is fully closed require Web Push subscriptions/VAPID infrastructure.
+True background push notifications when Deas Jobs is fully closed require Web Push subscriptions/VAPID infrastructure.
 Email notifications require an email delivery provider and domain configuration.
 Those are not enabled by this release.
 

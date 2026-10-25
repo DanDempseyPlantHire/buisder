@@ -1,4 +1,4 @@
--- DEASJobs v7 admin dashboard migration
+-- Deas Jobs v7 admin dashboard migration
 -- Run ONCE in Cloudflare D1 before deploying v7.
 
 ALTER TABLE users ADD COLUMN is_suspended INTEGER NOT NULL DEFAULT 0;
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS admin_audit_log (
 
 CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit_log(created_at);
 
--- Grant admin access to the existing DEASJobs support account.
+-- Grant admin access to the existing Deas Jobs support account.
 -- This does NOT store or change the account password.
 INSERT OR IGNORE INTO admin_users (user_id)
 SELECT id

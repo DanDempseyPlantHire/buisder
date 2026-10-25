@@ -1,4 +1,4 @@
-# DEASJobs v14 — Privacy, Safety & Moderation
+# Deas Jobs v14 — Privacy, Safety & Moderation
 
 ## Included
 
@@ -105,4 +105,4 @@ It also gives existing accounts default privacy preferences without creating fal
 
 ## Important beta limitation
 
-Employer self-deletion currently removes that employer's jobs and related DEASJobs recruitment records through the existing database cascade. Before a large public production launch, consider an archival/pseudonymisation model so candidate application history can be retained where appropriate without retaining the deleted employer account.
+Employer self-deletion currently removes that employer's jobs and related Deas Jobs recruitment records through the existing database cascade. Before a large public production launch, consider an archival/pseudonymisation model so candidate application history can be retained where appropriate without retaining the deleted employer account.

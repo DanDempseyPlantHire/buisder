@@ -1,4 +1,4 @@
--- DEASJobs v5 job matching / filtering migration
+-- Deas Jobs v5 job matching / filtering migration
 -- Run once against the existing D1 database.
 
 ALTER TABLE jobs ADD COLUMN employment_type TEXT NOT NULL DEFAULT 'Part-time';

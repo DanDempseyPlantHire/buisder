@@ -1,4 +1,4 @@
-# DEASJobs v20 Pilot Management Test
+# Deas Jobs v20 Pilot Management Test
 
 Use test accounts for this sequence.
 
@@ -51,4 +51,4 @@ Check at 320–430px mobile widths and on desktop:
 - two-column forms collapse cleanly
 - analytics/admin tables scroll horizontally
 - modal content remains scrollable
-- topbar controls do not overlap the DEASJobs brand
+- topbar controls do not overlap the Deas Jobs brand

@@ -1,4 +1,4 @@
-# DEASJobs v21 — Production Legal & Compliance Review Notes
+# Deas Jobs v21 — Production Legal & Compliance Review Notes
 
 This release implements a compliance workspace and production-draft legal documents. It is not a substitute for legal advice or final legal sign-off.
 
@@ -12,13 +12,13 @@ This release implements a compliance workspace and production-draft legal docume
 - Personal-data breaches that present a risk must be notified to the DPC without undue delay and, where feasible, within 72 hours; even non-notified breaches must be internally recorded. DPC: https://www.dataprotection.ie/en/faqs/responsibilities-data-controllers/what-do-i-do-if-there-security-breach
 - Non-exempt cookies/device storage generally require consent. Strictly necessary storage can be exempt, but clear information is still required. DPC: https://www.dataprotection.ie/en/dpc-guidance/guidance-cookies-and-other-tracking-technologies
 - Under the DSA, hosting services must provide notice-and-action mechanisms for illegal content. European Commission / EUR-Lex: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022R2065
-- The DSA also requires hosting services to provide statements of reasons for certain moderation restrictions; some additional online-platform obligations have micro/small-enterprise exceptions, so DEASJobs's exact classification and exemptions must be legally assessed. Commission overview: https://digital-strategy.ec.europa.eu/en/policies/dsa-brings-transparency
+- The DSA also requires hosting services to provide statements of reasons for certain moderation restrictions; some additional online-platform obligations have micro/small-enterprise exceptions, so Deas Jobs' exact classification and exemptions must be legally assessed. Commission overview: https://digital-strategy.ec.europa.eu/en/policies/dsa-brings-transparency
 - The Commission published DSA minor-protection guidelines in July 2025. The Commission states that those guidelines apply to online platforms accessible to minors except micro and small enterprises. https://digital-strategy.ec.europa.eu/en/library/commission-publishes-guidelines-protection-minors
 
 ## Decisions still requiring qualified review
 
-1. Confirm the legal entity operating DEASJobs and all public contact details.
-2. Confirm whether DEASJobs is an intermediary/hosting service/online platform under the DSA and what SME exemptions apply.
+1. Confirm the legal entity operating Deas Jobs and all public contact details.
+2. Confirm whether Deas Jobs is an intermediary/hosting service/online platform under the DSA and what SME exemptions apply.
 3. Complete a DPIA covering 16–17-year-old users, job ranking, location and recruitment data.
 4. Complete legitimate-interest assessments for security/moderation and first-party analytics if those bases are retained.
 5. Approve the final Record of Processing Activities and lawful-basis map.

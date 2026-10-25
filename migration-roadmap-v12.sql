@@ -1,4 +1,4 @@
--- DEASJobs v12
+-- Deas Jobs v12
 -- Application timeline + employer controls + in-app notifications
 --
 -- Only the notification centre needs new database objects.

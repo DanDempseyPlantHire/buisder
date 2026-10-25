@@ -1,10 +1,10 @@
-# DEASJobs v24.6 Google Indexing Fix
+# Deas Jobs v24.6 Google Indexing Fix
 
-This release addresses Google Search Console classifying the DEASJobs home page as a Soft 404.
+This release addresses Google Search Console classifying the Deas Jobs home page as a Soft 404.
 
 Changes:
 - Adds substantial crawlable home-page content to the initial HTML.
-- Keeps meaningful DEASJobs/job content in the rendered unauthenticated page.
+- Keeps meaningful Deas Jobs/job content in the rendered unauthenticated page.
 - Adds canonical, robots, Open Graph and WebSite/Organization structured data to the home page.
 - Adds the root URL to sitemap.xml.
 - Explicitly allows the root URL in robots.txt.

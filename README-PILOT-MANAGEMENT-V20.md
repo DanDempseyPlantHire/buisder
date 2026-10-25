@@ -1,6 +1,6 @@
-# DEASJobs v20 — Pilot Management + UI Polish
+# Deas Jobs v20 — Pilot Management + UI Polish
 
-v20 is built on DEASJobs v19 and is intended to support a controlled real-world pilot with employers, job seekers and partner organisations.
+v20 is built on Deas Jobs v19 and is intended to support a controlled real-world pilot with employers, job seekers and partner organisations.
 
 ## Pilot management
 
@@ -17,7 +17,7 @@ Invite codes can be copied or emailed directly from Admin -> Pilot using the exi
 
 An admin can optionally turn on **Require invite code for new signups**. When enabled, a valid pilot invite code is required during account creation.
 
-Existing DEASJobs users can enter an invite code from Account & Privacy -> Pilot.
+Existing Deas Jobs users can enter an invite code from Account & Privacy -> Pilot.
 
 ### Cohorts and organisations
 Admin -> Pilot can create and track:
@@ -41,7 +41,7 @@ The pilot dashboard shows:
 - employer job count and verification status
 - participants with no recorded app open in the last 7 days
 
-Admins can also add an existing DEASJobs user directly to a pilot by email and can change the user's pilot status, cohort or organisation.
+Admins can also add an existing Deas Jobs user directly to a pilot by email and can change the user's pilot status, cohort or organisation.
 
 ### Feedback
 Pilot participants can submit:
@@ -92,7 +92,7 @@ Run:
 
 `migration-pilot-management-v20-d1-safe.sql`
 
-against the existing production DEASJobs D1 database before deploying v20.
+against the existing production Deas Jobs D1 database before deploying v20.
 
 The migration creates:
 - `pilot_settings`
