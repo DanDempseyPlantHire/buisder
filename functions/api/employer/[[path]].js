@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for Deas Jobs v24.4 compact deployment.
 import { err, json, requireUser } from "../../_lib/db.js";
 
 // Source route: analytics.js

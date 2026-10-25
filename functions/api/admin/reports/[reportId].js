@@ -85,8 +85,8 @@ export async function onRequestPost(context) {
       type: "safety_report_update",
       title: "Safety report reviewed",
       body: status === "resolved"
-        ? "DEASJobs has reviewed your report and taken the appropriate action."
-        : "DEASJobs has reviewed and closed your report.",
+        ? "Deas Jobs has reviewed your report and taken the appropriate action."
+        : "Deas Jobs has reviewed and closed your report.",
       eventKey: `safety-report-update:${report.id}:${status}`
     });
   }

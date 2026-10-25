@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for Deas Jobs v24.4 compact deployment.
 import { accessEndFromDays, applyPlan, ensureCommercialAccount, normalizeCommercialCode } from "../../_lib/commercial.js";
 import { createNotification, err, json, newId, requireUser } from "../../_lib/db.js";
 import { recordGrowthSignup } from "../../_lib/growth.js";
@@ -105,7 +105,7 @@ const route0 = (() => {
       userId: referral.referrerEmployerId,
       type: "employer_referral",
       title: "Employer referral recorded",
-      body: "An employer joined your DEASJobs referral network.",
+      body: "An employer joined your Deas Jobs referral network.",
       eventKey: `employer-referral:${user.id}`
     });
   

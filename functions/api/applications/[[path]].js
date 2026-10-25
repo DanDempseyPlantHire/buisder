@@ -1,4 +1,4 @@
-// DEASJobs v25.2 compact Functions: original endpoint handlers, grouped by route.
+// Deas Jobs v25.2 compact Functions: original endpoint handlers, grouped by route.
 // Individual handlers and their authentication/validation logic are preserved.
 // Do not restore the old route files when deploying this compact module.
 import * as _import0 from "../../_lib/db.js";

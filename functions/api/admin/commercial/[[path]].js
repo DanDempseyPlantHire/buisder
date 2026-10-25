@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for Deas Jobs v24.4 compact deployment.
 import { applyPlan, normalizeCommercialCode } from "../../../_lib/commercial.js";
 import { createNotification, err, json, newId, requireAdmin } from "../../../_lib/db.js";
 
@@ -46,7 +46,7 @@ const route0 = (() => {
     await createNotification(env, {
       userId: employer.id,
       type: "commercial_plan_update",
-      title: "DEASJobs plan updated",
+      title: "Deas Jobs plan updated",
       body: `Your employer plan is now ${planCode}.`,
       eventKey: `commercial-plan:${employer.id}:${planCode}:${Date.now()}`
     });

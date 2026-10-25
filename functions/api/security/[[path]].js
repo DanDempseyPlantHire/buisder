@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for Deas Jobs v24.4 compact deployment.
 import { json } from "../../_lib/db.js";
 import { emailDeliveryConfigured, emailVerificationRequired } from "../../_lib/security.js";
 

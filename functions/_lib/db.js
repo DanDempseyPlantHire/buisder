@@ -1,5 +1,5 @@
 import { sendPushToUser } from "./push.js";
-// Shared helpers for the DEASJobs API (Cloudflare Pages Functions + D1)
+// Shared helpers for the Deas Jobs API (Cloudflare Pages Functions + D1)
 
 export function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
@@ -121,7 +121,7 @@ export async function createNotification(env, {
     newId(),
     userId,
     type || "general",
-    title || "DEASJobs update",
+    title || "Deas Jobs update",
     body || "",
     applicationId,
     jobId,
@@ -133,7 +133,7 @@ export async function createNotification(env, {
 
   try {
     await sendPushToUser(env, userId, {
-      title: title || "DEASJobs update",
+      title: title || "Deas Jobs update",
       body: body || "",
       type: type || "general",
       applicationId,

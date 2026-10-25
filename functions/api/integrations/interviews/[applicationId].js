@@ -10,6 +10,6 @@ export async function onRequestGet(context){
   if(!row||![row.jobseekerId,row.employerId].includes(user.id))return err('Interview not found',404);
   const start=icsTime(row.interviewAt); if(!start)return err('Interview date is invalid');
   const end=icsTime(new Date(new Date(row.interviewAt).getTime()+60*60*1000).toISOString());
-  const text=`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//DEASJobs//Interview//EN\r\nCALSCALE:GREGORIAN\r\nBEGIN:VEVENT\r\nUID:${row.id}@deasjobs\r\nDTSTAMP:${icsTime(new Date().toISOString())}\r\nDTSTART:${start}\r\nDTEND:${end}\r\nSUMMARY:${icsEscape(`Interview - ${row.title}`)}\r\nDESCRIPTION:${icsEscape(row.message||`Interview with ${row.company||'employer'}`)}\r\nLOCATION:${icsEscape(row.location||'')}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
+  const text=`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Deas Jobs//Interview//EN\r\nCALSCALE:GREGORIAN\r\nBEGIN:VEVENT\r\nUID:${row.id}@deasjobs\r\nDTSTAMP:${icsTime(new Date().toISOString())}\r\nDTSTART:${start}\r\nDTEND:${end}\r\nSUMMARY:${icsEscape(`Interview - ${row.title}`)}\r\nDESCRIPTION:${icsEscape(row.message||`Interview with ${row.company||'employer'}`)}\r\nLOCATION:${icsEscape(row.location||'')}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
   return new Response(text,{headers:{'Content-Type':'text/calendar; charset=utf-8','Content-Disposition':`attachment; filename="deasjobs-interview-${row.id}.ics"`,'Cache-Control':'no-store'}});
 }

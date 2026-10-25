@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for Deas Jobs v24.4 compact deployment.
 import { clearSessionCookie, err, json, newId, requireUser, verifyPassword } from "../../_lib/db.js";
 import { PRIVACY_VERSION, TERMS_VERSION } from "../../_lib/policy.js";
 

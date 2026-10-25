@@ -1,4 +1,4 @@
-// Consolidated Pages Functions routes. Generated for DEASJobs v24.4 compact deployment.
+// Consolidated Pages Functions routes. Generated for Deas Jobs v24.4 compact deployment.
 import { recordAnalyticsEvent } from "../../_lib/analytics.js";
 import { ensureCommercialAccount } from "../../_lib/commercial.js";
 import { clearSessionCookie, err, hashPassword, json, newId, parseCookies, sessionCookie, verifyPassword } from "../../_lib/db.js";
@@ -12,7 +12,7 @@ const route0 = (() => {
   function setupError(e) {
     const msg = String(e?.message || e || "");
     if (/no such table: (auth_rate_limits|auth_tokens|verified_emails)/i.test(msg)) {
-      return "DEASJobs security database setup is incomplete. Run migration-security-v13.sql in the live D1 database.";
+      return "Deas Jobs security database setup is incomplete. Run migration-security-v13.sql in the live D1 database.";
     }
     return null;
   }
@@ -53,9 +53,9 @@ const route0 = (() => {
   
           const sent = await sendEmail(env, {
             to: user.email,
-            subject: "Reset your DEASJobs password",
-            html: `<p>We received a request to reset your DEASJobs password.</p><p><a href="${link}">Reset password</a></p><p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>`,
-            text: `Reset your DEASJobs password: ${link}\nThis link expires in 30 minutes.`
+            subject: "Reset your Deas Jobs password",
+            html: `<p>We received a request to reset your Deas Jobs password.</p><p><a href="${link}">Reset password</a></p><p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>`,
+            text: `Reset your Deas Jobs password: ${link}\nThis link expires in 30 minutes.`
           });
   
           if (!sent.ok) {
@@ -208,9 +208,9 @@ const route3 = (() => {
   
     await sendEmail(env, {
       to: user.email,
-      subject: "Verify your DEASJobs email",
-      html: `<p><a href="${link}">Verify your DEASJobs email address</a></p><p>This link expires in 24 hours.</p>`,
-      text: `Verify your DEASJobs email: ${link}\nThis link expires in 24 hours.`
+      subject: "Verify your Deas Jobs email",
+      html: `<p><a href="${link}">Verify your Deas Jobs email address</a></p><p>This link expires in 24 hours.</p>`,
+      text: `Verify your Deas Jobs email: ${link}\nThis link expires in 24 hours.`
     });
   
     return json({ ok: true, message: "If verification is needed, an email has been sent." });
@@ -223,7 +223,7 @@ const route4 = (() => {
   function setupError(e) {
     const msg = String(e?.message || e || "");
     if (/no such table: (auth_tokens|verified_emails)/i.test(msg)) {
-      return "DEASJobs security database setup is incomplete. Run migration-security-v13.sql in the live D1 database.";
+      return "Deas Jobs security database setup is incomplete. Run migration-security-v13.sql in the live D1 database.";
     }
     return null;
   }
@@ -313,12 +313,12 @@ const route5 = (() => {
     if (!email || !password || !role) return err("Email, password and role are required");
     if (!["jobseeker", "employer"].includes(role)) return err("Role must be jobseeker or employer");
     if (!acceptedTerms || !acceptedPrivacy) {
-      return err("You must accept the DEASJobs Pilot Terms and Privacy Summary to create an account.");
+      return err("You must accept the Deas Jobs Pilot Terms and Privacy Summary to create an account.");
     }
     if (!eligibilityConfirmed) {
       return err(role === "jobseeker"
         ? "Confirm that you are at least 16 years old."
-        : "Confirm that you are authorised to use DEASJobs for this business.");
+        : "Confirm that you are authorised to use Deas Jobs for this business.");
     }
   
     const cleanEmail = String(email).toLowerCase().trim();
@@ -430,9 +430,9 @@ const route5 = (() => {
   
       const sent = await sendEmail(env, {
         to: cleanEmail,
-        subject: "Verify your DEASJobs email",
-        html: `<p>Welcome to DEASJobs.</p><p><a href="${link}">Verify your email address</a></p><p>This link expires in 24 hours.</p>`,
-        text: `Welcome to DEASJobs. Verify your email: ${link}\nThis link expires in 24 hours.`
+        subject: "Verify your Deas Jobs email",
+        html: `<p>Welcome to Deas Jobs.</p><p><a href="${link}">Verify your email address</a></p><p>This link expires in 24 hours.</p>`,
+        text: `Welcome to Deas Jobs. Verify your email: ${link}\nThis link expires in 24 hours.`
       });
   
       if (!sent.ok) {
