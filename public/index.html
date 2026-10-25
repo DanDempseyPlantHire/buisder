@@ -818,6 +818,71 @@
     /* Inline styles from legacy screens also use sharp edges. The provided circular
        Deas Jobs artwork is retained inside a square image frame. */
     :where(.app) *{border-radius:0!important}
+
+    /* v25.6: compact screens, iPhone safe areas and edge-to-edge navigation. */
+    :root{--deas-safe-top:env(safe-area-inset-top,0px);--deas-safe-bottom:env(safe-area-inset-bottom,0px)}
+    @media(max-width:699px){
+      .app{padding-top:calc(10px + var(--deas-safe-top));min-height:100dvh}
+      .topbar{top:var(--deas-safe-top);padding:9px 14px 10px}
+      .topbar .row{flex-wrap:nowrap;align-items:center}
+      .topbar .row>div:last-child{flex-wrap:nowrap;margin-left:auto}
+      .topbar .brand-name{font-size:14px}
+      .topbar .subtle{display:none}
+      .topbar .btn{min-height:36px;padding:7px 9px;font-size:11px}
+      .hero{margin-top:12px;margin-bottom:12px;padding:15px}
+      .hero h1{font-size:clamp(22px,6vw,26px);line-height:1.15}
+      .hero p{font-size:12px;line-height:1.4}
+      .feed-wrap{padding-top:12px}
+    }
+    .bottomnav:not(.hidden){
+      display:grid!important;
+      grid-template-columns:repeat(var(--nav-count,4),minmax(0,1fr))!important;
+      width:min(100%,430px)!important;
+      max-width:100%!important;
+      left:50%;right:auto;transform:translateX(-50%);
+      bottom:0!important;
+      overflow:visible!important;
+      justify-content:stretch!important;
+      gap:0!important;
+      padding:0 0 max(8px,var(--deas-safe-bottom))!important;
+      align-items:stretch;
+    }
+    .bottomnav:not(.admin-nav) button{
+      display:flex;align-items:center;justify-content:center;
+      flex:1 1 0!important;width:100%!important;min-width:0!important;max-width:none!important;
+      min-height:54px;padding:11px 2px 8px!important;
+      font-size:clamp(9px,2.7vw,11px);line-height:1.12;
+      white-space:normal;overflow-wrap:normal;word-break:normal;
+    }
+    .bottomnav.admin-nav:not(.hidden){
+      grid-template-columns:repeat(4,minmax(0,1fr))!important;
+      max-height:none!important;
+      overflow:visible!important;
+      width:min(100%,430px)!important;
+      padding:0 0 max(8px,var(--deas-safe-bottom))!important;
+    }
+    .bottomnav.admin-nav button{
+      min-width:0!important;max-width:none!important;width:100%!important;
+      min-height:42px;font-size:10px;padding:9px 2px 7px!important;
+    }
+    #content{padding-bottom:calc(90px + var(--deas-safe-bottom))}
+    #content.admin-nav-space{padding-bottom:calc(180px + var(--deas-safe-bottom))}
+    .filter-bar,.feed-intro,.opportunity-tabs{margin-bottom:10px}
+    .feed-intro h2{font-size:16px}
+    .filter-summary{font-size:11px}
+    .hero .cta-row{margin-top:12px}
+    .help-disclosure{border-top:1px solid rgba(45,123,255,.25);margin-top:9px;padding-top:9px}
+    .help-disclosure summary{cursor:pointer;font-size:12px;font-weight:700}
+    .help-disclosure[open] .small{margin-top:9px;line-height:1.5}
+    @media(max-width:380px){
+      .bottomnav.employer-nav button{font-size:9px;padding-inline:1px!important}
+      .bottomnav.admin-nav button{font-size:9px}
+      .topbar .brand-name{font-size:13px}
+    }
+    @media(min-width:700px){
+      .bottomnav:not(.hidden){bottom:24px!important}
+      .app{padding-top:0}
+    }
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -827,7 +892,7 @@
     <div class="row">
       <div>
         <div class="brand"><div class="logo"><img src="/brand/deasjobs-logo.png" alt="Deas Jobs logo"></div><div class="brand-name">Deas Jobs</div></div>
-        <div class="subtle" id="modeLabel">Swipe-friendly jobs for young people</div>
+        <div class="subtle" id="modeLabel">Jobs & work experience</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <button class="btn btn-soft install-top hidden" id="installTop" onclick="installDeasJobs()">Install</button>
@@ -844,8 +909,8 @@
   <section id="seoHomeIntro" class="seo-home-intro" aria-labelledby="seo-home-title">
     <div class="hero">
       <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="Deas Jobs logo"><span>Deas Jobs</span></div>
-      <h1 id="seo-home-title">Find local jobs and work experience with Deas Jobs</h1>
-      <p>Deas Jobs connects young people looking for work with employers offering jobs and work experience opportunities in Ireland. Browse vacancies without an account, then sign up to apply and manage your applications.</p>
+      <h1 id="seo-home-title">Jobs & work experience for young people</h1>
+      <p>Find jobs and work experience from employers in Ireland. Browse listings, create a profile and apply.</p>
       <div class="seo-home-actions">
         <a class="btn btn-dark" href="/jobs">Explore available jobs</a>
         <a class="btn btn-outline" href="#login">Log in or join</a>
@@ -856,7 +921,7 @@
     <div class="section-pad" id="login">
       <div class="form-card">
         <h2>Get started with Deas Jobs</h2>
-        <p>Log in or create your free account to apply for jobs, save your profile and manage recruitment.</p>
+        <p>Sign in or join to apply.</p>
         <a class="btn btn-dark btn-block" href="/jobs">Browse current opportunities</a>
         <noscript><p>Enable JavaScript to log in or create an account. Public job listings remain available without JavaScript.</p></noscript>
       </div>
@@ -867,28 +932,19 @@
       <div class="seo-home-grid">
         <article class="form-card">
           <h2>Looking for your first job?</h2>
-          <p>Discover opportunities from participating employers, including part-time work and entry-level roles. Create a candidate profile, add your CV and apply using the swipe-style job feed.</p>
+          <p>Browse local opportunities and swipe to apply.</p>
           <a href="/jobs">See public job listings</a>
         </article>
         <article class="form-card">
           <h2>Looking for work experience?</h2>
-          <p>Deas Jobs supports work experience listings alongside regular vacancies. Review the details of available opportunities before choosing whether to apply.</p>
+          <p>Find placements in a separate work experience feed.</p>
           <a href="/jobs#work-experience">Browse work experience</a>
         </article>
         <article class="form-card">
           <h2>Hiring young people?</h2>
-          <p>Employers can set up a business profile, submit their business for verification, publish jobs and review applications. Recruitment features include shortlisting and interview invitations.</p>
+          <p>Post vacancies, review applications and arrange interviews.</p>
           <a href="#login">Join as an employer</a>
         </article>
-      </div>
-      <div class="form-card seo-home-how">
-        <h2>How Deas Jobs works</h2>
-        <ol>
-          <li><strong>Explore:</strong> Browse publicly listed jobs from verified employers.</li>
-          <li><strong>Join:</strong> Create a job seeker or employer account at no charge during the free launch.</li>
-          <li><strong>Connect:</strong> Job seekers apply and track updates; employers manage applicants and interviews.</li>
-        </ol>
-        <p>Public listings are accessible without signing in. Applying to a job requires a candidate account.</p>
       </div>
       <div class="seo-home-legal">
         <a href="/jobs">Job listings</a>
@@ -898,7 +954,7 @@
       </div>
     </div>
   </section>
-  <nav class="bottomnav hidden" id="bottomnav"></nav>
+  <nav class="bottomnav hidden" id="bottomnav" aria-label="Main navigation"></nav>
 </div>
 
 <div id="modal" class="modal hidden" onclick="closeModal(event)">
@@ -1641,7 +1697,7 @@ function renderAuth(){
       <div class="hero">
         <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="Deas Jobs logo"><span>Deas Jobs</span></div>
         <h1>Check your email</h1>
-        <p>Verify your email address before logging in to Deas Jobs.</p>
+        <p>Verify your email to log in.</p>
       </div>
       <div class="section-pad">
         <div class="form-card">
@@ -1685,7 +1741,7 @@ function renderAuth(){
       <div class="hero">
         <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="Deas Jobs logo"><span>Deas Jobs</span></div>
         <h1>Choose a new password</h1>
-        <p>Use a new password for your Deas Jobs account.</p>
+        <p>Choose a secure password.</p>
       </div>
       <div class="section-pad">
         <div class="form-card">
@@ -1706,7 +1762,7 @@ function renderAuth(){
       <div class="hero">
         <div class="auth-brand"><img src="/brand/deasjobs-logo.png" alt="Deas Jobs logo"><span>Deas Jobs</span></div>
         <h1>Create your account</h1>
-        <p>Set up Deas Jobs as a job seeker or an employer.</p>
+        <p>Choose your account type.</p>
       </div>
       <div class="section-pad">
         <div class="form-card">
@@ -1774,12 +1830,12 @@ function renderAuth(){
       </div>
       <div class="form-card" style="margin-top:12px">
         <h2 style="margin-top:0">Find jobs with Deas Jobs</h2>
-        <p class="small">Deas Jobs connects young job seekers with verified employers. Browse jobs and work experience opportunities, create a profile, apply and keep track of interviews and application updates.</p>
+        <p class="small">Swipe to apply and track your applications.</p>
         <a class="btn btn-outline btn-block" style="margin-top:8px;color:var(--ink);border-color:var(--line-light)" href="/jobs">View public jobs</a>
       </div>
       <div class="form-card" style="margin-top:12px">
         <h2 style="margin-top:0">Employers</h2>
-        <p class="small">Employers can create a business profile, post jobs or work experience opportunities and manage applicants through Deas Jobs.</p>
+        <p class="small">Post roles and manage applicants.</p>
       </div>
     </div>
   `;
@@ -1936,11 +1992,13 @@ function renderNav(){
     : state.mode==="employer"
       ? [["home","Dashboard"],["employer-analytics","Analytics"],["post","Post job"],["applicants","Applicants"],["integrations","Integrations"],["profile","Business"]]
       : [["admin-home","Admin"],["admin-growth","Growth"],["admin-pilot","Pilot"],["admin-launch","Launch"],["admin-analytics","Analytics"],["admin-commercial","Plans"],["admin-risk","Risk"],["admin-compliance","Compliance"],["admin-reports","Reports"],["verifications","Verify"],["admin-users","Users"],["admin-jobs","Jobs"]];
-  nav.style.gridTemplateColumns = "";
+  nav.style.removeProperty("grid-template-columns");
+  nav.style.setProperty("--nav-count", String(items.length));
+  nav.classList.toggle("employer-nav", state.mode==="employer");
   nav.classList.toggle("admin-nav", state.mode==="admin");
   document.getElementById("content").classList.toggle("admin-nav-space", state.mode==="admin");
   nav.innerHTML = items.map(([key,label]) => `
-    <button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>
+    <button class="${state.tab===key?'active':''}" aria-current="${state.tab===key ? 'page' : 'false'}" onclick="setTab('${key}')">${label}</button>
   `).join("");
 }
 
@@ -1956,7 +2014,7 @@ function render(){
   const nav = document.getElementById("bottomnav");
   if(state.serviceError){
     topbar.classList.add("hidden"); nav.classList.add("hidden");
-    nav.classList.remove("admin-nav"); document.getElementById("content").classList.remove("admin-nav-space");
+    nav.classList.remove("admin-nav", "employer-nav"); document.getElementById("content").classList.remove("admin-nav-space");
     document.getElementById("content").innerHTML = `
       <div class="hero"><h1>Service unavailable</h1><p>${state.serviceError}</p></div>
       <div class="section-pad"><div class="card"><strong>Your account data has not been changed.</strong><p class="small">Retry the connection. If the problem continues, check Cloudflare Pages and D1 before making database changes.</p><button class="btn btn-dark btn-block" onclick="retryService()">Retry</button></div></div>`;
@@ -1965,7 +2023,7 @@ function render(){
   if(!state.user){
     topbar.classList.add("hidden");
     nav.classList.add("hidden");
-    nav.classList.remove("admin-nav"); document.getElementById("content").classList.remove("admin-nav-space");
+    nav.classList.remove("admin-nav", "employer-nav"); document.getElementById("content").classList.remove("admin-nav-space");
     document.getElementById("content").innerHTML = renderAuth();
     setTimeout(renderTurnstileWidget, 0);
     return;
@@ -2157,7 +2215,7 @@ function openJobFilters(){
   const categories = [...new Set(state.jobs.map(categoryFor).filter(Boolean))].sort();
   openModal(`
     <h3>Job filters</h3>
-    <p>Choose what matters to you. Your feed will be filtered and then ranked by fit.</p>
+    
 
     <label>Category</label>
     <select id="filterCategory">
@@ -2181,7 +2239,7 @@ function openJobFilters(){
     <select id="filterEmployment" ${state.tab === "work-experience" ? "disabled" : ""}>
       ${["Any","Part-time","Full-time","Temporary / Seasonal","Weekend / Casual","Apprenticeship"].map(x=>`<option ${f.employmentType===x?"selected":""}>${x}</option>`).join("")}
     </select>
-    ${state.tab === "work-experience" ? `<p class="small" style="margin-top:6px">This view shows only work experience opportunities, regardless of your usual job type preferences.</p>` : ""}
+    ${state.tab === "work-experience" ? `<p class="small" style="margin-top:6px">Only work experience appears in this feed.</p>` : ""}
 
     <label>Experience</label>
     <select id="filterExperience">
@@ -2195,7 +2253,7 @@ function openJobFilters(){
     </select>
 
     <div class="notice">
-      Distance filtering works when you and the employer have added device locations. If either location is missing, Deas Jobs keeps the job rather than hiding it.
+      Distance applies only when both locations are available.
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
@@ -2243,8 +2301,8 @@ function renderFeed(){
       ${unreadInterviewCount() ? `
         <div class="interview-alert">
           <strong>🔔 ${unreadInterviewCount()} new interview ${unreadInterviewCount()===1 ? "invitation" : "invitations"}</strong>
-          An employer has proposed a date, time and place. Review it and accept or decline.
-          <button class="btn btn-dark btn-block" style="margin-top:10px" onclick="setTab('applications')">View interview invitation</button>
+          Review the invitation and respond.
+          <button class="btn btn-dark btn-block" style="margin-top:10px" onclick="setTab('applications')">View invitation</button>
           ${("Notification" in window && Notification.permission !== "granted") ? `<button class="notify-btn" onclick="enableBrowserNotifications()">Enable browser notifications</button>` : ""}
         </div>
       ` : ""}
@@ -2256,7 +2314,7 @@ function renderFeed(){
         <div class="filter-row">
           <div>
             <strong style="font-size:13px">${placementView ? "Work experience" : "Best-fit jobs"}</strong>
-            <div class="filter-summary">${jobs.length} ${sectionName} match your current filters</div>
+            <div class="filter-summary">${jobs.length} available</div>
           </div>
           <button class="btn btn-outline" onclick="openJobFilters()">Filters</button>
         </div>
@@ -2267,7 +2325,7 @@ function renderFeed(){
       <div class="feed-intro">
         <div>
           <h2>${placementView ? "Swipe work experience" : "Swipe jobs"}</h2>
-          <div class="hint">Right = apply · Left = skip</div>
+          <div class="hint">Right: apply · Left: skip</div>
         </div>
         <div style="display:flex;gap:8px">
           ${state.lastAction ? `<button class="btn btn-outline" onclick="undoLast()">Undo</button>` : ""}
@@ -2281,14 +2339,11 @@ function renderFeed(){
         current ? renderSwipeCard(current, jobs.length) : `
         <div class="card dark empty">
           <h3 style="margin:0 0 8px">${placementView ? "No more work experience opportunities" : "You reached the end"}</h3>
-          <p style="color:#cbd5e1">${placementView ? "No matching work experience placements are available right now. Try changing your filters or check back later." : "You have reviewed all current jobs. Reload skipped jobs or go to Applications to review your applications."}</p>
+          <p style="color:#cbd5e1">${placementView ? "Try different filters or check back soon." : "Reload skipped jobs or view your applications."}</p>
           <button class="btn btn-light btn-block" onclick="resetDecisions()">Reload jobs</button>
         </div>
         `
       }
-      <div class="info-note">
-        This interaction is designed to feel familiar and quick, similar to a social feed, while still showing pay, hours, location and fit before the user makes a decision.
-      </div>
     </div>
   `;
 }
@@ -2457,7 +2512,7 @@ function renderApplied(){
     <div class="section-pad">
       <div class="title-row"><h2>Applications</h2><span>${visibleApplications.length} active</span></div>
       ${("Notification" in window && Notification.permission !== "granted") ? `<button class="btn btn-outline btn-block" style="margin-bottom:12px" onclick="enableBrowserNotifications()">🔔 Enable browser notifications</button>` : ""}
-      <div class="small" style="margin-bottom:12px">Removing an application withdraws it from the employer and removes it from this list.</div>
+      
       ${
         visibleApplications.length ? visibleApplications.map(a=>{
           const hasInterview = !!a.interviewAt;
@@ -2663,9 +2718,6 @@ function renderPrivacySafetyCard(){
   return `
     <div class="safety-card">
       <div class="title-row" style="margin-top:0"><h2>Account & privacy</h2><span>${openReports ? `${openReports} report${openReports===1?"":"s"} open` : "Controls"}</span></div>
-      <div class="small">
-        Control what is shared, choose recruitment and app notifications, review blocked accounts, export your Deas Jobs data or permanently delete your account.
-      </div>
       ${!a.consent?.current ? `<div class="notice" style="margin-top:10px"><strong>Review required:</strong> the Deas Jobs Terms or Privacy Notice have been updated. Review the current documents before continuing.</div>` : ""}
       <div class="safety-actions">
         <button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openPrivacySettings()">Privacy settings</button>
@@ -2765,7 +2817,7 @@ async function submitPilotFeedback(){
 function openPilotIssueForm(){
   openModal(`
     <h3>Log a pilot issue</h3>
-    <p class="small">Use this for bugs, confusing screens, account problems or other pilot issues. Safety concerns can also be reported through the Safety Centre.</p>
+
     <div class="two-col">
       <div><label>Category</label><select id="pilotIssueCategory"><option value="bug">Bug</option><option value="usability">Usability</option><option value="content">Content</option><option value="notification">Notification</option><option value="account">Account</option><option value="safety">Safety</option><option value="other">Other</option></select></div>
       <div><label>Severity</label><select id="pilotIssueSeverity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
@@ -2796,7 +2848,7 @@ function openEmailPreferences(){
   const master = privacyBool(p.recruitmentEmails);
   openModal(`
     <h3>Email notifications</h3>
-    <p class="small">Choose which recruitment updates Deas Jobs sends by email. In-app notifications are not affected.</p>
+    <p class="small">Email preferences</p>
     <div class="privacy-toggle">
       <input id="emailRecruitment" type="checkbox" ${master?"checked":""} onchange="syncEmailPreferenceControls()">
       <label for="emailRecruitment" style="margin:0"><strong>Recruitment emails</strong><br><span class="small">Master switch for the recruitment categories below.</span></label>
@@ -2912,7 +2964,7 @@ function openSafetyCentre(){
 
   openModal(`
     <h3>Safety centre</h3>
-    <p class="small">Reports are reviewed by Deas Jobs administrators. Blocking prevents future matching and closes active recruitment interactions between the two accounts.</p>
+    <p class="small">Blocking ends active recruitment interactions.</p>
 
     <div class="title-row"><h2>Blocked accounts</h2><span>${blocks.length}</span></div>
     ${blocks.length ? blocks.map(b=>`
@@ -3051,7 +3103,7 @@ function reportReasonLabel(reason){
 function openReport(targetType, targetId, context={}){
   openModal(`
     <h3>Report ${targetType}</h3>
-    <p class="small">Send this to the Deas Jobs moderation queue. Do not include unnecessary sensitive information.</p>
+    <p class="small">Avoid including sensitive information.</p>
     <label>Reason</label>
     <select id="reportReason">
       <option value="scam_fraud">Scam or fraud</option>
@@ -3591,7 +3643,7 @@ function renderAdminAnalytics(){
   if(a.error) return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${safeText(a.error)}</div><button class="btn btn-dark btn-block" onclick="loadAdminAnalytics(true)">Retry</button></div>`;
   const f=a.funnel||{};
   return `<div class="analytics-page">
-    <div class="hero"><h1>Pilot analytics</h1><p>Clear recruitment and pilot metrics without compressed or overlapping charts.</p></div>
+    <div class="hero"><h1>Pilot analytics</h1></div>
     <div class="section-pad">
       <div class="analytics-controls">${renderAnalyticsPeriodButtons("admin")}<button class="btn btn-outline" onclick="adminAnalyticsCsv()">Export CSV</button></div>
       <div class="analytics-kpis">
@@ -3611,7 +3663,7 @@ function renderAdminAnalytics(){
       </section>
 
       <section class="analytics-panel">
-        <div class="analytics-panel-head"><div><h2>Conversion rates</h2><div class="panel-sub">Rates are shown separately so labels never compete with chart space.</div></div></div>
+        <div class="analytics-panel-head"><div><h2>Conversion rates</h2><div class="panel-sub"></div></div></div>
         ${renderConversionGrid([
           {label:"Apply vs skip decisions",value:analyticsPct(a.rates.swipeRightRate)},
           {label:"Job view to application",value:analyticsPct(a.rates.viewToApply)},
@@ -3621,12 +3673,12 @@ function renderAdminAnalytics(){
       </section>
 
       <section class="analytics-panel">
-        <div class="analytics-panel-head"><div><h2>Recent activity</h2><div class="panel-sub">Last 14 days. Exact counts replace the previous compressed multi-bar chart.</div></div></div>
+        <div class="analytics-panel-head"><div><h2>Recent activity</h2><div class="panel-sub">Last 14 days</div></div></div>
         ${renderActivityRows(a.trend)}
       </section>
 
       <section class="analytics-panel">
-        <div class="analytics-panel-head"><div><h2>Top jobs</h2><div class="panel-sub">Ranked by application activity.</div></div></div>
+        <div class="analytics-panel-head"><div><h2>Top jobs</h2><div class="panel-sub"></div></div></div>
         <div class="rank-list">${(a.topJobs||[]).map(j=>`<div class="rank-item"><div class="rank-title">${safeText(j.title)}<small>${safeText(j.company||"")} ${j.location?"· "+safeText(j.location):""}</small></div><div class="rank-stats"><div class="rank-stat"><strong>${j.applications}</strong><span>Apps</span></div><div class="rank-stat"><strong>${j.interviews}</strong><span>Interviews</span></div><div class="rank-stat"><strong>${j.offers}</strong><span>Offers</span></div><div class="rank-stat"><strong>${j.hires}</strong><span>Hires</span></div></div></div>`).join("")||`<div class="panel-sub">No application activity in this period.</div>`}</div>
       </section>
 
@@ -3651,7 +3703,7 @@ function renderEmployerAnalytics(){
   if(a.error) return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${safeText(a.error)}</div><button class="btn btn-dark btn-block" onclick="loadEmployerAnalytics(true)">Retry</button></div>`;
   const f=a.funnel||{};
   return `<div class="analytics-page">
-    <div class="hero"><h1>Hiring analytics</h1><p>Your recruitment performance in a simpler mobile-friendly layout.</p></div>
+    <div class="hero"><h1>Hiring analytics</h1></div>
     <div class="section-pad">
       <div class="analytics-controls">${renderAnalyticsPeriodButtons("employer")}</div>
       <div class="analytics-kpis">
@@ -3991,7 +4043,7 @@ function renderAdminLaunch(){
   if(r.error) return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${r.error}</div><button class="btn btn-dark btn-block" onclick="loadLaunchReadiness(true)">Retry preflight</button></div>`;
   const completed=(r.checklist||[]).filter(x=>Boolean(x.completed)).length,total=(r.checklist||[]).length;
   return `
-    <div class="hero"><h1>Pilot launch readiness</h1><p>Production preflight, recovery controls and the manual go-live checklist.</p></div>
+    <div class="hero"><h1>Launch readiness</h1></div>
     <div class="section-pad">
       ${r.launchReady?`<div class="launch-ready">Automated preflight passes and the manual pilot checklist is complete.</div>`:`<div class="launch-not-ready">${r.automatedReady?"Automated preflight passes.":"Automated preflight needs attention."} Manual checklist: ${completed}/${total} complete.</div>`}
       <div class="launch-summary" style="margin-top:12px"><div class="launch-kpi"><strong>${r.summary?.critical||0}</strong><span>Critical issues</span></div><div class="launch-kpi"><strong>${r.summary?.warning||0}</strong><span>Warnings</span></div><div class="launch-kpi"><strong>${r.summary?.pass||0}</strong><span>Checks passed</span></div><div class="launch-kpi"><strong>${completed}/${total}</strong><span>Manual checks complete</span></div></div>
@@ -4703,10 +4755,10 @@ function renderIntegrations(){
   if(!d&&!state.integrationsLoading)setTimeout(()=>loadIntegrations(),0);
   if(state.integrationsLoading||!d)return `<div class="section-pad"><div class="notice">Loading integrations…</div></div>`;
   if(d.error)return `<div class="section-pad"><div class="notice" style="color:var(--bad)">${safeText(d.error)}</div></div>`;
-  return `<div class="hero"><h1>Integrations</h1><p>Connect external recruitment tools without exposing your Deas Jobs password.</p></div><div class="section-pad">
-    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Job import API</h2><span>Employer only</span></div><div class="small">Create a scoped API key for your HR or recruitment system. Send JSON to <strong>/api/integrations/jobs</strong> using <strong>Authorization: Bearer &lt;key&gt;</strong>. Each job needs a stable <strong>externalId</strong> and title. Existing external IDs update the linked job rather than creating duplicates.</div><label>Key name</label><input id="integrationKeyName" placeholder="e.g. HR system"><button class="btn btn-dark btn-block" style="margin-top:8px" onclick="createIntegrationKey()">Create API key</button></div>
+  return `<div class="hero"><h1>Integrations</h1></div><div class="section-pad">
+    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Job import API</h2><span>Employer only</span></div><details class="help-disclosure"><summary>API instructions</summary><div class="small">POST JSON to <strong>/api/integrations/jobs</strong> with <strong>Authorization: Bearer &lt;key&gt;</strong>. Include <strong>externalId</strong> and title. Matching external IDs update the job.</div></details><label>Key name</label><input id="integrationKeyName" placeholder="e.g. HR system"><button class="btn btn-dark btn-block" style="margin-top:8px" onclick="createIntegrationKey()">Create API key</button></div>
     <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>API keys</h2><span>${(d.keys||[]).length}</span></div>${(d.keys||[]).length?(d.keys||[]).map(k=>`<div class="admin-row"><strong>${safeText(k.name)}</strong><div class="admin-meta">${safeText(k.tokenPrefix)}… · ${safeText(k.status)}${k.lastUsedAt?` · last used ${formatTimelineDate(k.lastUsedAt)}`:''}</div>${k.status==='active'?`<button class="btn btn-bad btn-block" style="margin-top:8px" onclick="revokeIntegrationKey('${k.id}')">Revoke</button>`:''}</div>`).join(''):`<div class="small">No API keys yet.</div>`}</div>
-    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Interview calendars</h2><span>ICS</span></div><div class="small">Every scheduled interview now has an Add to calendar link. The generated ICS file works with Apple Calendar, Google Calendar, Outlook and other calendar applications.</div></div>
+    <div class="v24-panel"><div class="title-row" style="margin-top:0"><h2>Interview calendars</h2><span>ICS</span></div><div class="small">Add scheduled interviews to your calendar.</div></div>
   </div>`;
 }
 
@@ -4722,8 +4774,8 @@ function updatePostOpportunityForm(){
   document.getElementById("postEmploymentRow")?.classList.toggle("hidden", isExperience);
   const note = document.getElementById("postTypeNote");
   if(note) note.textContent = isExperience
-    ? "This will appear only in the Work experience feed. State whether the placement is paid, any expenses covered, the duration and who will supervise it."
-    : "This will appear in the Jobs feed, not the separate Work experience feed.";
+    ? "Work experience feed. Specify pay, duration, expenses and supervision."
+    : "Appears in the Jobs feed.";
   const btn = document.getElementById("publishOpportunityButton");
   if(btn) btn.textContent = isExperience ? "Publish work experience" : "Publish job";
 }
@@ -4741,7 +4793,7 @@ function renderEmployer(){
   return `
     <div class="hero">
       <h1>Employer dashboard</h1>
-      <p>Keep the hiring side simple while the candidate experience feels modern and swipe-friendly.</p>
+      <p>Post opportunities and manage hiring.</p>
       <div class="cta-row">
         <button class="btn btn-light" onclick="startPostOpportunity('job')">Post a job</button>
         <button class="btn btn-soft" onclick="startPostOpportunity('work-experience')">Post work experience</button>
@@ -4754,10 +4806,10 @@ function renderEmployer(){
         <strong>${businessVerificationLabel(state.profile.verification_status)}</strong>
         <div style="margin-top:4px;font-size:12px">
           ${state.profile.verification_status==="verified"
-            ? "Candidates will see a verified badge on your listings."
+            ? "Your listings show a verified badge."
             : state.profile.verification_status==="pending"
-              ? "Your business details have been submitted for manual review."
-              : "Complete your Business Profile and submit it for verification."}
+              ? "Verification pending."
+              : "Complete your business verification."}
         </div>
       </div>
       <div class="stats">
@@ -4770,7 +4822,7 @@ function renderEmployer(){
       ${!state.postedJobs.length ? `
         <div class="card dark empty">
           <h3 style="margin:0 0 8px">No jobs posted yet</h3>
-          <p style="color:#cbd5e1">Post your first role to start appearing in the candidate feed.</p>
+          <p style="color:#cbd5e1">Post a role to reach jobseekers.</p>
           <button class="btn btn-light btn-block" onclick="setTab('post')">Post a job</button>
         </div>
       ` : state.postedJobs.map(j=>`
@@ -4901,7 +4953,7 @@ function renderPostJob(){
           <option value="job" ${!isExperience ? "selected" : ""}>Job</option>
           <option value="work-experience" ${isExperience ? "selected" : ""}>Work experience</option>
         </select>
-        <div class="notice" id="postTypeNote">${isExperience ? "This will appear only in the Work experience feed. State whether the placement is paid, any expenses covered, the duration and who will supervise it." : "This will appear in the Jobs feed, not the separate Work experience feed."}</div>
+        <div class="notice" id="postTypeNote">${isExperience ? "Work experience feed. Specify pay, duration, expenses and supervision." : "Appears in the Jobs feed."}</div>
         <label>${isExperience ? "Placement title" : "Job title"}</label><input id="jtitle" placeholder="${isExperience ? "One-week office work experience" : "Weekend Retail Assistant"}">
 
         <label>Location</label><input id="jlocation" value="${state.profile.location || "Cork"}">
