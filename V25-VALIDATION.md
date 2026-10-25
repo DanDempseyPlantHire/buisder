@@ -1,10 +1,10 @@
-# DEASJobs v25 validation
+# Deas Jobs v25 validation
 
 Validated before packaging:
 
 - Product-facing Buisder references removed from `public/`, Pages Functions and reminder Worker. The only legacy-domain references retained in runtime code are deliberate redirect/compatibility checks for `buisder.com`.
 - Production canonical domain is `https://deasjobs.com`.
-- PWA name and short name are `DEASJobs`.
+- PWA name and short name are `Deas Jobs`.
 - Brand asset path is `/brand/deasjobs-logo.png`.
 - Terms and Privacy version constants are `2026-10-19-v25-deasjobs`.
 - Functions directory remains below the browser-upload limit target at 89 files.
@@ -13,7 +13,7 @@ Validated before packaging:
 - Relative ES-module import resolution passed.
 - Fresh `schema.sql` executes with SQLite foreign keys enabled.
 - `migration-deasjobs-rebrand-v25.sql` executes twice successfully (idempotency check).
-- Existing seeded pilot/commercial wording changes from Buisder to DEASJobs after the migration.
+- Existing seeded pilot/commercial wording changes from Buisder to Deas Jobs after the migration.
 
 ## Intentionally retained internal identifiers
 
