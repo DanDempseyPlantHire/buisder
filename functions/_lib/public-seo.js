@@ -118,7 +118,7 @@ export function layout({ title, description, canonical, body, jsonLd = null, noi
 <meta property="og:type" content="website"><meta property="og:site_name" content="Deas Jobs"><meta property="og:title" content="${safeTitle}"><meta property="og:description" content="${safeDescription}"><meta property="og:url" content="${safeCanonical}">
 <meta name="twitter:card" content="summary"><meta name="twitter:title" content="${safeTitle}"><meta name="twitter:description" content="${safeDescription}">
 <style>${publicStyles()}</style>${jsonLd ? `<script type="application/ld+json">${safeJsonLd(jsonLd)}</script>` : ""}</head>
-<body><div class="shell"><header><a class="brand" href="/jobs"><img src="/brand/deasjobs-logo.png" alt="Deas Jobs logo"><span>Deas Jobs</span></a><a class="header-link" href="/">Sign in / join</a></header><main>${body}</main><footer>Deas Jobs connects job seekers and employers. Public job information is supplied by participating employers.</footer></div></body></html>`;
+<body><div class="shell"><header><a class="brand" href="/jobs"><img src="/brand/deasjobs-logo.png" alt="Deas Jobs logo"><span>Deas Jobs</span></a><a class="header-link" href="/login.html">Log in / join</a></header><main>${body}</main><footer>Deas Jobs connects job seekers and employers. Public job information is supplied by participating employers.</footer></div></body></html>`;
 }
 
 export async function listPublicJobs(env, { limit = 100 } = {}) {

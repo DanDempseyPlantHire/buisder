@@ -49,7 +49,7 @@ const route0 = (() => {
   
         if (user) {
           const token = await createAuthToken(env, user.id, "reset_password", 30 * 60);
-          const link = `${appOrigin(env, request)}/?reset=${encodeURIComponent(token)}`;
+          const link = `${appOrigin(env, request)}/login.html?reset=${encodeURIComponent(token)}`;
   
           const sent = await sendEmail(env, {
             to: user.email,
@@ -204,7 +204,7 @@ const route3 = (() => {
     }
   
     const token = await createAuthToken(env, user.id, "verify_email", 24 * 3600);
-    const link = `${appOrigin(env, request)}/?verify=${encodeURIComponent(token)}`;
+    const link = `${appOrigin(env, request)}/login.html?verify=${encodeURIComponent(token)}`;
   
     await sendEmail(env, {
       to: user.email,
@@ -426,7 +426,7 @@ const route5 = (() => {
   
     if (requireVerification) {
       const token = await createAuthToken(env, id, "verify_email", 24 * 3600);
-      const link = `${appOrigin(env, request)}/?verify=${encodeURIComponent(token)}`;
+      const link = `${appOrigin(env, request)}/login.html?verify=${encodeURIComponent(token)}`;
   
       const sent = await sendEmail(env, {
         to: cleanEmail,
