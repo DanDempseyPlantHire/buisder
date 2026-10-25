@@ -1028,17 +1028,23 @@ let state = {
   turnstileWidgetId:null,
   postOpportunityKind: "job",
   feedFilters: (() => {
+    const defaults = {category:"Any", maxDistance:0, minPay:"", employmentType:"Any", experience:"Any", availability:"Any"};
     try{
       const stored = JSON.parse(localStorage.getItem("deasjobs_feed_filters"));
-      // v25.3 migration: work experience is a separate feed, not a job-type filter.
-      if(stored?.employmentType === "Work experience") stored.employmentType = "Any";
-      return stored || {
-        category:"Any", maxDistance:25, minPay:"", employmentType:"Any",
-        experience:"Any", availability:"Match profile"
-      };
-    }catch(e){
-      return {category:"Any", maxDistance:25, minPay:"", employmentType:"Any", experience:"Any", availability:"Match profile"};
-    }
+      if(!stored || typeof stored !== "object" || Array.isArray(stored)) return defaults;
+      // Work experience has its own tab; preserve separately selected filters.
+      if(stored.employmentType === "Work experience") stored.employmentType = "Any";
+      // Prior versions restricted EVERY new account to 25 km and matching availability.
+      // Migrate only the untouched legacy defaults, not intentional custom selections.
+      if(stored.category === "Any" && (stored.employmentType || "Any") === "Any"
+         && (stored.experience || "Any") === "Any" && !stored.minPay
+         && Number(stored.maxDistance) === 25 && stored.availability === "Match profile") {
+        stored.maxDistance = 0;
+        stored.availability = "Any";
+        try{localStorage.setItem("deasjobs_feed_filters", JSON.stringify(stored));}catch(e){}
+      }
+      return {...defaults, ...stored};
+    }catch(e){ return defaults; }
   })()
 };
 
@@ -1636,9 +1642,14 @@ async function boot(){
     if(!state.user) return;
     try{
       const before = unreadNotificationCount();
+      const beforeJobs = state.mode === "jobseeker"
+        ? state.jobs.map(j => `${j.id}:${j.status}:${j.created_at}`).join("|") : "";
       await loadBootstrap();
       const after = unreadNotificationCount();
-      if(after !== before) render();
+      const afterJobs = state.mode === "jobseeker"
+        ? state.jobs.map(j => `${j.id}:${j.status}:${j.created_at}`).join("|") : "";
+      // Bootstrap already refreshes data; it previously did NOT redraw new jobs.
+      if(after !== before || (beforeJobs !== afterJobs && ["feed", "work-experience"].includes(state.tab))) render();
       notifyUnreadNotifications();
     }catch(e){}
   }, 20000);
@@ -1649,6 +1660,9 @@ async function setTab(tab){
   if(tab === "post" && state.mode === "employer") state.postOpportunityKind = "job";
   state.tab = tab;
   render();
+  if(state.mode === "jobseeker" && ["feed","work-experience"].includes(tab)) {
+    try{ await loadBootstrap(); render(); }catch(e){}
+  }
 
   if(tab==="admin-growth" && state.mode==="admin"){
     await loadGrowth();
@@ -2088,7 +2102,11 @@ function ageBandMinimum(ageBand){
 }
 
 function haversineKm(lat1, lon1, lat2, lon2){
-  const vals = [lat1,lon1,lat2,lon2].map(Number);
+  // Number(null) and Number("") are zero, NOT valid missing coordinates.
+  // Using (0,0) here used to hide legitimate nearby jobs as thousands of km away.
+  const raw = [lat1,lon1,lat2,lon2];
+  if(raw.some(v => v === null || v === undefined || String(v).trim() === "")) return null;
+  const vals = raw.map(Number);
   if(vals.some(v=>!Number.isFinite(v))) return null;
   const [a,b,c,d] = vals;
   const R = 6371;
@@ -2102,14 +2120,22 @@ function scheduleOverlap(job){
   const wanted = normalizeList(state.profile.availability);
   const offered = normalizeList(job.schedule_tags);
   if(!wanted.length || !offered.length) return null;
-  const synonyms = {
-    "sat":"saturday","sun":"sunday","weekend":"saturday","weekends":"saturday",
-    "evening":"evenings","holiday":"holidays","school/college holidays":"holidays"
+  // Compare whole day groups, not just "weekend" -> "Saturday".
+  const expand = x => {
+    const t = String(x || "").toLowerCase().trim();
+    if(["any", "flexible", "any time"].includes(t)) return ["*"];
+    if(/\bweekends?\b/.test(t)) return ["saturday", "sunday"];
+    if(/\bweekdays?\b/.test(t)) return ["monday", "tuesday", "wednesday", "thursday", "friday"];
+    if(/\bsat(?:urday)?\b/.test(t)) return ["saturday"];
+    if(/\bsun(?:day)?\b/.test(t)) return ["sunday"];
+    if(/\bevenings?\b/.test(t)) return ["evening"];
+    if(/\bholidays?\b/.test(t)) return ["holiday"];
+    return [t];
   };
-  const normal = x => synonyms[x] || x;
-  const w = wanted.map(normal);
-  const o = offered.map(normal);
-  return w.some(x => o.some(y => x.includes(y) || y.includes(x)));
+  return wanted.some(x => offered.some(y => {
+    const a=expand(x), b=expand(y);
+    return a.includes("*") || b.includes("*") || a.some(p => b.some(q => p===q || p.includes(q) || q.includes(p)));
+  }));
 }
 
 function categoryFor(job){
@@ -2227,6 +2253,26 @@ function saveFeedFilters(){
   try{ localStorage.setItem("deasjobs_feed_filters", JSON.stringify(state.feedFilters)); }catch(e){}
 }
 
+function feedFiltersActive(){
+  const f = state.feedFilters || {};
+  return Boolean((f.category && f.category !== "Any")
+    || (state.tab !== "work-experience" && f.employmentType && f.employmentType !== "Any")
+    || (f.experience && f.experience !== "Any")
+    || (state.tab !== "work-experience" && Number(f.minPay || 0) > 0)
+    || Number(f.maxDistance || 0) > 0
+    || f.availability === "Match profile");
+}
+
+async function refreshAvailableJobs(){
+  try{
+    const previous = currentFeedJobs().length;
+    await loadBootstrap();
+    const updated = currentFeedJobs().length;
+    render();
+    toast(updated > previous ? `${updated-previous} more opportunities available` : "Jobs are up to date");
+  }catch(e){ toast(e.message || "Could not refresh jobs"); }
+}
+
 function activeFilterLabels(){
   const f = state.feedFilters;
   const out = [];
@@ -2307,7 +2353,7 @@ function applyJobFilters(){
 }
 
 function clearJobFilters(){
-  state.feedFilters = {category:"Any",maxDistance:25,minPay:"",employmentType:"Any",experience:"Any",availability:"Match profile"};
+  state.feedFilters = {category:"Any",maxDistance:0,minPay:"",employmentType:"Any",experience:"Any",availability:"Any"};
   saveFeedFilters();
   closeModal();
   render();
@@ -2358,7 +2404,8 @@ function renderFeed(){
         </div>
         <div style="display:flex;gap:8px">
           ${state.lastAction ? `<button class="btn btn-outline" onclick="undoLast()">Undo swipe</button>` : ""}
-          <button class="btn btn-outline" onclick="resetDecisions()">Reload jobs</button>
+          <button class="btn btn-outline" onclick="refreshAvailableJobs()">Refresh jobs</button>
+          ${state.skipped.length ? `<button class="btn btn-outline" onclick="resetDecisions()">Show skipped</button>` : ""}
         </div>
       </div>
       <div class="feed-progress">
@@ -2368,8 +2415,10 @@ function renderFeed(){
         current ? renderSwipeCard(current, jobs.length) : `
         <div class="card dark empty">
           <h3 style="margin:0 0 8px">${placementView ? "No more work experience opportunities" : "You reached the end"}</h3>
-          <p style="color:#cbd5e1">${placementView ? "Try different filters or check back soon." : "Reload skipped jobs or view your applications."}</p>
-          <button class="btn btn-light btn-block" onclick="resetDecisions()">Reload jobs</button>
+          <p style="color:#cbd5e1">${feedFiltersActive() ? "Some opportunities may be hidden by your filters." : "There are no more available opportunities in this category right now."}</p>
+          ${feedFiltersActive() ? `<button class="btn btn-light btn-block" onclick="clearJobFilters()">Clear filters</button>` : ""}
+          ${state.skipped.length ? `<button class="btn btn-outline btn-block" onclick="resetDecisions()">Show skipped jobs</button>` : ""}
+          <button class="btn btn-outline btn-block" onclick="refreshAvailableJobs()">Refresh opportunities</button>
         </div>
         `
       }
@@ -4896,7 +4945,7 @@ function renderEmployer(){
         </div>
       </div>
       <div class="stats">
-        <div class="stat"><strong>${state.postedJobs.filter(j=>j.status==="active").length}</strong><span>Live listings</span></div>
+        <div class="stat"><strong>${state.postedJobs.filter(j=>j.status==="active").length}</strong><span>Active listings</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
         <div class="stat"><strong>${state.applicants.filter(a=>a.status==="shortlisted").length}</strong><span>Shortlisted</span></div>
         <div class="stat"><strong>${state.applicants.filter(a=>a.interviewAt).length}</strong><span>Interviews</span></div>
@@ -4920,6 +4969,7 @@ function renderEmployer(){
               <span class="job-status ${j.status || "active"}">${cap(j.status || "active")}</span>
             </div>
           </div>
+          <div class="small" style="margin-top:7px">${j.status !== "active" ? "Not visible until reopened" : state.profile.verification_status === "verified" ? "Available in the app and public jobs" : "Available to signed-in jobseekers; public listing requires employer verification"}</div>
           <div class="chips">
             <span class="chip">${j.hours}</span>
             <span class="chip good">${j.experience==="None" ? "No experience" : j.experience}</span>
