@@ -940,6 +940,7 @@
     }
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script defer src="/i18n.js"></script>
 </head>
 <body>
 <div class="app">
@@ -956,6 +957,7 @@
     </div>
   </header>
 
+  <div id="authLanguage" class="auth-language-strip"><label class="language-control" for="loginLanguage"><span>Language</span><select id="loginLanguage" data-i18n-picker aria-label="Choose language" onchange="DeasI18n.setLanguage(this.value)"><option value="en" data-no-translate>English</option><option value="ga" data-no-translate>Gaeilge</option><option value="es" data-no-translate>Español</option></select></label></div>
   <main id="content" aria-live="polite"></main>
   <nav class="bottomnav hidden" id="bottomnav" aria-label="Main navigation"></nav>
 </div>
@@ -1814,7 +1816,7 @@ function renderAuth(){
           </div>
           <div class="privacy-toggle">
             <input id="authPrivacy" type="checkbox">
-            <label for="authPrivacy" style="margin:0">I have read the <a href="/privacy.html" target="_blank" rel="noopener">Deas Jobs Privacy Notice</a>.</label>
+            <label for="authPrivacy" style="margin:0">I have read: <a href="/privacy.html" target="_blank" rel="noopener">Deas Jobs Privacy Notice</a>.</label>
           </div>
           ${turnstileMarkup()}
           ${errBox}
@@ -2436,13 +2438,13 @@ function renderSwipeCard(job, remaining){
       <div class="job-image">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <div class="job-badge">${industry}</div>
+            <div class="job-badge" data-no-translate>${industry}</div>
             ${job.is_featured ? `<span class="commercial-badge featured">Featured</span>` : ""}
           </div>
           <div class="match-score">${job._matchScore || scoreJob(job)}% fit</div>
         </div>
-        <h3>${job.title}</h3>
-        <p>${job.company || "Employer"} · ${job.location || "Location flexible"}</p>
+        <h3 data-no-translate>${job.title}</h3>
+        <p><span data-no-translate>${job.company || "Employer"}</span> · <span data-no-translate>${job.location || "Location flexible"}</span></p>
       </div>
       <div class="job-body">
         <div class="chips">
@@ -2459,7 +2461,7 @@ function renderSwipeCard(job, remaining){
           <div class="metric"><small>Start</small><strong>${job.start_date || "To be agreed"}</strong></div>
         </div>
         ${(job.match?.reasons||[]).length ? `<div class="match-reasons">${job.match.reasons.map(r=>`<span class="match-reason">${safeText(r)}</span>`).join("")}</div>` : ""}
-        ${job.description ? `<div class="why"><strong>About the role:</strong> ${job.description}</div>` : ""}
+        ${job.description ? `<div class="why"><strong>About the role:</strong> <span data-no-translate>${job.description}</span></div>` : ""}
         <div class="swipe-actions">
           <button class="big-action skip" onclick="skipCurrent()" aria-label="Skip this job">Skip job</button>
           <button class="big-action details" onclick="showJob('${job.id}')" aria-label="View job details">View details</button>
@@ -2809,6 +2811,16 @@ function renderSettings(){
       ${personal ? settingsAction(state.mode === "employer" ? "Edit business profile" : "Edit job profile", "profile", "setTab('profile')") : ""}
       ${settingsAction("Reset password", "lock", "openPasswordResetHelp()", "Secure email reset")}
       ${personal ? settingsAction("Privacy settings", "risk", "openPrivacySettings()") : ""}
+    </section>
+    <section class="settings-group" aria-label="Language">
+      <h2>Language</h2>
+      <div class="settings-language-row"><label for="settingsLanguage">App language</label>
+        <select id="settingsLanguage" data-i18n-picker aria-label="Choose language" onchange="DeasI18n.setLanguage(this.value)">
+          <option value="en" data-no-translate>English</option>
+          <option value="ga" data-no-translate>Gaeilge</option>
+          <option value="es" data-no-translate>Español</option>
+        </select>
+      </div>
     </section>
     <section class="settings-group" aria-label="Notifications">
       <h2>Notifications</h2>

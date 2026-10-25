@@ -57,13 +57,17 @@
     footer{display:flex;flex-wrap:wrap;gap:13px 20px;border-top:1px solid rgba(45,123,255,.35);padding-top:23px;font-size:13px;color:var(--muted)}
     footer a{text-decoration:underline;text-underline-offset:3px}
     @media(max-width:680px){.hero{grid-template-columns:1fr;padding:30px 0 26px;gap:10px}.hero-logo{display:none}.grid{grid-template-columns:1fr}.tile{min-height:0}.topnav .signup{display:none}h1{font-size:clamp(32px,8vw,45px)}.hero p{font-size:15px}.site{padding-inline:16px}}
+    .language-control{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .language-control select{font:inherit;color:#EEF5FF;background:#111F3B;border:1px solid #477CCD;padding:8px 4px;max-width:105px;min-height:40px}
+    @media(max-width:520px){.language-control span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.language-control select{max-width:92px;font-size:12px}.topnav{gap:5px}.action{padding-inline:9px}}
   </style>
+  <script defer src="/i18n.js"></script>
 </head>
 <body>
   <div class="site">
     <header>
       <a class="brand" href="/" aria-label="Deas Jobs home"><img src="/brand/deasjobs-logo.png" width="43" height="43" alt=""><span>Deas Jobs</span></a>
-      <nav class="topnav" aria-label="Account"><a class="action secondary" data-auth-link href="/login.html">Log in</a><a class="action signup" data-auth-link href="/login.html?signup=1">Create account</a></nav>
+      <nav class="topnav" aria-label="Account"><label class="language-control" for="homeLanguage"><span>Language</span><select id="homeLanguage" data-i18n-picker aria-label="Choose language" onchange="DeasI18n.setLanguage(this.value)"><option value="en" data-no-translate>English</option><option value="ga" data-no-translate>Gaeilge</option><option value="es" data-no-translate>Español</option></select></label><a class="action secondary" data-auth-link href="/login.html">Log in</a><a class="action signup" data-auth-link href="/login.html?signup=1">Create account</a></nav>
     </header>
     <main>
       <section class="hero" aria-labelledby="home-heading">
