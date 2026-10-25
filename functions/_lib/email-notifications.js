@@ -130,7 +130,7 @@ export async function sendRecruitmentEmail(env, request, {
         <p>Hi ${safeName},</p>
         <p>${safeBody}</p>
         ${detailsHtml ? `<ul style="padding-left:20px">${detailsHtml}</ul>` : ""}
-        ${origin ? `<p style="margin-top:24px"><a href="${escapeHtml(origin)}" style="display:inline-block;padding:11px 16px;background:#182230;color:#fff;text-decoration:none;border-radius:0}
+        ${origin ? `<p style="margin-top:24px"><a href="${escapeHtml(origin)}" style="display:inline-block;padding:11px 16px;background:#182230;color:#fff;text-decoration:none;border-radius:0">Open Deas Jobs</a></p>` : ""}
         <p style="font-size:12px;color:#667085;margin-top:28px">You can change recruitment email preferences in Deas Jobs under Account &amp; Privacy. Security and account-recovery emails cannot be disabled.</p>
       </div>`;
 
