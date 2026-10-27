@@ -1056,7 +1056,55 @@
     .message-bubble.mine{background:#125CC6;color:#FFF}
     .chip:not(.dark),.pill.soft,.notice,.match-reason,.why{background:#1B2C46!important;color:#DFECFF!important;border-color:#466B9D!important}
     .interview-alert{background:#112F45!important;color:#EDF9FF!important;border-color:#2674A0!important}
+
+    /* v25.18: Explicit appearance themes. Keep every job swipe card within the chosen theme. */
+    html[data-deas-theme="dark"] .job-card{background:#101A2C!important;color:#EDF4FF!important;border-color:#42618D!important}
+    html[data-deas-theme="dark"] .job-card .job-body{background:#101A2C!important;color:#EDF4FF!important}
+    html[data-deas-theme="dark"] .job-card .metric{background:#1A2B45!important;color:#F1F6FF!important;border-color:#43628B!important}
+    html[data-deas-theme="dark"] .job-card .metric small{color:#B4C8E5!important}
+    html[data-deas-theme="dark"] .job-card .why{background:#203754!important;color:#E6F1FF!important;border-color:#456993!important}
+    html[data-deas-theme="dark"] .job-card .job-image{color:#FFFFFF!important}
+    html[data-deas-theme="dark"] .job-card .job-image p{color:#C2D5EF!important}
+    html[data-deas-theme="dark"] :is(.feed-wrap,.filter-bar,.filter-chips,.job-list,.jobs-list){color:#EAF2FF}
+    html[data-deas-theme="dark"] :is(.feed-wrap,.filter-bar,.job-list,.jobs-list) :is(input,select,textarea){background:#111F35!important;color:#F0F6FF!important;border-color:#47668E!important}
+    html[data-deas-theme="dark"] :is(.feed-wrap,.filter-bar,.job-list,.jobs-list) :is(input,select,textarea) option{background:#111F35;color:#F0F6FF}
+    /* Light is applied deliberately; the old white base rules must not leak into Dark. */
+    html[data-deas-theme="light"]{--ink:#F3F7FD;--panel:#FFFFFF;--paper:#FFFFFF;--paper-dim:#ECF3FD;--text:#14243C;--muted:#516581;--muted-on-dark:#526783;--line-dark:#CAD9EC;--line-light:#D1DFEE;--accent:#245DCC;--accent-ink:#184B9B;--accent-tint:#E5F0FF;--good:#166D45;--good-tint:#DDF7E9;--bad:#B13232;--bad-tint:#FFEAEB;color-scheme:light}
+    html[data-deas-theme="light"] :is(html,body){background:#F3F7FD!important;color:#14243C!important}
+    html[data-deas-theme="light"] body,html[data-deas-theme="light"] .app,html[data-deas-theme="light"] .topbar,html[data-deas-theme="light"] #content{background:#F3F7FD!important;color:#14243C!important}
+    html[data-deas-theme="light"] .topbar{border-bottom-color:#CDDBEB!important}
+    html[data-deas-theme="light"] .brand-name,html[data-deas-theme="light"] .subtle{color:#192B48!important}
+    html[data-deas-theme="light"] .bottomnav{background:#FFFFFF!important;border-color:#C9D9EC!important}
+    html[data-deas-theme="light"] .bottomnav button{color:#516581!important;text-shadow:none!important}
+    html[data-deas-theme="light"] .bottomnav button.active{color:#165AC5!important;border-top-color:#165AC5!important}
+    html[data-deas-theme="light"] :is(.job-card,.job-card .job-body,.card,.form-card,.sheet,.pilot-card,.pilot-metric,.analytics-kpi,.analytics-panel,.growth-kpi,.growth-section,.v24-panel,.v24-kpi,.compliance-kpi,.compliance-section,.admin-stat,.admin-row,.launch-kpi,.readiness-check,.safety-card,.plan-card,.commercial-stat,.metric-card,.referral-card,.conversion-item,.activity-value,.rank-stat){background:#FFFFFF!important;color:#14243C!important;border-color:#CDDBEB!important}
+    html[data-deas-theme="light"] :is(.job-card,.card,.form-card,.sheet,.analytics-panel,.growth-section,.v24-panel,.compliance-section) :is(h1,h2,h3,h4,strong){color:#14243C!important}
+    html[data-deas-theme="light"] .job-card .metric{background:#EBF2FC!important;color:#14243C!important;border-color:#C9D9EB!important}
+    html[data-deas-theme="light"] .job-card .metric small{color:#506681!important}
+    html[data-deas-theme="light"] .job-card .why{background:#E5F0FF!important;color:#24486F!important;border-color:#BDD5F3!important}
+    html[data-deas-theme="light"] .job-image{background:linear-gradient(145deg,#254B83,#102949)!important;color:#FFFFFF!important}
+    html[data-deas-theme="light"] .job-image :is(h1,h2,h3,p){color:#FFFFFF!important}
+    html[data-deas-theme="light"] :is(.card,.form-card,.sheet,.analytics-panel,.growth-section,.v24-panel,.compliance-section) :is(.small,.admin-meta,.panel-sub){color:#526782!important}
+    html[data-deas-theme="light"] :is(input,select,textarea),html[data-deas-theme="light"] :is(.sheet,.form-card,.card) :is(input,select,textarea){background:#FFFFFF!important;color:#14243C!important;border-color:#A8BEDA!important}
+    html[data-deas-theme="light"] :is(input,textarea)::placeholder{color:#647894!important}
+    html[data-deas-theme="light"] .settings-screen{color:#14243C!important}
+    html[data-deas-theme="light"] .settings-identity,html[data-deas-theme="light"] .settings-group{background:#FFFFFF!important;color:#14243C!important;border-color:#CCDBED!important}
+    html[data-deas-theme="light"] .settings-identity :is(strong,span),html[data-deas-theme="light"] .settings-action{color:#14243C!important}
+    html[data-deas-theme="light"] .settings-identity small,html[data-deas-theme="light"] .settings-action small{color:#526783!important}
+    html[data-deas-theme="light"] .settings-group h2{background:#EAF2FD!important;color:#284B79!important}
+    html[data-deas-theme="light"] .settings-action{border-top-color:#D6E1EF!important}
+    html[data-deas-theme="light"] .settings-action .nav-icon{color:#2462BE!important}
+    html[data-deas-theme="light"] .settings-danger .settings-action{color:#AA3030!important}
+    html[data-deas-theme="light"] .settings-language-row :is(label,select),html[data-deas-theme="light"] .settings-theme-row :is(label,select){color:#14243C!important}
+    html[data-deas-theme="light"] :is(.analytics-page,.growth-page,.compliance-page,.title-row,.feed-intro){color:#14243C!important}
+    html[data-deas-theme="light"] .btn-outline{color:#194B94!important;border-color:#98B2D5!important}
+    html[data-deas-theme="light"] .analytics-period button{background:#EEF4FC!important;color:#14243C!important;border-color:#BFCFE2!important}
+    html[data-deas-theme="light"] .analytics-period button.active{background:#1C63C7!important;color:#FFFFFF!important}
+    .settings-theme-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:14px;border-top:1px solid rgba(45,123,255,.22)}
+    .settings-theme-row label{font-weight:650;font-size:14px}
+    .settings-theme-row select{width:auto;min-width:128px;max-width:56vw;padding:9px 12px;border:1px solid #536E9B;border-radius:0;background:#11213A;color:#EFF7FF}
 </style>
+  <script>try{document.documentElement.setAttribute('data-deas-theme',localStorage.getItem('deas-theme')==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-deas-theme','dark')}</script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script defer src="/i18n.js"></script>
 </head>
@@ -2927,6 +2975,13 @@ function settingsAction(label, icon, action, detail=""){
 function settingsLink(label, icon, href, detail=""){
   return `<a class="settings-action" href="${href}">${navIcon(icon)}<span class="settings-action-text"><strong>${label}</strong>${detail ? `<small>${detail}</small>` : ""}</span><span class="settings-chevron" aria-hidden="true">›</span></a>`;
 }
+function setDeasTheme(value){
+  const theme=value === "light" ? "light" : "dark";
+  document.documentElement.setAttribute("data-deas-theme",theme);
+  try{localStorage.setItem("deas-theme",theme);}catch(e){}
+  const picker=document.getElementById("settingsTheme");
+  if(picker) picker.value=theme;
+}
 function renderSettings(){
   const personal = state.mode !== "admin";
   const role = state.mode === "employer" ? "Employer" : state.mode === "admin" ? "Administrator" : "Job seeker";
@@ -2941,6 +2996,15 @@ function renderSettings(){
       ${personal ? settingsAction(state.mode === "employer" ? "Edit business profile" : "Edit job profile", "profile", "setTab('profile')") : ""}
       ${settingsAction("Reset password", "lock", "openPasswordResetHelp()", "Secure email reset")}
       ${personal ? settingsAction("Privacy settings", "risk", "openPrivacySettings()") : ""}
+    </section>
+    <section class="settings-group" aria-label="Appearance">
+      <h2>Appearance</h2>
+      <div class="settings-theme-row"><label for="settingsTheme">Theme</label>
+        <select id="settingsTheme" data-no-translate aria-label="Colour theme" onchange="setDeasTheme(this.value)">
+          <option value="dark" ${document.documentElement.getAttribute("data-deas-theme") !== "light" ? "selected" : ""}>Dark mode</option>
+          <option value="light" ${document.documentElement.getAttribute("data-deas-theme") === "light" ? "selected" : ""}>Light mode</option>
+        </select>
+      </div>
     </section>
     <section class="settings-group" aria-label="Language">
       <h2>Language</h2>
