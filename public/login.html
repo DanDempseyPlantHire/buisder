@@ -1117,6 +1117,20 @@
     .photo-adjust-row{display:flex;gap:8px;margin-top:14px}.photo-adjust-row button{flex:1}
     .photo-adjust-panel input[type=range]{width:100%}
 
+
+    /* v25.21: Public authentication pages use light appearance.
+       Signed-in application continues to honour Settings > Appearance. */
+    html:has(#content .auth-brand) body,
+    html:has(#content .auth-brand) .app,
+    html:has(#content .auth-brand) .topbar,
+    html:has(#content .auth-brand) #content{background:#F3F7FD!important;color:#14243C!important}
+    html:has(#content .auth-brand) .hero{background:#F3F7FD!important;color:#14243C!important}
+    html:has(#content .auth-brand) .hero :is(h1,h2,p),html:has(#content .auth-brand) .brand-name{color:#14243C!important}
+    html:has(#content .auth-brand) :is(.form-card,.card,.sheet){background:#FFFFFF!important;color:#14243C!important;border-color:#CDDBEB!important}
+    html:has(#content .auth-brand) :is(.form-card,.card) :is(label,strong,p,small){color:#14243C}
+    html:has(#content .auth-brand) :is(input,select,textarea){background:#FFFFFF!important;color:#14243C!important;border-color:#A8BEDA!important}
+    html:has(#content .auth-brand) .btn-outline{color:#174B9F!important;border-color:#94ADD0!important}
+    html:has(#content .auth-brand) .security-note{background:#EAF2FD!important;color:#25456E!important}
   </style>
   <script>try{document.documentElement.setAttribute('data-deas-theme',localStorage.getItem('deas-theme')==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-deas-theme','dark')}</script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
