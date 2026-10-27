@@ -1005,6 +1005,27 @@
         .app.viewport-fit .job-body .big-action{min-height:32px;padding:6px 2px}
       }
     }
+
+    /* v25.16: use the complete job-card height instead of stacking at the top */
+    @media(max-width:699px){
+      .app.viewport-fit .job-card{justify-content:stretch}
+      .app.viewport-fit .job-image{flex:0 0 auto;padding:12px 14px}
+      .app.viewport-fit .job-body{flex:1 1 auto;justify-content:space-between;gap:clamp(5px,1.1vh,12px);padding:12px 12px 9px}
+      .app.viewport-fit .job-body>.grid{flex:1 1 auto;min-height:0;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);align-content:stretch;gap:7px;margin:0}
+      .app.viewport-fit .job-body .metric{min-height:0;display:flex;flex-direction:column;justify-content:center;padding:7px 10px}
+      .app.viewport-fit .job-body .metric strong{white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:clamp(11px,3vw,14px)}
+      .app.viewport-fit .job-body .metric small{font-size:10px;margin-bottom:3px}
+      .app.viewport-fit .job-body .why{flex:1 1 auto;min-height:0;max-height:none;-webkit-line-clamp:4;display:-webkit-box;margin:0;padding:8px 10px;font-size:clamp(11px,2.7vw,13px)}
+      .app.viewport-fit .job-body .swipe-actions{flex:0 0 auto;margin-top:auto}
+    }
+    /* The supplied logo is circular artwork: no decorative square container. */
+    .logo,.auth-brand img{border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;padding:0!important}
+    .logo img{width:100%;height:100%;object-fit:contain}
+    .cancelled-applications{margin-top:20px}
+    .cancelled-applications h3{font-size:15px;margin:0 0 10px}
+    .cancelled-application{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px}
+    .cancelled-application .btn{width:auto;white-space:nowrap;font-size:12px}
+    @media(max-width:360px){.cancelled-application{flex-wrap:wrap}.cancelled-application .btn{width:100%}}
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script defer src="/i18n.js"></script>
@@ -2655,6 +2676,7 @@ async function resetDecisions(){
 
 function renderApplied(){
   const visibleApplications = state.applications.filter(a=>a.status!=="withdrawn");
+  const cancelledApplications = state.applications.filter(a=>a.status==="withdrawn");
   return `
     <div class="section-pad">
       <div class="title-row"><h2>Applications</h2><span>${visibleApplications.length} active</span></div>
@@ -2736,6 +2758,7 @@ function renderApplied(){
           </div>
         `
       }
+      ${cancelledApplications.length ? `<section class="cancelled-applications"><h3>Cancelled applications</h3>${cancelledApplications.map(a=>`<div class="card cancelled-application"><div><strong data-no-translate>${safeText(a.title)}</strong><div class="small" data-no-translate>${safeText(a.company)}</div></div><button class="btn btn-bad" onclick="deleteCancelledApplication('${a.id}')" aria-label="Delete cancelled application permanently">Delete permanently</button></div>`).join("")}</section>` : ""}
     </div>
   `;
 }
@@ -2764,6 +2787,20 @@ async function removeApplication(applicationId){
     render();
     toast("Application removed");
   }catch(e){ toast(e.message); }
+}
+
+async function deleteCancelledApplication(applicationId){
+  const a=state.applications.find(x=>String(x.id)===String(applicationId));
+  if(!a || a.status!=="withdrawn") return toast("Only cancelled applications can be deleted");
+  if(!confirm("Permanently delete this cancelled application, its messages and interview history? This cannot be undone.")) return;
+  try{
+    await api(`/api/applications/purge/${encodeURIComponent(applicationId)}`, {method:"DELETE"});
+    state.applications=state.applications.filter(x=>String(x.id)!==String(applicationId));
+    render();
+    await loadBootstrap();
+    render();
+    toast("Cancelled application permanently deleted");
+  }catch(e){toast(e.message);}
 }
 
 async function respondToOffer(applicationId, response){
