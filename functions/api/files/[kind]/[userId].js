@@ -83,7 +83,7 @@ export async function onRequestGet(context) {
       contentDisposition(object.customMetadata?.originalName || fallbackName)
     );
   } else {
-    headers.set("Cache-Control", "private, max-age=3600");
+    headers.set("Cache-Control", "private, no-store");
   }
 
   return new Response(object.body, { headers });

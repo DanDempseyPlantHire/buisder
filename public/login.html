@@ -1103,7 +1103,21 @@
     .settings-theme-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:14px;border-top:1px solid rgba(45,123,255,.22)}
     .settings-theme-row label{font-weight:650;font-size:14px}
     .settings-theme-row select{width:auto;min-width:128px;max-width:56vw;padding:9px 12px;border:1px solid #536E9B;border-radius:0;background:#11213A;color:#EFF7FF}
-</style>
+
+    /* v25.20: image boundaries and circular Deas Jobs artwork */
+    .swipe-employer{display:flex!important;align-items:center;gap:12px;min-width:0;width:100%;max-width:100%;overflow:hidden}
+    .swipe-employer-logo{display:block!important;flex:0 0 64px!important;width:64px!important;height:64px!important;max-width:64px!important;max-height:64px!important;min-width:64px;object-fit:contain!important;border:1px solid rgba(96,155,244,.4);background:#111B31;aspect-ratio:1/1}
+    .swipe-employer-info{flex:1;min-width:0;overflow:hidden}
+    .swipe-employer-info h3,.swipe-employer-info p{overflow-wrap:anywhere}
+    .logo,.logo img,.auth-brand img,.auth-screen img[src*="deasjobs-logo"],.brand img[src*="deasjobs-logo"]{border:0!important;box-shadow:none!important;outline:0!important;background:transparent!important;padding:0!important;border-radius:50%!important;object-fit:contain!important}
+    .business-logo img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+    .photo-adjust-backdrop{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:15px}
+    .photo-adjust-panel{width:min(410px,100%);max-height:95dvh;overflow:auto;background:#101a2c;color:#f1f6ff;border:1px solid #3978d9;padding:16px}
+    .photo-adjust-canvas{display:block;max-width:100%;width:min(300px,76vw);height:auto;aspect-ratio:1/1;margin:12px auto;background:#fff;touch-action:none;cursor:grab}
+    .photo-adjust-row{display:flex;gap:8px;margin-top:14px}.photo-adjust-row button{flex:1}
+    .photo-adjust-panel input[type=range]{width:100%}
+
+  </style>
   <script>try{document.documentElement.setAttribute('data-deas-theme',localStorage.getItem('deas-theme')==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-deas-theme','dark')}</script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script defer src="/i18n.js"></script>
@@ -2900,46 +2914,53 @@ async function prepareProfilePhotoFile(file){
   if(!file) return null;
   if(!file.type || !file.type.startsWith("image/")) throw new Error("Please choose an image file");
   if(file.size > 5 * 1024 * 1024) throw new Error("Image must be under 5 MB");
-
-  const dataUrl = await new Promise((resolve, reject)=>{
+  const dataUrl = await new Promise((resolve,reject)=>{
     const reader = new FileReader();
-    reader.onload = ()=>resolve(reader.result);
-    reader.onerror = ()=>reject(new Error("Could not read image"));
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=()=>reject(new Error("Could not read image"));
     reader.readAsDataURL(file);
   });
-
-  const img = await new Promise((resolve, reject)=>{
-    const i = new Image();
-    i.onload = ()=>resolve(i);
-    i.onerror = ()=>reject(new Error("Could not load image"));
-    i.src = dataUrl;
+  const img = await new Promise((resolve,reject)=>{
+    const i = new Image(); i.onload=()=>resolve(i);
+    i.onerror=()=>reject(new Error("Could not load image")); i.src=dataUrl;
   });
-
-  const size = 480;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  const side = Math.min(img.width, img.height);
-  const sx = (img.width - side) / 2;
-  const sy = (img.height - side) / 2;
-  ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
-
-  const canvasBlob = quality => new Promise((resolve, reject)=>{
-    canvas.toBlob(
-      blob => blob ? resolve(blob) : reject(new Error("Could not prepare image")),
-      "image/jpeg",
-      quality
-    );
+  const square=480;
+  return await new Promise((resolve,reject)=>{
+    const overlay=document.createElement("div");overlay.className="photo-adjust-backdrop";
+    overlay.innerHTML=`<div class="photo-adjust-panel" role="dialog" aria-modal="true" aria-label="Adjust photo">
+      <strong>Adjust photo</strong><p class="small">Drag to reposition. Use the slider to zoom.</p>
+      <canvas class="photo-adjust-canvas" width="480" height="480" aria-label="Photo crop preview"></canvas>
+      <label for="photoAdjustZoom">Zoom</label><input id="photoAdjustZoom" type="range" min="1" max="3" step="0.01" value="1">
+      <div class="photo-adjust-row"><button class="btn btn-outline" type="button" id="photoAdjustCancel">Cancel</button><button class="btn btn-dark" type="button" id="photoAdjustSave">Use photo</button></div></div>`;
+    document.body.appendChild(overlay);
+    const canvas=overlay.querySelector('canvas'),ctx=canvas.getContext('2d');
+    const slider=overlay.querySelector('#photoAdjustZoom');
+    let zoom=1,ox=0,oy=0,pointer=null;
+    const cover=Math.max(square/img.width,square/img.height);
+    function draw(){
+      const w=img.width*cover*zoom,h=img.height*cover*zoom;
+      ox=Math.min(Math.max(ox,square/2-w/2),w/2-square/2);
+      oy=Math.min(Math.max(oy,square/2-h/2),h/2-square/2);
+      ctx.clearRect(0,0,square,square);
+      ctx.drawImage(img,(square-w)/2+ox,(square-h)/2+oy,w,h);
+    }
+    function cleanup(){overlay.remove();}
+    slider.addEventListener('input',()=>{zoom=Number(slider.value);draw()});
+    canvas.addEventListener('pointerdown',e=>{pointer={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId)});
+    canvas.addEventListener('pointermove',e=>{
+      if(!pointer||pointer.id!==e.pointerId)return;
+      const r=canvas.getBoundingClientRect();
+      ox+=(e.clientX-pointer.x)*square/r.width; oy+=(e.clientY-pointer.y)*square/r.height;
+      pointer.x=e.clientX;pointer.y=e.clientY;draw();
+    });
+    canvas.addEventListener('pointerup',()=>{pointer=null});
+    canvas.addEventListener('pointercancel',()=>{pointer=null});
+    overlay.querySelector('#photoAdjustCancel').onclick=()=>{cleanup();resolve(null)};
+    overlay.querySelector('#photoAdjustSave').onclick=()=>{
+      canvas.toBlob(blob=>{cleanup();blob?resolve(blob):reject(new Error('Could not prepare image'))},'image/jpeg',.84);
+    };
+    draw();
   });
-
-  let quality = .82;
-  let blob = await canvasBlob(quality);
-  while(blob.size > 600 * 1024 && quality > .45){
-    quality -= .08;
-    blob = await canvasBlob(quality);
-  }
-  return blob;
 }
 
 async function uploadR2File(kind, file, filename){
@@ -3620,6 +3641,7 @@ async function saveProfile(){
     if(photoInput && photoInput.files && photoInput.files[0]){
       toast("Uploading profile photo…");
       const blob = await prepareProfilePhotoFile(photoInput.files[0]);
+      if(!blob) return;
       await uploadR2File("profile-photo", blob, "profile.jpg");
     }
 
@@ -3788,6 +3810,7 @@ async function completeOnboarding(){
     if(f && f.files && f.files[0]){
       toast("Uploading profile photo…");
       const blob = await prepareProfilePhotoFile(f.files[0]);
+      if(!blob) return;
       await uploadR2File("profile-photo", blob, "profile.jpg");
     }
 
@@ -5892,7 +5915,7 @@ function renderBusinessProfile(){
 
       <div class="form-card">
         ${(p.logo_url || p.logo_data)
-          ? `<div class="business-logo"><img src="${p.logo_url || p.logo_data}" alt="Business profile image"></div>`
+          ? `<div class="business-logo"><img src="${p.logo_url ? p.logo_url + (p.logo_url.includes("?") ? "&" : "?") + "v=" + Date.now() : p.logo_data}" alt="Business profile image"></div>`
           : `<div class="business-logo">${businessInitial()}</div>`}
 
         <label>Business profile photo / logo</label>
@@ -5956,6 +5979,7 @@ async function saveBusinessProfile(){
     if(logoInput && logoInput.files && logoInput.files[0]){
       toast("Uploading business image…");
       const blob = await prepareProfilePhotoFile(logoInput.files[0]);
+      if(!blob) return;
       await uploadR2File("business-logo", blob, "business-logo.jpg");
     }
 
