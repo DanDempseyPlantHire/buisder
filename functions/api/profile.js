@@ -54,7 +54,6 @@ export async function onRequestPut(context) {
          ON CONFLICT(user_id) DO UPDATE SET
            share_email=0,
            share_cv=0,
-           share_photo=0,
            updated_at=CURRENT_TIMESTAMP`
       ).bind(user.id).run();
     }

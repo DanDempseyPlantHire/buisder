@@ -19,6 +19,18 @@ export async function onRequestGet(context) {
   let isPrivateDocument = false;
 
   if (kind === "profile-photo") {
+    let allowed = user.isAdmin || user.id === targetUserId;
+    if (!allowed && user.role === "employer") {
+      const access = await env.DB.prepare(
+        `SELECT 1 AS ok FROM applications a
+         JOIN jobs j ON j.id=a.job_id
+         JOIN privacy_preferences pp ON pp.user_id=a.jobseeker_id
+         WHERE a.jobseeker_id=? AND j.employer_id=? AND pp.share_photo=1
+         LIMIT 1`
+      ).bind(targetUserId, user.id).first();
+      allowed = Boolean(access);
+    }
+    if (!allowed) return err("You do not have permission to access this photo", 403);
     const row = await env.DB.prepare(
       "SELECT photo_key FROM jobseeker_profiles WHERE user_id=?"
     ).bind(targetUserId).first();

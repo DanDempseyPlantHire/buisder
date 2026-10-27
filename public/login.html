@@ -2605,8 +2605,13 @@ function renderSwipeCard(job, remaining){
           </div>
           <div class="match-score">${job._matchScore || scoreJob(job)}% fit</div>
         </div>
-        <h3 data-no-translate>${job.title}</h3>
-        <p><span data-no-translate>${job.company || "Employer"}</span> · <span data-no-translate>${job.location || "Location flexible"}</span></p>
+        <div class="swipe-employer">
+          ${job.employer_logo ? `<img class="swipe-employer-logo" src="${safeText(job.employer_logo)}" alt="${safeText(job.company || 'Employer')} logo" loading="lazy">` : ''}
+          <div class="swipe-employer-info">
+            <h3 data-no-translate>${job.title}</h3>
+            <p><span data-no-translate>${job.company || "Employer"}</span> · <span data-no-translate>${job.location || "Location flexible"}</span></p>
+          </div>
+        </div>
       </div>
       <div class="job-body">
         <div class="chips">
@@ -3253,7 +3258,7 @@ function openPrivacySettings(){
 
   openModal(`
     <h3>Privacy settings</h3>
-    ${young ? `<div class="notice"><strong>16–17 protection:</strong> direct email, CV and profile photo sharing are disabled. Employers can still use Deas Jobs' interview and offer workflow.</div>` : ""}
+    ${young ? `<div class="notice"><strong>16–17 protection:</strong> email and CV sharing are disabled. Profile photos remain private unless you choose to share yours with employers you apply to.</div>` : ""}
     ${state.mode==="jobseeker" ? `
       <div class="privacy-toggle">
         <input id="privacyEmail" type="checkbox" ${privacyBool(p.shareEmail)&&!young?"checked":""} ${young?"disabled":""}>
@@ -3264,8 +3269,8 @@ function openPrivacySettings(){
         <label for="privacyCv" style="margin:0"><strong>Share my CV with employers I apply to</strong></label>
       </div>
       <div class="privacy-toggle">
-        <input id="privacyPhoto" type="checkbox" ${privacyBool(p.sharePhoto)&&!young?"checked":""} ${young?"disabled":""}>
-        <label for="privacyPhoto" style="margin:0"><strong>Share my profile photo with employers I apply to</strong></label>
+        <input id="privacyPhoto" type="checkbox" ${privacyBool(p.sharePhoto)?"checked":""}>
+        <label for="privacyPhoto" style="margin:0"><strong>Share my profile photo with employers I apply to</strong><br><span class="small">Optional. For under-18 users this is off by default. You can switch it off again at any time.</span></label>
       </div>
       <div class="privacy-toggle">
         <input id="privacyLocation" type="checkbox" ${privacyBool(p.shareLocation)?"checked":""}>

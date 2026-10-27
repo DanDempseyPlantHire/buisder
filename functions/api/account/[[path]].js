@@ -614,7 +614,7 @@ const route6 = (() => {
       if (profile?.age_band === "16–17") {
         shareEmail = 0;
         shareCv = 0;
-        sharePhoto = 0;
+        // Profile photo can be shared only on explicit opt-in; default stays off.
       }
     }
   
