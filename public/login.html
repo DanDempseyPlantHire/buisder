@@ -938,6 +938,73 @@
       .bottomnav.employer-nav .nav-label{font-size:10px;line-height:1.1}
       #content.employer-nav-space{padding-bottom:calc(150px + var(--deas-safe-bottom))}
     }
+
+    /* v25.15: use the available phone viewport for the active swipe and dashboard tabs. */
+    @media(max-width:699px){
+      .app.viewport-fit{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+      .app.viewport-fit .topbar{position:relative;top:auto;flex:0 0 auto}
+      .app.viewport-fit #content{flex:1 1 auto;min-height:0;overflow:hidden;padding-bottom:0!important}
+      .app.viewport-fit .bottomnav:not(.hidden){position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;width:100%!important;flex:0 0 auto}
+      .app.viewport-fit #content>.feed-wrap{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:6px 10px 4px}
+      .app.viewport-fit .interview-alert{max-height:54px;overflow:hidden;margin:0 0 4px;padding:4px 8px;font-size:11px}
+      .app.viewport-fit .interview-alert .btn,.app.viewport-fit .interview-alert .notify-btn{display:none}
+      .app.viewport-fit .opportunity-tabs{flex:0 0 auto;margin:2px 0 4px;gap:5px}
+      .app.viewport-fit .opportunity-tab{min-height:34px;padding:5px 6px;font-size:11px}
+      .app.viewport-fit .filter-bar{flex:0 0 auto;padding:5px 8px;margin:0 0 4px}
+      .app.viewport-fit .filter-bar .filter-chips{display:none}
+      .app.viewport-fit .filter-bar .btn{padding:5px 9px;font-size:11px}
+      .app.viewport-fit .feed-intro{flex:0 0 auto;margin:0 0 3px;align-items:center;gap:4px}
+      .app.viewport-fit .feed-intro h2{font-size:13px}
+      .app.viewport-fit .feed-intro .hint{display:none}
+      .app.viewport-fit .feed-intro>div:last-child{gap:4px!important;flex-wrap:wrap;justify-content:flex-end}
+      .app.viewport-fit .feed-intro .btn{padding:5px 7px;font-size:10px}
+      .app.viewport-fit .feed-progress{flex:0 0 auto;margin:2px 0 4px}
+      .app.viewport-fit .feed{min-height:0;flex:1 1 auto;overflow:hidden}
+      .app.viewport-fit .job-card{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+      .app.viewport-fit .job-image{flex:0 0 auto;min-height:0;padding:10px 12px}
+      .app.viewport-fit .job-image h3{font-size:clamp(18px,4.8vw,23px);margin:5px 0 2px;line-height:1.13;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+      .app.viewport-fit .job-image p{font-size:11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+      .app.viewport-fit .job-badge,.app.viewport-fit .match-score{font-size:10px;padding:3px 6px}
+      .app.viewport-fit .job-body{min-height:0;flex:1 1 auto;display:flex;flex-direction:column;padding:8px 10px 7px;overflow:hidden}
+      .app.viewport-fit .job-body>.chips{flex:0 0 auto;margin:0 0 5px;gap:4px;max-height:44px;overflow:hidden}
+      .app.viewport-fit .job-body .chip{font-size:10px;padding:3px 5px}
+      .app.viewport-fit .job-body>.grid{flex:0 0 auto;margin:0 0 5px;gap:5px}
+      .app.viewport-fit .job-body .metric{padding:5px 7px;min-width:0;overflow:hidden}
+      .app.viewport-fit .job-body .metric small{margin:0;font-size:9px}
+      .app.viewport-fit .job-body .metric strong{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .app.viewport-fit .job-body .match-reasons{max-height:23px;overflow:hidden;margin:0 0 4px}
+      .app.viewport-fit .job-body .match-reason{font-size:9px;padding:2px 4px}
+      .app.viewport-fit .job-body .why{flex:1 1 auto;min-height:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;margin:0 0 5px;padding:5px 7px;font-size:11px;line-height:1.25}
+      .app.viewport-fit .job-body .swipe-actions{flex:0 0 auto;gap:5px;margin:0}
+      .app.viewport-fit .job-body .big-action{padding:10px 2px;font-size:11px;min-height:37px}
+      .app.viewport-fit .job-body>.remaining-count{display:none}
+      .app.viewport-fit #content>.dashboard-fit{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+      .app.viewport-fit .dashboard-fit>.hero{flex:0 0 auto;margin:5px 10px;padding:10px}
+      .app.viewport-fit .dashboard-fit>.hero h1{font-size:18px;margin-bottom:2px}
+      .app.viewport-fit .dashboard-fit>.hero p{display:none}
+      .app.viewport-fit .dashboard-fit>.hero .cta-row{margin-top:6px;gap:4px}
+      .app.viewport-fit .dashboard-fit>.hero .btn{font-size:10px;padding:7px 5px}
+      .app.viewport-fit .dashboard-fit>.section-pad{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:4px 10px 0;overflow:hidden}
+      .app.viewport-fit .dashboard-fit .verification-card{flex:0 0 auto;padding:5px 8px;margin-bottom:5px;font-size:11px}
+      .app.viewport-fit .dashboard-fit .verification-card>div{display:none}
+      .app.viewport-fit .dashboard-fit .stats{flex:0 0 auto;gap:4px}
+      .app.viewport-fit .dashboard-fit .stat{padding:6px 3px}
+      .app.viewport-fit .dashboard-fit .stat strong{font-size:15px}
+      .app.viewport-fit .dashboard-fit .stat span{font-size:9px}
+      .app.viewport-fit .dashboard-fit .title-row{flex:0 0 auto;margin:7px 0 4px}
+      .app.viewport-fit .dashboard-fit .title-row h2{font-size:13px}
+      .app.viewport-fit .dashboard-fit .dashboard-list{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding-bottom:4px}
+      .app.viewport-fit .dashboard-fit .dashboard-list .list-card{padding:9px;margin-bottom:5px}
+      .app.viewport-fit .dashboard-fit .dashboard-list .chips{margin:4px 0;gap:3px}
+      .app.viewport-fit .dashboard-fit .dashboard-list .btn{padding:7px;font-size:11px}
+      @media(max-height:680px){
+        .app.viewport-fit .job-body .match-reasons,.app.viewport-fit .job-body .why{display:none}
+        .app.viewport-fit .job-image{padding:7px 10px}
+        .app.viewport-fit .job-body>.chips{max-height:24px}
+        .app.viewport-fit .job-body{padding:5px 8px}
+        .app.viewport-fit .job-body .big-action{min-height:32px;padding:6px 2px}
+      }
+    }
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script defer src="/i18n.js"></script>
@@ -986,7 +1053,7 @@ let state = {
   applicants:[],
   notifications:[],
   account:{privacy:{shareEmail:1,shareCv:1,sharePhoto:1,shareLocation:1},emailPreferences:{recruitmentEmails:1,applicationUpdates:1,interviews:1,interviewReminders:1,offers:1,outcomes:1},consent:null,blocks:[],reports:[]},
-  applicantFilters:{jobId:"all", status:"all"},
+  applicantFilters:{jobId:"all", status:"active"},
   admin:{overview:{}, verifications:[], users:[], jobs:[], reports:[], auditLog:[]},
   analyticsDays:30,
   adminAnalytics:null,
@@ -2050,6 +2117,7 @@ function renderNav(){
 
 function render(){
   // Public home lives at /. This page contains only sign-in and the authenticated app.
+  document.querySelector(".app")?.classList.toggle("viewport-fit", !!state.user && !needsOnboarding() && ((state.mode==="jobseeker" && ["feed","work-experience"].includes(state.tab)) || (state.mode==="employer" && state.tab==="home")));
   document.querySelector(".app")?.classList.toggle("auth-layout", !state.user);
   const topbar = document.getElementById("topbar");
   const nav = document.getElementById("bottomnav");
@@ -2466,7 +2534,7 @@ function renderSwipeCard(job, remaining){
           <button class="big-action details" onclick="showJob('${job.id}')" aria-label="View job details">View details</button>
           <button class="big-action accept" onclick="acceptCurrent()" aria-label="Apply to this job">Apply now</button>
         </div>
-        <div style="margin-top:12px;font-size:12px;color:#667085">${remaining} jobs remaining in the current feed.</div>
+        <div class="remaining-count" style="margin-top:12px;font-size:12px;color:#667085">${remaining} jobs remaining in the current feed.</div>
       </div>
     </div>
   </div>`;
@@ -2594,7 +2662,7 @@ function renderApplied(){
       
       ${
         visibleApplications.length ? visibleApplications.map(a=>{
-          const hasInterview = !!a.interviewAt;
+          const hasInterview = !!a.interviewAt && !["unsuccessful","withdrawn"].includes(a.status);
           const interviewClass = a.interviewStatus==="declined" ? "declined" : (a.interviewStatus==="accepted" ? "" : "pending");
           return `
           <div class="card list-card">
@@ -2658,7 +2726,7 @@ function renderApplied(){
             ` : ""}
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-dark" onclick="showApplicationProfile('${a.jobId}')">View application</button><button class="btn btn-outline" style="color:var(--ink);border-color:var(--line-light)" onclick="openMessages('${a.id}')">Messages</button></div>
-            ${a.interviewAt ? `<a class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-top:8px;text-decoration:none" href="/api/integrations/interviews/${a.id}">Add interview to calendar</a>` : ''}
+            ${hasInterview ? `<a class="btn btn-outline btn-block" style="color:var(--ink);border-color:var(--line-light);margin-top:8px;text-decoration:none" href="/api/integrations/interviews/${a.id}">Add interview to calendar</a>` : ''}
           </div>
         `}).join('') : `
           <div class="card dark empty">
@@ -4934,6 +5002,7 @@ function renderEmployer(){
   if(state.tab==="applicants") return renderApplicants();
   if(state.tab==="profile") return renderBusinessProfile();
   return `
+    <div class="dashboard-fit">
     <div class="hero">
       <h1>Employer dashboard</h1>
       <p>Post opportunities and manage hiring.</p>
@@ -4959,9 +5028,10 @@ function renderEmployer(){
         <div class="stat"><strong>${state.postedJobs.filter(j=>j.status==="active").length}</strong><span>Active listings</span></div>
         <div class="stat"><strong>${state.applicants.length}</strong><span>Applicants</span></div>
         <div class="stat"><strong>${state.applicants.filter(a=>a.status==="shortlisted").length}</strong><span>Shortlisted</span></div>
-        <div class="stat"><strong>${state.applicants.filter(a=>a.interviewAt).length}</strong><span>Interviews</span></div>
+        <div class="stat"><strong>${state.applicants.filter(a=>a.interviewAt && !["unsuccessful","withdrawn"].includes(a.status)).length}</strong><span>Interviews</span></div>
       </div>
       <div class="title-row"><h2>Your listings</h2><span>Current</span></div>
+      <div class="dashboard-list">
       ${!state.postedJobs.length ? `
         <div class="card dark empty">
           <h3 style="margin:0 0 8px">No jobs posted yet</h3>
@@ -5001,6 +5071,8 @@ function renderEmployer(){
           </div>
         </div>
       `).join('')}
+      </div>
+    </div>
     </div>
   `;
 }
@@ -5229,7 +5301,7 @@ function setApplicantFilter(name, value){
 }
 
 function renderApplicants(){
-  const f = state.applicantFilters || {jobId:"all", status:"all"};
+  const f = state.applicantFilters || {jobId:"all", status:"active"};
   const filteredApplicants = state.applicants.filter(a =>
     (f.jobId==="all" || String(a.jobId)===String(f.jobId)) &&
     applicantMatchesStatus(a, f.status)
@@ -5459,9 +5531,10 @@ async function markUnsuccessful(id){
       body:{action:"mark_unsuccessful", note}
     });
     closeModal();
+    if(state.applicantFilters) state.applicantFilters.status = "active";
     await loadBootstrap();
     render();
-    toast("Application marked unsuccessful");
+    toast("Unsuccessful interview removed from active view; outcome saved in Closed.");
   }catch(e){ toast(e.message); }
 }
 
