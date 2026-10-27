@@ -1,6 +1,6 @@
 import { json, err, requireUser } from "../../../_lib/db.js";
 
-// Permanent deletion is explicitly limited to the owner of a withdrawn application.
+// Permanent deletion is explicitly limited to the owner of a withdrawn or unsuccessful application.
 export async function onRequestDelete(context) {
   const { env, params } = context;
   const { user, error } = await requireUser(context, "jobseeker");
@@ -11,13 +11,13 @@ export async function onRequestDelete(context) {
     "SELECT id, status FROM applications WHERE id = ? AND jobseeker_id = ?"
   ).bind(id, user.id).first();
   if (!record) return err("Application not found", 404);
-  if (record.status !== "withdrawn") {
-    return err("Only cancelled applications can be permanently deleted", 409);
+  if (!["withdrawn", "unsuccessful"].includes(record.status)) {
+    return err("Only cancelled or unsuccessful applications can be permanently deleted", 409);
   }
   // D1 enforces the schema's ON DELETE CASCADE relationships for dependent
   // messages, reports, interview invitations, offers, and status history.
   await env.DB.prepare(
-    "DELETE FROM applications WHERE id = ? AND jobseeker_id = ? AND status = 'withdrawn'"
+    "DELETE FROM applications WHERE id = ? AND jobseeker_id = ? AND status IN ('withdrawn', 'unsuccessful')"
   ).bind(id, user.id).run();
   return json({ ok: true, deleted: true });
 }

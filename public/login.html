@@ -1026,6 +1026,36 @@
     .cancelled-application{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px}
     .cancelled-application .btn{width:auto;white-space:nowrap;font-size:12px}
     @media(max-width:360px){.cancelled-application{flex-wrap:wrap}.cancelled-application .btn{width:100%}}
+
+    /* v25.17: dark, sharp panels instead of stark white backgrounds. */
+    .card:not(.dark), .form-card, .sheet, .pilot-card, .pilot-metric,
+    .analytics-kpi, .analytics-panel, .growth-kpi, .growth-section,
+    .v24-panel, .v24-kpi, .compliance-kpi, .compliance-section,
+    .admin-stat, .admin-row, .launch-kpi, .readiness-check,
+    .safety-card, .plan-card, .commercial-stat, .metric-card,
+    .referral-card, .conversion-item, .activity-value, .rank-stat {
+      background:#101A2C!important;color:#EDF4FF!important;
+      border-color:rgba(96,155,244,.35)!important;
+    }
+    .card:not(.dark) :is(h1,h2,h3,h4,strong),.form-card :is(h1,h2,h3,h4,strong),
+    .sheet :is(h1,h2,h3,h4,strong),.analytics-panel :is(h1,h2,h3,strong),
+    .growth-section :is(h1,h2,h3,strong),.v24-panel :is(h1,h2,h3,strong),
+    .compliance-section :is(h1,h2,h3,strong){color:#F5F8FF!important}
+    .card:not(.dark) .small,.form-card .small,.sheet .small,.analytics-panel .small,
+    .growth-section .small,.v24-panel .small,.compliance-section .small,
+    .card:not(.dark) .admin-meta,.form-card .admin-meta {color:#B6C5DF!important}
+    .sheet label,.form-card label,.card label{color:#D5E3FC}
+    .sheet :is(input,select,textarea),.form-card :is(input,select,textarea),
+    .card :is(input,select,textarea){background:#091426;color:#F4F8FF;border-color:#425778}
+    .sheet :is(input,select,textarea)::placeholder,.form-card :is(input,select,textarea)::placeholder{color:#A8B8D4}
+    .card:not(.dark) .btn-outline,.form-card .btn-outline,.sheet .btn-outline,
+    .admin-row .btn-outline,.analytics-page .btn-outline {background:transparent!important;color:#DCEAFF!important;border-color:#617FAF!important}
+    .analytics-period button{background:#15223A!important;color:#DCEAFF!important;border-color:#5975A0!important}
+    .analytics-period button.active{background:#236CE0!important;color:#FFFFFF!important}
+    .message-bubble{background:#1D2E48;color:#F3F7FF}
+    .message-bubble.mine{background:#125CC6;color:#FFF}
+    .chip:not(.dark),.pill.soft,.notice,.match-reason,.why{background:#1B2C46!important;color:#DFECFF!important;border-color:#466B9D!important}
+    .interview-alert{background:#112F45!important;color:#EDF9FF!important;border-color:#2674A0!important}
 </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script defer src="/i18n.js"></script>
@@ -2471,10 +2501,6 @@ function renderFeed(){
           ${("Notification" in window && Notification.permission !== "granted") ? `<button class="notify-btn" onclick="enableBrowserNotifications()">Enable browser notifications</button>` : ""}
         </div>
       ` : ""}
-      <div class="opportunity-tabs" role="group" aria-label="Choose opportunities to browse">
-        <button type="button" class="opportunity-tab ${!placementView ? "active" : ""}" onclick="setTab('feed')" aria-pressed="${!placementView}">Jobs</button>
-        <button type="button" class="opportunity-tab ${placementView ? "active" : ""}" onclick="setTab('work-experience')" aria-pressed="${placementView}">Work experience</button>
-      </div>
       <div class="filter-bar">
         <div class="filter-row">
           <div>
@@ -2675,8 +2701,8 @@ async function resetDecisions(){
 }
 
 function renderApplied(){
-  const visibleApplications = state.applications.filter(a=>a.status!=="withdrawn");
-  const cancelledApplications = state.applications.filter(a=>a.status==="withdrawn");
+  const visibleApplications = state.applications.filter(a=>!["withdrawn","unsuccessful"].includes(a.status));
+  const cancelledApplications = state.applications.filter(a=>["withdrawn","unsuccessful"].includes(a.status));
   return `
     <div class="section-pad">
       <div class="title-row"><h2>Applications</h2><span>${visibleApplications.length} active</span></div>
@@ -2758,7 +2784,7 @@ function renderApplied(){
           </div>
         `
       }
-      ${cancelledApplications.length ? `<section class="cancelled-applications"><h3>Cancelled applications</h3>${cancelledApplications.map(a=>`<div class="card cancelled-application"><div><strong data-no-translate>${safeText(a.title)}</strong><div class="small" data-no-translate>${safeText(a.company)}</div></div><button class="btn btn-bad" onclick="deleteCancelledApplication('${a.id}')" aria-label="Delete cancelled application permanently">Delete permanently</button></div>`).join("")}</section>` : ""}
+      ${cancelledApplications.length ? `<section class="cancelled-applications"><h3>Cancelled & unsuccessful applications</h3>${cancelledApplications.map(a=>`<div class="card cancelled-application"><div><strong data-no-translate>${safeText(a.title)}</strong><div class="small" data-no-translate>${safeText(a.company)}</div></div><button class="btn btn-bad" onclick="deleteCancelledApplication('${a.id}')" aria-label="Delete closed application permanently">Delete permanently</button></div>`).join("")}</section>` : ""}
     </div>
   `;
 }
@@ -2791,15 +2817,15 @@ async function removeApplication(applicationId){
 
 async function deleteCancelledApplication(applicationId){
   const a=state.applications.find(x=>String(x.id)===String(applicationId));
-  if(!a || a.status!=="withdrawn") return toast("Only cancelled applications can be deleted");
-  if(!confirm("Permanently delete this cancelled application, its messages and interview history? This cannot be undone.")) return;
+  if(!a || !["withdrawn","unsuccessful"].includes(a.status)) return toast("Only cancelled or unsuccessful applications can be deleted");
+  if(!confirm("Permanently delete this closed application and its linked history? This cannot be undone.")) return;
   try{
     await api(`/api/applications/purge/${encodeURIComponent(applicationId)}`, {method:"DELETE"});
     state.applications=state.applications.filter(x=>String(x.id)!==String(applicationId));
     render();
     await loadBootstrap();
     render();
-    toast("Cancelled application permanently deleted");
+    toast("Application permanently deleted");
   }catch(e){toast(e.message);}
 }
 
